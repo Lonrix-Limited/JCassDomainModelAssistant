@@ -32,7 +32,7 @@ public static class FixtureModels
             ["missing-reset-arm"] = "'replace' is triggered and funded, and Resetter has no case for it",
             ["two-csproj"] = "two .csproj files at the root, which stops a debug run before it starts",
             ["assembly-name-set"] = "<AssemblyName> is set to something other than the .csproj stem",
-            ["blank-budget-category"] = "RMaint has no budget_category, so it is never funded and never complains",
+            ["blank-budget-category"] = "RMaint has no budget_category, so the run throws at setup naming the treatment",
         };
 
     /// <summary>Absolute path to a fixture, as committed. Read-only as far as the tests care.</summary>

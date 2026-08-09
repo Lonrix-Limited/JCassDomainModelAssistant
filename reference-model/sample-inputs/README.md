@@ -7,7 +7,7 @@ live in a project's `inputs/` folder, alongside but separate from your domain mo
 |---|---|
 | `model_input_data.csv` | The network: one row per element, 1000 generic assets with an age, a condition rating, a material and an area. |
 | `lookups.xlsx` | Thresholds and unit rates. Every `lkp_`-prefixed sheet is read and merged into one flat table addressed by (`lookup_set_name`, `setting_key`). This is where tunable numbers belong. |
-| `budgets.xlsx` | One column per budget category, one row per period. A treatment charged to a category with no column here is **never funded, silently**. |
+| `budgets.xlsx` | One column per budget category, one row per period. A treatment charged to a category with no column here **fails the run at setup**, naming the treatment — before a single period is modelled. |
 | `configurations.xlsx` | Run settings — model type, number of periods, discount rate, which budget sheet to use. |
 | `mcda_setups.xlsx` | Weights and objective types for MCDA optimisation. |
 | `kpi_setups.xlsx` | KPI definitions for post-processing, plus a sheet documenting every aggregator code. |

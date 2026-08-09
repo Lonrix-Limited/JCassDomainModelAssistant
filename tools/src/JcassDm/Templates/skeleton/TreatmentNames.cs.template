@@ -12,11 +12,12 @@ namespace {{NAMESPACE}};
 ///   sheet.</description></item>
 /// </list>
 ///
-/// <para>A mismatch surfaces late and quietly. A name that does not match the bundle throws
-/// partway through a run; a <c>budget_category</c> with no column in <c>budgets.xlsx</c> throws
-/// nothing at all - the treatment is simply never funded, in any period, and the forecast looks
-/// like a modelling result. Keeping the strings in one place is cheap insurance against the
-/// first, and <c>jcass-dm check</c> catches the second.</para>
+/// <para>Both mismatches are caught, and neither is caught early. A name that does not match the
+/// bundle throws partway through a run; a <c>budget_category</c> with no column in
+/// <c>budgets.xlsx</c> fails the run at setup, naming the treatment, before a single period is
+/// modelled. Loud is better than silent, but a run that dies at setup still costs the engineer
+/// the round trip - so keep the strings in one place and let <c>jcass-dm check</c> find both
+/// before you upload.</para>
 ///
 /// <para><b>Adding a treatment</b> is a constant here, a bundle row, a trigger, and a reset arm:</para>
 /// <list type="number">

@@ -1,8 +1,21 @@
 # DomainModelSample
 
-A deliberately small, working Juno Cassandra **domain model**. Clone this folder, rename it, and
-refactor it into your own model. It is not a library to reference — it is a starting point to
-edit.
+A deliberately small, working Juno Cassandra **domain model**, kept here to be **read**.
+
+**Do not clone and rename this folder.** That was the old advice and it is now the wrong one:
+renaming is the most reliable way to break a model, because four separate strings have to agree
+and nothing tells you when they don't. Start your own model with the tool instead, which writes
+all four from a single name and cannot produce a mismatch:
+
+```powershell
+.\tools\jcass-dm.exe scaffold MyRoadModel --from-sample --output ..\MyRoadModel
+```
+
+`--from-sample` gives you this same working model under your own name, so you can prove the whole
+pipeline — build, upload, F5, publish, run — before writing a line of your own engineering.
+
+What this folder is for is reading. It is small enough to take in at one sitting, and it is
+structured the way a real model should be structured.
 
 ---
 
@@ -83,26 +96,27 @@ The framework's unit-test domain model gets this wrong — its csproj is `JCassU
 but its class is `UnitTestDomainModel` — and F5 against it fails for exactly this reason. That
 mistake is the reason this kit exists.
 
-### Renaming this kit to your own model
+### Renaming a model — use the tool, not four manual edits
 
-Do all four in one sitting, then build:
+This README used to walk through four manual steps here: two `git mv`s, a class rename, and two
+cells in the `meta` sheet. Doing it by hand is exactly how the four names drift apart, and the
+fourth step is inside a binary spreadsheet where nothing warns you.
+
+There is a verb for it, and it changes all four atomically or changes nothing:
 
 ```powershell
-# 1. Rename the project file
-git mv DomainModelSample.csproj MyRoadModel.csproj      # or: Rename-Item, if not yet in git
-
-# 2. Rename the entry class file
-git mv Objects\DomainModelSample.cs Objects\MyRoadModel.cs
+.\tools\jcass-dm.exe rename MyRoadModel --project ..\MyRoadModel
 ```
 
-3. Open `Objects\MyRoadModel.cs` and rename the class `DomainModelSample` → `MyRoadModel`.
-   Also update the namespace across all files if you want (`DomainModelSample.Objects` →
-   `MyRoadModel.Objects`) — the namespace is *not* part of the rule, but leaving a stale one is
-   confusing.
-4. Open `domain_model_setup.xlsx`, sheet `meta`, and set `main_dll` to `MyRoadModel.dll` and
-   `main_class` to `MyRoadModel`.
+It leaves the namespace alone by default and tells you why — the namespace is *not* one of the
+four names, and a stale one is confusing rather than broken. Pass the namespace option if you
+want it updated too.
 
 Then rebuild and confirm `bin\Debug\net9.0\MyRoadModel.dll` exists.
+
+For a **new** model you should not be renaming at all — `scaffold` writes all four from one name
+in the first place. Reach for `rename` when you have **inherited** a model whose names already
+disagree, which is common: the framework's own unit-test domain model is one.
 
 **Do not add `<AssemblyName>` to the csproj.** It is the one setting that can break the rule
 silently: the file would still say `MyRoadModel.csproj` while the DLL came out under a different
@@ -281,7 +295,9 @@ opening Excel.
 1. `Objects\TreatmentNames.cs` → add the constant.
 2. `domain_model_setup.xlsx` → `treatments` → add a row using exactly that string as
    `treatment_name`. Set `budget_category` to a column that exists in the client's
-   `inputs\budgets.xlsx` — a category with no budget column never gets funded, silently.
+   `inputs\budgets.xlsx` — a category with no matching column fails the run at setup, naming the
+   treatment, before a single period is modelled. Loud, but only after you have uploaded and
+   waited; `jcass-dm check` finds it first.
 3. `Objects\TreatmentTrigger.cs` → decide when it fires and what it costs.
 4. `Objects\StrategyGenerator.cs` → decide whether it competes with the others as an alternative.
 5. `Objects\SampleElement.cs` → handle it in `Reset`. The `default:` branch throws, so a treatment
@@ -354,10 +370,15 @@ adding a treatment costs a row in `lookups.xlsx` and a constant on `TreatmentNam
 at all in `Constants`**. Thresholds are unpacked into properties because each one is used in a
 different comparison; rates are not, because they are all used the same way.
 
-**Read them in `SetupInstance()`, never earlier.** The framework populates lookups immediately
-before calling it. A lookup read from a constructor or a static initialiser gets an empty
-dictionary — and because that reads as "key not found" rather than "too early", it is a
-genuinely confusing hour to lose.
+**Read them in `SetupInstance()`, never earlier.** The framework constructs your domain model
+last, on purpose, so by the time `SetupInstance` runs the lookups are fully loaded. Earlier than
+that there is no dictionary at all: a lookup read from a constructor or a static initialiser
+throws `NullReferenceException`, which at least tells you something is wrong.
+
+The genuinely quiet trap in `SetupInstance` is a different one. `NElements`, `NPeriods` and
+`NParameters` are all **zero** there — the network has not been read yet. Size an array or divide
+by one of them at setup and you get a silent wrong answer, not an exception. Use them from
+`Initialise` onwards.
 
 ### The one number deliberately left hard-coded
 

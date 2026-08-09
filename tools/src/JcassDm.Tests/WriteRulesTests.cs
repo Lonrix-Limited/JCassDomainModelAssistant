@@ -90,8 +90,8 @@ public class WriteRulesTests
     public void A_mistyped_option_is_refused_rather_than_ignored(string[] add, string[] _)
     {
         // The failure this prevents: --budget_category silently ignored, leaving a treatment
-        // with a blank budget category, which is a treatment that is never funded and never
-        // complains.
+        // with a blank budget category, which throws at setup on the next run - loudly, but
+        // long after the engineer typed the option and moved on.
         using var bundle = TestBundle.FromReferenceModel();
         string before = bundle.Dump();
 

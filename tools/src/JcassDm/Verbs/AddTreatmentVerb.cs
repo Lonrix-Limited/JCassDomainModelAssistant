@@ -63,6 +63,6 @@ internal static class AddTreatmentVerb
         output.WriteLine( "                              missing here fails loudly rather than doing nothing.");
         output.WriteLine();
         output.WriteLine($"Also check that '{budgetCategory}' is a column in the client's inputs/budgets.xlsx.");
-        output.WriteLine( "A budget category with no column there is never funded, and nothing says so.");
+        output.WriteLine( "A budget category with no column there fails the run at setup, naming the treatment.");
     }
 }

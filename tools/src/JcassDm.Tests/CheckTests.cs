@@ -93,12 +93,18 @@ public class CheckTests
     }
 
     [Fact]
-    public void A_blank_budget_category_is_reported_as_never_funded()
+    public void A_blank_budget_category_is_reported_as_a_setup_failure()
     {
+        // This asserted "never funded" until 2026-08-10, which was wrong and had been wrong
+        // everywhere it was copied. ModelSetupChecker adds a named error for a category that
+        // matches no budget column, RunSetupChecksStage1 runs unconditionally, and the run
+        // throws - loudly, at setup, naming the treatment. A blank category is caught the same
+        // way. The unchecked case is elsewhere: keys passed to AssignBudgetCategoryFractions at
+        // run time, which no static check can see.
         ToolResult result = Run("blank-budget-category");
 
         Assert.Contains("No budget_category on: RMaint", result.Output, StringComparison.Ordinal);
-        Assert.Contains("never funded", result.Output, StringComparison.Ordinal);
+        Assert.Contains("fails at setup", result.Output, StringComparison.Ordinal);
     }
 
     [Fact]

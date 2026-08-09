@@ -121,7 +121,8 @@ In this order. Each step leaves you with a project that still builds.
    ```
 
    The `budget_category` must match a column in the client's `inputs\budgets.xlsx`. One that
-   doesn't is never funded, in any period, and nothing says so.
+   doesn't fails the run at setup, naming the treatment — loud, but only after you have uploaded
+   and waited. `jcass-dm check` finds it before you do.
 
 5. **Check as you go.**
 
