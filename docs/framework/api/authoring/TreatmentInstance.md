@@ -22,7 +22,7 @@
 > **Should a domain model use this?**  
 > **Yes — you construct these.** It is what a trigger returns.
 >  
-> This is the most error-prone type in the framework and the reason this reference exists. The constructor takes eight parameters and several are the same type, so passing them in the wrong order compiles cleanly and produces a wrong model. Use named arguments. `AssignBudgetCategoryFractions` is rare, non-obvious and high-consequence: it is how one treatment's cost is split across budget groups, and a cost charged to a budget category with no column in `budgets.xlsx` is silently never funded.
+> This is the most error-prone type in the framework and the reason this reference exists. The constructor takes eight parameters and several are the same type, so passing them in the wrong order compiles cleanly and produces a wrong model. Use named arguments. `AssignBudgetCategoryFractions` is rare, non-obvious and high-consequence: it is how one treatment's cost is split across budget groups, and it is the one place a budget category name is NOT validated at setup — a name with no matching budget column kills the run mid-way with a bare `KeyNotFoundException` that names nothing.
 
 One treatment proposed for one element in one modelling period: what it is, how much of it, what it costs and why it was put forward.
 

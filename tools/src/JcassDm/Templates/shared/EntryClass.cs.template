@@ -52,11 +52,17 @@ public class {{MODEL}} : DomainModelBase
     /// Called once, after the framework has loaded lookups and treatment rates but before any
     /// element is touched.
     ///
-    /// <para><b>This is the only place lookups may be read.</b> <c>model.Lookups</c> is populated
-    /// by the framework immediately before this call and not before it, so a lookup read from a
-    /// constructor or a static initialiser gets an empty dictionary - and an empty dictionary
-    /// reads as "key not found" rather than "too early", which is a genuinely confusing hour to
-    /// lose. That ordering guarantee is the entire reason this method exists.</para>
+    /// <para><b>This is the earliest place lookups may be read.</b> The framework loads the domain
+    /// model last, precisely so that this method can use project data: <c>model.Lookups</c>,
+    /// treatment rates, the budget and <c>model.Configuration</c> are all ready. A constructor is
+    /// too early - the <c>model</c> field is not assigned until afterwards, so reading anything
+    /// through it there throws a <c>NullReferenceException</c>.</para>
+    ///
+    /// <para><b>What is NOT ready here, and fails silently:</b> <c>model.NElements</c>,
+    /// <c>model.NPeriods</c> and <c>model.NParameters</c> are all still <b>zero</b>. The
+    /// per-element data arrays are built after this method returns. Size an array off one of them
+    /// here and you get an empty array and a model that runs to completion with nothing in it.
+    /// Read those counts in <c>Initialise</c> or later.</para>
     ///
     /// <para>Anything else that is the same for every element belongs here too: coefficient tables
     /// loaded from a CSV in the client's <c>supporting\</c> folder, sub-models, cached statistics.

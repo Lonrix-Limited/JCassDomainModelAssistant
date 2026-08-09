@@ -116,9 +116,18 @@ public class SampleElement
 
     /// <summary>
     /// Condition points added per year for this element's material. Higher means faster decay.
+    ///
+    /// <para><b>DELIBERATE COUNTER-EXAMPLE — do not copy this shape.</b> These rates are hard-coded
+    /// in C# on purpose, as the contrast that makes the rule visible. A deterioration rate is
+    /// exactly what a modeller recalibrates against observed condition data, so in a real model it
+    /// belongs in <c>inputs\lookups.xlsx</c> and is read through <see cref="Constants"/>. As
+    /// written, changing one needs a developer, a rebuild and a republish. Moving them is the
+    /// reader's second exercise — README section 7.</para>
     /// </summary>
     public double GetDeteriorationRate()
     {
+        // COUNTER-EXAMPLE. See the summary above and README section 7. In your own model these
+        // rates come from lookups.xlsx through Constants, not from a switch expression.
         return this.MaterialType.ToLower() switch
         {
             "metal" => 2.0,
@@ -130,9 +139,18 @@ public class SampleElement
         };
     }
 
-    /// <summary>Cost per square metre of replacing this element, by material.</summary>
+    /// <summary>
+    /// Cost per square metre of replacing this element, by material.
+    ///
+    /// <para><b>DELIBERATE COUNTER-EXAMPLE — do not copy this shape.</b> A unit rate is the single
+    /// most-often-retuned number in any model, and the web app's Tuning page exists to edit rates
+    /// without a code change. Hard-coded here on purpose, as the contrast. See README section 7,
+    /// and <see cref="Constants.GetUnitRate"/> for how the same model does it properly for the
+    /// per-treatment rate multiplier.</para>
+    /// </summary>
     public double GetReplacementRate()
     {
+        // COUNTER-EXAMPLE. See the summary above and README section 7.
         return this.MaterialType.ToLower() switch
         {
             "metal" => 60,

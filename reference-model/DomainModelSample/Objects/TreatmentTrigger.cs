@@ -18,10 +18,13 @@ public static class TreatmentTrigger
     /// <summary>
     /// Condition above which routine maintenance is needed every period.
     ///
-    /// <para>Deliberately left as a compile-time constant, as the one counter-example in the kit:
-    /// this is what a threshold looks like when it is <em>not</em> tunable, and changing it means
-    /// a code change, a rebuild and a redeploy. Compare it with anything on
-    /// <see cref="Constants"/>. Moving it is the exercise described in README section 7.</para>
+    /// <para><b>DELIBERATE COUNTER-EXAMPLE — do not copy this shape.</b> It is a trigger
+    /// threshold, so by the rule it belongs in <c>inputs\lookups.xlsx</c> and should be read
+    /// through <see cref="Constants"/> like every other threshold in this file. It is left as a
+    /// <c>const</c> on purpose, as the contrast that makes the rule visible: as written, moving it
+    /// from 50 to 45 needs a developer, a rebuild and a republish, where every threshold on
+    /// <see cref="Constants"/> is something the modeller changes themselves on the Tuning page.
+    /// Moving it is the reader's first exercise — README section 7.</para>
     /// </summary>
     public const double RoutineMaintenanceConditionGreaterThan = 50;
 

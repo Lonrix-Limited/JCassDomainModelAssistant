@@ -394,8 +394,15 @@ internal static class CheckVerb
     }
 
     /// <summary>
-    /// Every treatment needs a budget category, and the consequence of getting it wrong is the
-    /// one failure in this list with no error message at all.
+    /// Every treatment needs a budget category that matches a column of the client's budget sheet.
+    ///
+    /// <para><b>This one is loud, not silent, and the wording matters.</b> The framework's
+    /// <c>ModelSetupChecker</c> validates every treatment type's own budget category against the
+    /// budget columns at setup and names any mismatch - a blank one included, since a blank never
+    /// matches a column. So the value of checking it here is only that it is found before an
+    /// upload rather than during one. The genuinely unchecked case is a category supplied at run
+    /// time to <c>TreatmentInstance.AssignBudgetCategoryFractions</c>, which jcass-dm cannot see
+    /// and which the framework cannot validate either.</para>
     /// </summary>
     private static void CheckBudgetCategories(BundleFile bundle, CheckReport report)
     {
@@ -418,8 +425,9 @@ internal static class CheckVerb
         {
             report.Problem("budget categories",
                 "No budget_category on: " + string.Join(", ", blank) + ".",
-                "A treatment charged to nothing is never funded, in any period, and the run does " +
-                "not complain.",
+                "A blank category matches no column of the client's budget sheet, so the model " +
+                "fails at setup with 'Treatment budget category '' has no matching column in the " +
+                "Budget.' - before a single period is modelled.",
                 "Set it to a column that exists in the client's inputs\\budgets.xlsx.");
             return;
         }
@@ -433,11 +441,14 @@ internal static class CheckVerb
         report.Note("budget categories",
             "every treatment names one: " + string.Join(", ", categories) + ".",
             "jcass-dm cannot see the client's inputs\\budgets.xlsx, so it cannot tell you whether " +
-            "these columns exist there. A budget category with no matching column is silently " +
-            "never funded - no error, no warning, just a treatment that never appears in any " +
-            "period's programme.",
-            "The web app's Check Setup does check this, and it is the one thing worth running " +
-            "there before you trust a forecast.");
+            "these columns exist there. The framework can, and does: a category here with no " +
+            "matching budget column stops the run at setup with a message naming it. So this is " +
+            "a check on when you find out, not on whether you do.",
+            "Run the web app's Check Setup to have it confirmed against the client's actual " +
+            "budget sheet before you upload. Note that neither check covers a category name your " +
+            "C# passes to AssignBudgetCategoryFractions at run time - that one is not validated " +
+            "anywhere, and a wrong name ends the run mid-way with a KeyNotFoundException naming " +
+            "nothing. Compare those keys against model.Budget.BudgetCategories yourself.");
     }
 
     /// <summary>

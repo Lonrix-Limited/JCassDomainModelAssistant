@@ -12,8 +12,8 @@ namespace JcassDm.Cli;
 /// <para><b>Unknown options are an error, never ignored.</b> That is the whole reason
 /// this class exists rather than a dictionary lookup at each call site. An agent that
 /// types <c>--budget_category</c> instead of <c>--budget-category</c> must be told, not
-/// quietly handed a row with a blank budget category - which is a treatment that is
-/// silently never funded, discovered a fortnight later in someone's forecast.</para>
+/// quietly handed a row with a blank budget category - which is a bundle that fails setup
+/// on the client's server rather than on the machine where the mistake was made.</para>
 ///
 /// <para>Verbs declare the options they accept via <see cref="Declare"/>, then read them.
 /// <see cref="CheckForUnknownOptions"/> runs once the declarations are in.</para>

@@ -38,10 +38,17 @@ public class DomainModelSample : DomainModelBase
     /// Called once, after the framework has loaded lookups and treatment rates but before any
     /// element is touched. Use it to cache anything that is the same for every element.
     ///
-    /// <para><b>This is the only place lookups may be read.</b> <c>model.Lookups</c> is populated
-    /// by the framework immediately before this call and not before it, so a lookup read from a
-    /// constructor or a static initialiser gets an empty dictionary. That ordering guarantee is
-    /// the entire reason this method exists.</para>
+    /// <para><b>This is the earliest place lookups may be read.</b> The framework loads the
+    /// domain model last, precisely so that this method can use project data: lookups, treatment
+    /// rates, the budget and <c>model.Configuration</c> are all ready. A constructor is too early
+    /// — the <c>model</c> field is not assigned until afterwards, so reading anything through it
+    /// there throws a <c>NullReferenceException</c>.</para>
+    ///
+    /// <para><b>What is NOT ready here, and fails silently:</b> <c>model.NElements</c>,
+    /// <c>model.NPeriods</c> and <c>model.NParameters</c> are all still <b>zero</b>. The
+    /// per-element data arrays are built after this method returns. Size an array off one of them
+    /// here and you get an empty array and a model that runs to completion with nothing in it.
+    /// Read those counts in <see cref="Initialise"/> or later.</para>
     /// </summary>
     public override void SetupInstance()
     {

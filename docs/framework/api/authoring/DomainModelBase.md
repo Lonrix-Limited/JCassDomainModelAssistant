@@ -22,7 +22,7 @@
 > **Should a domain model use this?**  
 > **Yes — your entry class inherits from this.**
 >  
-> The abstract members are the six execution stages you must write. The protected members — `model`, `Rando`, `PIndex` — are what you call from inside them. `SetupInstance` runs before anything else; a lookup read before it returns an empty dictionary rather than an error, which is one of the framework's quietest failures.
+> The abstract members are the six execution stages you must write. The protected members — `model`, `Rando`, `PIndex` — are what you call from inside them. `SetupInstance` is where your own setup goes, and its own page below is the one to read before writing any: lookups and configuration ARE ready there, and `model.NElements`, `model.NPeriods` and `model.NParameters` are all still zero, which is one of the framework's quietest failures.
 
 Base class for every domain model. Inherit from this, implement the abstract methods, and the framework will call them at the right point in every modelling period.
 

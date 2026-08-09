@@ -15,9 +15,11 @@ namespace {{NAMESPACE}};
 ///
 /// <para><b>Read them here, not earlier.</b> This object is built from
 /// <see cref="{{MODEL}}.SetupInstance"/>, which the framework calls after it has loaded lookups
-/// and before it touches any element. A lookup read from a constructor or a static initialiser
-/// that runs earlier gets an empty dictionary, and that reads as "key not found" rather than
-/// "too early".</para>
+/// and before it touches any element. A lookup read from a constructor is too early and throws a
+/// NullReferenceException - the framework has not yet assigned the `model` field your code reads
+/// them through. Note what IS safe here and what is not: lookups, treatment rates, the budget and
+/// model.Configuration are all ready, but model.NElements, model.NPeriods and model.NParameters
+/// are all still ZERO until after setup returns.</para>
 ///
 /// <para><b>How lookups.xlsx is structured.</b> Any sheet whose name starts with <c>lkp_</c> is
 /// read, and all of them are merged into one flat table with three columns that matter -

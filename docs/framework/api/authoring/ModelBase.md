@@ -90,6 +90,14 @@ The run's budget: what money is available in each category and each period, and 
 
 **Remarks.** Read it - typically to ask whether a candidate could be afforded. The framework does the spending; a domain model proposes candidates and the optimiser decides what is funded.
 
+### NElements
+
+```csharp
+public int NElements;
+```
+
+Number of elements in the run
+
 ### NParameters
 
 ```csharp
@@ -97,6 +105,14 @@ public int NParameters;
 ```
 
 Number of model parameters
+
+### NPeriods
+
+```csharp
+public int NPeriods;
+```
+
+Number of Modelling Periods
 
 ## Methods
 

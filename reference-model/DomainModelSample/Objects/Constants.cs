@@ -22,9 +22,9 @@ namespace DomainModelSample.Objects;
 /// <para><b>Read them here, not earlier.</b> This object is built from
 /// <see cref="DomainModelSample.SetupInstance"/>, which the framework calls after it has loaded
 /// lookups and before it touches any element. That ordering is the whole reason
-/// <c>SetupInstance</c> exists. Reading a lookup from a constructor or static initialiser that
-/// runs earlier gets you an empty dictionary — and it reads as "key not found" rather than "too
-/// early", which is a confusing hour to lose.</para>
+/// <c>SetupInstance</c> exists. A lookup read from a constructor throws a
+/// <c>NullReferenceException</c> instead, because the framework has not yet assigned the
+/// <c>model</c> field your code reads them through.</para>
 /// </summary>
 public class Constants
 {
