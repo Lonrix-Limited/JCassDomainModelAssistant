@@ -24,8 +24,11 @@
 >  
 > This is the most error-prone type in the framework and the reason this reference exists. The constructor takes eight parameters and several are the same type, so passing them in the wrong order compiles cleanly and produces a wrong model. Use named arguments. `AssignBudgetCategoryFractions` is rare, non-obvious and high-consequence: it is how one treatment's cost is split across budget groups, and a cost charged to a budget category with no column in `budgets.xlsx` is silently never funded.
 
-*The framework carries no `<summary>` for this type. The signatures below come
-from the assembly metadata and are authoritative; the description is not available.*
+One treatment proposed for one element in one modelling period: what it is, how much of it, what it costs and why it was put forward.
+
+**Remarks.** This is the currency between a domain model and the framework. A domain model creates instances of this class in its trigger methods and returns them as candidates; the framework then ranks them, funds what fits the budget, and passes the winners back to `Reset`.
+
+Domain models construct these. Everything else here - costing, ranking, funding, exporting - is done by the framework, and the properties it fills in are marked as such below.
 
 ## Constructors
 
@@ -43,22 +46,30 @@ public TreatmentInstance(
     string comment)
 ```
 
-*No framework documentation for this member.*
+Creates a treatment candidate for one element in one period. This is what a domain model's trigger methods return.
 
 | # | Parameter | Type | Description |
 |---|---|---|---|
-| 1 | `element_index` | `int` | — |
-| 2 | `name` | `string` | — |
-| 3 | `period` | `int` | — |
-| 4 | `quantity` | `double` | — |
-| 5 | `unitRate` | `double` | — |
-| 6 | `force` | `bool` | — |
-| 7 | `reason` | `string` | — |
-| 8 | `comment` | `string` | — |
+| 1 | `element_index` | `int` | Zero-based index of the element, as passed into the domain model method. |
+| 2 | `name` | `string` | Treatment name. Must match a treatment type in the model setup - see `JCass_ModelCore.Treatments.TreatmentInstance.TreatmentName`. |
+| 3 | `period` | `int` | Modelling period the treatment falls in. Must be 1 or greater. |
+| 4 | `quantity` | `double` | How much of the treatment is applied, in the same unit as `unitRate`. |
+| 5 | `unitRate` | `double` | Cost per unit of quantity. Read this from the model's lookups; do not hard-code it. |
+| 6 | `force` | `bool` | True to place this treatment regardless of how it ranks - see `JCass_ModelCore.Treatments.TreatmentInstance.Force`. |
+| 7 | `reason` | `string` | Why the treatment was triggered. Exported, and read by modellers. |
+| 8 | `comment` | `string` | Free text carried with the treatment. No meaning to the framework. |
 
 > Positional order matters and 8 arguments is more than anyone reliably remembers.
 > Call this with **named arguments** — `quantity: q, unitRate: r` — so a wrong order
 > is a compile error rather than a silently wrong model.
+
+**Throws.**
+
+- `System.Exception` — Thrown if `period` is zero or negative.
+
+**Remarks.** Call this with named arguments. Eight positional parameters, of which two are consecutive doubles and three are consecutive strings, means a call with the right values in the wrong order compiles cleanly and produces a wrong model rather than an error.
+
+The unit rate is supplied per instance and is no longer inherited from the treatment type - see `JCass_ModelCore.Treatments.TreatmentInstance.UnitRate`. It belongs in the project's lookups, so that a modeller can recalibrate rates without a rebuild.
 
 ## Properties
 
@@ -68,7 +79,9 @@ public TreatmentInstance(
 public double Cost { get; }
 ```
 
-*No framework documentation for this member.*
+Cost of the treatment, discounted and inflated to the period it falls in. Read-only.
+
+**Remarks.** This is zero until the framework calculates it. A domain model supplies `JCass_ModelCore.Treatments.TreatmentInstance.Quantity` and the unit rate; the framework multiplies them by the present-worth factor for the period in `CalculateDiscountedAndInflatedCost` and rounds to two decimal places. Reading `Cost` straight after constructing an instance returns 0, not the treatment's cost.
 
 ### UnitRate
 
@@ -94,15 +107,7 @@ public IReadOnlyDictionary<string, decimal> BudgetCategoryFractions;
 public string Comment;
 ```
 
-*No framework documentation for this member.*
-
-### CustomAttributes
-
-```csharp
-public Dictionary<string, string> CustomAttributes;
-```
-
-*No framework documentation for this member.*
+Free text carried with the treatment and exported as `treatment_comment`. Unlike `JCass_ModelCore.Treatments.TreatmentInstance.Reason` the framework attaches no meaning to it.
 
 ### CustomPropertiesNumber
 
@@ -126,7 +131,7 @@ Optional set of customisable Text/String properties that can be used by custom i
 public int ElementIndex;
 ```
 
-*No framework documentation for this member.*
+Zero-based index of the network element this treatment applies to. This is the same index the framework passes into every domain model method.
 
 ### FollowUpWaitPeriods
 
@@ -134,7 +139,7 @@ public int ElementIndex;
 public int FollowUpWaitPeriods;
 ```
 
-*No framework documentation for this member.*
+For a follow-up treatment, the number of periods to wait after the strategy's first treatment before this one is placed. Set by the framework's strategy generator alongside `JCass_ModelCore.Treatments.TreatmentInstance.IsFollowUp`.
 
 ### Force
 
@@ -142,7 +147,9 @@ public int FollowUpWaitPeriods;
 public bool Force;
 ```
 
-*No framework documentation for this member.*
+True if this treatment must be placed regardless of how it ranks economically.
+
+**Remarks.** Forced treatments bypass the ranking rather than the budget. In an MCDA model a forced treatment is assigned the maximum rank parameter; in a BCA model forced strategies are separated out and funded ahead of the ranked ones. Use it for interventions that policy or safety requires, not to push a treatment the model would otherwise reject.
 
 ### IsCommitted
 
@@ -150,7 +157,9 @@ public bool Force;
 public bool IsCommitted;
 ```
 
-*No framework documentation for this member.*
+True if this treatment came from the model's committed-treatments setup data rather than from a domain model trigger. Set by the framework when it loads that data; a domain model does not assign it.
+
+**Remarks.** Committed treatments are always loaded with `JCass_ModelCore.Treatments.TreatmentInstance.Force` set to true, because a treatment somebody has already committed to is not a candidate for the optimiser to reject.
 
 ### IsFollowUp
 
@@ -158,7 +167,7 @@ public bool IsCommitted;
 public bool IsFollowUp;
 ```
 
-*No framework documentation for this member.*
+True if this treatment is a follow-up within a multi-treatment strategy rather than the first treatment of one. Set by the framework's strategy generator - a domain model does not assign it.
 
 ### Quantity
 
@@ -166,7 +175,7 @@ public bool IsFollowUp;
 public double Quantity;
 ```
 
-*No framework documentation for this member.*
+How much of the treatment is applied, in whatever unit the treatment type's unit rate is expressed in. Cost is quantity multiplied by unit rate, so the two must agree on units.
 
 ### RankParamSimple
 
@@ -174,7 +183,13 @@ public double Quantity;
 public double RankParamSimple;
 ```
 
-Temporary simple ranking for maintenance. Higher parameter value means higher priority.
+Priority of this treatment among the routine-maintenance candidates competing for the maintenance budget. Higher wins. Set this from your domain model on treatments returned by `GetTriggeredMaintenance`.
+
+**Remarks.** Maintenance is not optimised the way capital treatments are. The framework simply sorts every triggered maintenance treatment by this value, descending, and funds down the list until the budget runs out. So this value is the whole of your control over what gets done first when maintenance money is short.
+
+Left at its default of 0 the ordering is arbitrary - every candidate compares equal, and which ones get funded is decided by the order elements happen to be processed in. That is stable enough to look deliberate and it is not. Set it whenever maintenance can be budget-constrained, using whatever expresses urgency in your domain: severity, a condition index, exposure, or cost-effectiveness.
+
+It has no effect on capital treatment candidates, which are ranked by the optimiser instead.
 
 ### Reason
 
@@ -182,7 +197,7 @@ Temporary simple ranking for maintenance. Higher parameter value means higher pr
 public string Reason;
 ```
 
-*No framework documentation for this member.*
+Short text saying why the treatment was triggered. Exported against every treatment as `treatment_reason`, so it is what a modeller reads when asking why the model did something. Worth writing for that reader rather than for a developer.
 
 ### TreatmentName
 
@@ -190,7 +205,9 @@ public string Reason;
 public string TreatmentName;
 ```
 
-*No framework documentation for this member.*
+Name of the treatment, which must match a treatment type defined in the model setup.
+
+**Remarks.** The name is used as a dictionary key into the model's treatment types whenever a cost is allocated or a row is exported. A name with no matching treatment type therefore does not fail where it was created - it fails later, during costing or export.
 
 ### TreatmentPeriod
 
@@ -198,7 +215,7 @@ public string TreatmentName;
 public int TreatmentPeriod;
 ```
 
-*No framework documentation for this member.*
+Modelling period in which the treatment is placed. Periods are 1-based; the constructor rejects zero or negative values.
 
 ### TreatmentRankParameter
 
@@ -228,9 +245,17 @@ Assigns the budget category fractions for this treatment instance if the treatme
 
 | # | Parameter | Type | Description |
 |---|---|---|---|
-| 1 | `budgetCategoryFractions` | `Dictionary<string, decimal>` | — |
+| 1 | `budgetCategoryFractions` | `Dictionary<string, decimal>` | Budget category name to the fraction of this treatment's cost charged to it. Must sum to 1. |
 
-**Remarks.** Do NOT remove this method if references shows Zero!!! This needs to be called explicitly by custom implementers, and since these are read only at runtime, the reference is not in the code base.
+**Throws.**
+
+- `System.Exception` — Thrown if the fractions do not sum to 1 (checked to six decimal places).
+
+**Remarks.** Leave this alone and the whole cost goes to the treatment type's own budget category, which is what most treatments want.
+
+A category named here must have a matching column in the project's budget setup, and this is the one place that is not checked for you. The framework validates each treatment type's own budget category during setup and reports a mismatch by name. It cannot validate a category that only exists once your code has run, so a name that does not match a budget column kills the run mid-way with a bare `KeyNotFoundException` that names nothing. Check your names against `model.Budget.BudgetCategories`.
+
+Do NOT remove this method if the reference count shows zero. It is called explicitly by custom domain models, which are compiled separately, so no call site appears in this code base.
 
 ### CalculateDiscountedAndInflatedCost
 
@@ -238,12 +263,14 @@ Assigns the budget category fractions for this treatment instance if the treatme
 public void CalculateDiscountedAndInflatedCost(ModelBase model, int absolutePeriod)
 ```
 
-*No framework documentation for this member.*
+Calculates `JCass_ModelCore.Treatments.TreatmentInstance.Cost` as quantity multiplied by unit rate, adjusted by the present-worth factor for the period, rounded to two decimal places.
 
 | # | Parameter | Type | Description |
 |---|---|---|---|
-| 1 | `model` | `ModelBase` | — |
-| 2 | `absolutePeriod` | `int` | — |
+| 1 | `model` | `ModelBase` | The framework model, which supplies the discount and inflation rates. |
+| 2 | `absolutePeriod` | `int` | Period to discount to. |
+
+**Remarks.** Called by the framework. A domain model does not normally call this - the framework costs candidates after they are triggered. Until it runs, `JCass_ModelCore.Treatments.TreatmentInstance.Cost` is zero.
 
 ### GetBudgetCategoryCosts
 
@@ -251,11 +278,19 @@ public void CalculateDiscountedAndInflatedCost(ModelBase model, int absolutePeri
 public Dictionary<string, decimal> GetBudgetCategoryCosts(Dictionary<string, TreatmentType> treatmentTypes)
 ```
 
-*No framework documentation for this member.*
+Splits this treatment's cost across budget categories, using the fractions assigned by `JCass_ModelCore.Treatments.TreatmentInstance.AssignBudgetCategoryFractions(System.Collections.Generic.Dictionary{System.String,System.Decimal})` or, where none were assigned, charging the whole cost to the treatment type's own budget category.
 
 | # | Parameter | Type | Description |
 |---|---|---|---|
-| 1 | `treatmentTypes` | `Dictionary<string, TreatmentType>` | — |
+| 1 | `treatmentTypes` | `Dictionary<string, TreatmentType>` | The model's treatment types, keyed by treatment name. |
+
+**Returns.** Budget category name to the cost charged to it.
+
+**Throws.**
+
+- `System.Exception` — Thrown if an assigned fraction is outside the range 0 to 1.
+
+**Remarks.** Called by the framework when funding and exporting spending.
 
 ### GetBudgetCategoryInfoForExport
 
@@ -275,11 +310,15 @@ Gets a string representation of the budget category for export purposes. If mult
 public static jcDataSet GetRankDebugInformationStructure(ModelBase model)
 ```
 
-*No framework documentation for this member.*
+Builds the empty, correctly-columned data set that MCDA ranking debug rows are written into.
 
 | # | Parameter | Type | Description |
 |---|---|---|---|
-| 1 | `model` | `ModelBase` | — |
+| 1 | `model` | `ModelBase` | The framework model, which supplies the element identifiers and the ranking setup's columns. |
+
+**Returns.** An empty data set with the right columns.
+
+**Remarks.** Framework plumbing. Pairs with `JCass_ModelCore.Treatments.TreatmentInstance.GetRankingDebugInformationRowForMCDA(JCass_ModelCore.Models.ModelBase,System.Int32)`.
 
 ### GetRankingDebugInformationRowForMCDA
 
@@ -287,12 +326,16 @@ public static jcDataSet GetRankDebugInformationStructure(ModelBase model)
 public Dictionary<string, object> GetRankingDebugInformationRowForMCDA(ModelBase model, int iPeriod)
 ```
 
-*No framework documentation for this member.*
+Builds one row of MCDA ranking debug output for this treatment: its rank, its cost, and every raw-data column and model parameter the ranking setup used to score it.
 
 | # | Parameter | Type | Description |
 |---|---|---|---|
-| 1 | `model` | `ModelBase` | — |
-| 2 | `iPeriod` | `int` | — |
+| 1 | `model` | `ModelBase` | The framework model. |
+| 2 | `iPeriod` | `int` | Modelling period. Parameter values are read from the previous epoch. |
+
+**Returns.** Column name to value, matching the structure from `JCass_ModelCore.Treatments.TreatmentInstance.GetRankDebugInformationStructure(JCass_ModelCore.Models.ModelBase)`.
+
+**Remarks.** Framework plumbing, produced only when a debug ranking period is configured. It is what you read to answer "why did the model choose that treatment over this one" - which makes it worth knowing exists, even though a domain model never calls it.
 
 ### GetSetupFunctionValueNumber
 
@@ -300,13 +343,21 @@ public Dictionary<string, object> GetRankingDebugInformationRowForMCDA(ModelBase
 public static double GetSetupFunctionValueNumber(Dictionary<string, object> row, Dictionary<string, object> functionValues, string setupColumn)
 ```
 
-*No framework documentation for this member.*
+Resolves a setup cell that names a function into that function's numeric result.
 
 | # | Parameter | Type | Description |
 |---|---|---|---|
-| 1 | `row` | `Dictionary<string, object>` | — |
-| 2 | `functionValues` | `Dictionary<string, object>` | — |
-| 3 | `setupColumn` | `string` | — |
+| 1 | `row` | `Dictionary<string, object>` | The setup row. |
+| 2 | `functionValues` | `Dictionary<string, object>` | Function key to evaluated value, for the element and period in hand. |
+| 3 | `setupColumn` | `string` | Column of `row` holding the function key. |
+
+**Returns.** The function's value as a double.
+
+**Throws.**
+
+- `System.Exception` — Thrown, naming the key, if the function is not in `functionValues`.
+
+**Remarks.** Framework plumbing. A domain model does not call this.
 
 ### GetSetupFunctionValueString
 
@@ -314,13 +365,21 @@ public static double GetSetupFunctionValueNumber(Dictionary<string, object> row,
 public static string GetSetupFunctionValueString(Dictionary<string, object> row, Dictionary<string, object> functionValues, string setupColumn)
 ```
 
-*No framework documentation for this member.*
+Resolves a setup cell that names a function into that function's text result.
 
 | # | Parameter | Type | Description |
 |---|---|---|---|
-| 1 | `row` | `Dictionary<string, object>` | — |
-| 2 | `functionValues` | `Dictionary<string, object>` | — |
-| 3 | `setupColumn` | `string` | — |
+| 1 | `row` | `Dictionary<string, object>` | The setup row. |
+| 2 | `functionValues` | `Dictionary<string, object>` | Function key to evaluated value, for the element and period in hand. |
+| 3 | `setupColumn` | `string` | Column of `row` holding the function key. |
+
+**Returns.** The function's value as text.
+
+**Throws.**
+
+- `System.Exception` — Thrown, naming the key, if the function is not in `functionValues`.
+
+**Remarks.** Framework plumbing for setup sheets that reference function blocks. A domain model does not call this.
 
 ### GetSpendingExportColums
 

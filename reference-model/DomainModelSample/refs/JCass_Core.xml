@@ -335,10 +335,51 @@
         </member>
         <member name="T:JCass_Core.JFunctions.PieceWiseLinearModelGeneric">
             <summary>
-            General form of a simple piece-wise linear model. You provide the model with a set of (X,Y) points, and then you call GetValue(X) to get the
-            value of Y for any X. The model does linear interpolation between the closest (X,Y) points. If X is less than the minimim X it returns
-            the Y point associated with the minimum Y. If X is greater than the maximum X, it returns the Y point associated with the maximum X
+            A curve defined by a set of (X, Y) points, with straight lines between them. Give it the points,
+            then call <see cref="M:JCass_Core.JFunctions.PieceWiseLinearModelGeneric.GetValue(System.Double)"/> to read Y for any X.
             </summary>
+            <remarks>
+            The usual way to express a relationship a modeller calibrates by eye or by fitting - a
+            deterioration rate against age, a treatment effect against condition. Keeping it as points in a
+            setup file rather than as an equation in C# is what lets the modeller change the shape without a
+            rebuild.
+            <para>
+            <b>Outside the range of the supplied points, behaviour depends on <see cref="P:JCass_Core.JFunctions.PieceWiseLinearModelGeneric.CanExtrapolate"/>,
+            and the default is to extrapolate.</b> With extrapolation on, the first and last line segments
+            are continued indefinitely, so an X far beyond the last point produces a Y far beyond the last
+            point - for a deterioration curve, an unbounded one. With it off, the curve is flat outside the
+            range, holding the first and last Y values.
+            </para>
+            <para>
+            Extrapolation is the more dangerous default and it is worth choosing deliberately. A condition
+            curve fitted over ages 0 to 40, asked for age 90, will happily return a value no pavement ever
+            had. Pass <c>canExtrapolate: false</c> unless the relationship genuinely continues.
+            </para>
+            <para>X values must be supplied in increasing order; nothing checks that they are.</para>
+            </remarks>
+        </member>
+        <member name="F:JCass_Core.JFunctions.PieceWiseLinearModelGeneric.minXIndex">
+            <summary>
+            Index of the point with the lowest X value. Set when the model is built.
+            </summary>
+        </member>
+        <member name="F:JCass_Core.JFunctions.PieceWiseLinearModelGeneric.maxXIndex">
+            <summary>
+            Index of the point with the highest X value. Set when the model is built.
+            </summary>
+        </member>
+        <member name="P:JCass_Core.JFunctions.PieceWiseLinearModelGeneric.CanExtrapolate">
+            <summary>
+            Whether <see cref="M:JCass_Core.JFunctions.PieceWiseLinearModelGeneric.GetValue(System.Double)"/> continues the end segments beyond the supplied points (true)
+            or holds the end Y values flat (false).
+            </summary>
+        </member>
+        <member name="M:JCass_Core.JFunctions.PieceWiseLinearModelGeneric.#ctor">
+            <summary>
+            Creates an empty model. <b>Not usable until <see cref="M:JCass_Core.JFunctions.PieceWiseLinearModelGeneric.SetupFromXYPairs(System.String,System.Boolean)"/> has been called</b>
+            - calling <see cref="M:JCass_Core.JFunctions.PieceWiseLinearModelGeneric.GetValue(System.Double)"/> before then fails.
+            </summary>
+            <remarks>Exists so the type can be deserialised. Prefer one of the constructors that builds a usable model.</remarks>
         </member>
         <member name="M:JCass_Core.JFunctions.PieceWiseLinearModelGeneric.#ctor(System.Collections.Generic.List{System.Double},System.Collections.Generic.List{System.Double},System.Boolean)">
             <summary>
@@ -346,19 +387,91 @@
             </summary>
             <param name="tXValues">XValues, assumed to be in increasing order</param>
             <param name="tYValues">YValues corresponding to the XValues</param>
-            <param name="canExtrapolate">If true, allow extrapolation outside the supplied X-range</param>
+            <param name="canExtrapolate">True to continue the end segments beyond the supplied range; false to hold the end Y values flat. See the type's remarks - this is worth choosing deliberately.</param>
+            <exception cref="T:System.Exception">Thrown if the two lists differ in length, if fewer than two points are supplied, or if an X value is repeated.</exception>
         </member>
         <member name="M:JCass_Core.JFunctions.PieceWiseLinearModelGeneric.#ctor(System.String,System.Boolean)">
-             <summary>
-            
-             </summary>
-             <param name="setupString">Specifies X and Y points in format x1,y1|x2,y2|x3,y3|etc</param>
-             <param name="canExtrapolate">Flag to indicate if we can extrapolate outside the points or not</param>
+            <summary>
+            Builds the curve from a setup string, which is how a curve reaches a model from a lookup or a
+            setup file rather than from code.
+            </summary>
+            <param name="setupString">Specifies X and Y points in format x1,y1|x2,y2|x3,y3|etc</param>
+            <param name="canExtrapolate">True to continue the end segments beyond the supplied range; false to hold the end Y values flat.</param>
+            <exception cref="T:System.Exception">Thrown if the string is malformed, has fewer than two pairs, or repeats an X value.</exception>
+        </member>
+        <member name="M:JCass_Core.JFunctions.PieceWiseLinearModelGeneric.GetMaximumValue">
+            <summary>
+            The Y value at the <b>highest X</b> - the curve's right-hand end.
+            </summary>
+            <returns>The last Y value supplied.</returns>
+            <exception cref="T:System.Exception">Thrown if the model has no points.</exception>
+            <remarks>
+            <b>Despite the name, this is not the largest Y.</b> It is the Y at the largest X. On a
+            decreasing curve - a condition index falling with age, for instance - it returns the
+            <i>smallest</i> value on the curve. Use it to mean "the end of the curve", never "the peak".
+            </remarks>
+        </member>
+        <member name="M:JCass_Core.JFunctions.PieceWiseLinearModelGeneric.GetMaximumX">
+            <summary>
+            The highest X value the curve was defined over.
+            </summary>
+            <returns>The last X value supplied.</returns>
+            <exception cref="T:System.Exception">Thrown if the model has no points.</exception>
+            <remarks>
+            Useful for deciding whether a lookup is about to leave the fitted range, which matters when
+            <see cref="P:JCass_Core.JFunctions.PieceWiseLinearModelGeneric.CanExtrapolate"/> is true and the curve will happily keep going.
+            </remarks>
+        </member>
+        <member name="M:JCass_Core.JFunctions.PieceWiseLinearModelGeneric.GetMinimumValue">
+            <summary>
+            The Y value at the <b>lowest X</b> - the curve's left-hand end.
+            </summary>
+            <returns>The first Y value supplied.</returns>
+            <exception cref="T:System.Exception">Thrown if the model has no points.</exception>
+            <remarks>
+            <b>Despite the name, this is not the smallest Y.</b> It is the Y at the smallest X, which on
+            a decreasing curve is the largest value on it. See <see cref="M:JCass_Core.JFunctions.PieceWiseLinearModelGeneric.GetMaximumValue"/>.
+            </remarks>
+        </member>
+        <member name="M:JCass_Core.JFunctions.PieceWiseLinearModelGeneric.GetMinimumX">
+            <summary>
+            The lowest X value the curve was defined over.
+            </summary>
+            <returns>The first X value supplied.</returns>
+            <exception cref="T:System.Exception">Thrown if the model has no points.</exception>
+        </member>
+        <member name="M:JCass_Core.JFunctions.PieceWiseLinearModelGeneric.GetValue(System.Double)">
+            <summary>
+            Reads Y for a given X, interpolating linearly between the two nearest points.
+            </summary>
+            <param name="X">The X value to look up.</param>
+            <returns>The interpolated Y value.</returns>
+            <exception cref="T:System.Exception">Thrown if the model has no points - which is the case if it was created with the parameterless constructor and never set up.</exception>
+            <remarks>
+            <b>Outside the supplied range this does not fail.</b> With <see cref="P:JCass_Core.JFunctions.PieceWiseLinearModelGeneric.CanExtrapolate"/> true,
+            the first and last segments are continued, so a far-out X gives a far-out Y - including
+            negative values from a curve that only ever described positive ones. With it false, the
+            value is held flat at the nearest end.
+            <para>
+            Neither behaviour is reported. If it matters that a lookup stayed inside the fitted range,
+            test against <see cref="M:JCass_Core.JFunctions.PieceWiseLinearModelGeneric.GetMinimumX"/> and <see cref="M:JCass_Core.JFunctions.PieceWiseLinearModelGeneric.GetMaximumX"/> first.
+            </para>
+            </remarks>
         </member>
         <member name="M:JCass_Core.JFunctions.PieceWiseLinearModelGeneric.GetPairIndexForX(System.Double)">
             <summary>
             Returns the index of the Lower pair of X,Y coordinates that brackets the given X value
             </summary>
+        </member>
+        <member name="M:JCass_Core.JFunctions.PieceWiseLinearModelGeneric.SetupFromXYPairs(System.String,System.Boolean)">
+            <summary>
+            Builds or replaces the curve from a setup string. This is what makes a model created with the
+            parameterless constructor usable.
+            </summary>
+            <param name="setupString">X and Y points in the format <c>x1,y1|x2,y2|x3,y3</c>. X values must increase and must not repeat.</param>
+            <param name="canExtrapolate">True to continue the end segments beyond the supplied range; false to hold the end Y values flat.</param>
+            <exception cref="T:System.Exception">Thrown if the string is malformed, has fewer than two pairs, or repeats an X value.</exception>
+            <remarks>Calling this on a model that already has points replaces them entirely.</remarks>
         </member>
         <member name="M:JCass_Core.JFunctions.SShapedModelHelper.GetSCurveProgressionIncrement(System.Double,System.Double)">
             <summary>
@@ -1045,6 +1158,22 @@
             (which was cloned from the now-removed JCass_Functions project so domain models that load the framework DLL still work).
             New code should use this class. 'PieceWiseLinearModelGeneric' in namespace JCass_Core.JFunctions will be deprecated
             over time as domain models are migrated to use PieceWiseLinearModel.</remarks>
+        </member>
+        <member name="P:JCass_Core.Statistics.PieceWiseLinearModel.CanExtrapolate">
+            <summary>
+            Whether <c>GetValue</c> continues the end segments beyond the supplied points (true) or holds
+            the end Y values flat (false). Defaults to true.
+            </summary>
+            <remarks>
+            Extrapolation is the more dangerous default and worth choosing deliberately: a curve fitted
+            over a limited range will happily return values well outside it when asked.
+            </remarks>
+        </member>
+        <member name="M:JCass_Core.Statistics.PieceWiseLinearModel.#ctor">
+            <summary>
+            Creates an empty model. <b>Not usable until <c>SetupFromXYPairs</c> has been called.</b>
+            </summary>
+            <remarks>Exists so the type can be deserialised. Prefer a constructor that builds a usable model.</remarks>
         </member>
         <member name="M:JCass_Core.Statistics.PieceWiseLinearModel.#ctor(System.Collections.Generic.List{System.Double},System.Collections.Generic.List{System.Double},System.Boolean)">
             <summary>

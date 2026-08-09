@@ -24,8 +24,11 @@
 >  
 > `WorkFolder` is the one property most domain models need: it is the **client root**, so `Path.Combine(WorkFolder, "supporting/<name>.csv")` resolves to the same file under a normal run and under a debug F5 run. There is no bundle-folder property, which is why side-car CSVs belong in `supporting/` and not in the bundle.
 
-*The framework carries no `<summary>` for this type. The signatures below come
-from the assembly metadata and are authoritative; the description is not available.*
+Everything about how a model run is configured: how many periods, which model type, the discount and inflation rates, where the run's files live, and which domain model to load.
+
+**Remarks.** Populated from the project's setup data before the run starts, and reachable from a domain model as `model.Configuration`.
+
+Read it; do not write to it. Changing a value here part-way through a run changes the rules the run is being scored under, and nothing recalculates what has already happened.
 
 ## Constructors
 
@@ -35,7 +38,9 @@ from the assembly metadata and are authoritative; the description is not availab
 public ModelConfiguration()
 ```
 
-*No framework documentation for this member.*
+Creates a configuration with the framework's defaults, which one of the `Setup` overloads then overwrites from the project's setup data.
+
+**Remarks.** The defaults are a working MCDA model: 10 periods from calendar epoch 2024, 3% discount and inflation, incremental benefit-cost optimisation over a 15-period look-ahead, routine maintenance off, and the three debug indices set to -1 meaning "no debug output".
 
 ## Properties
 
@@ -77,7 +82,9 @@ Number of periods to skip between repeated branches of the same treatment. If ze
 public string BudgetTagName { get; set; }
 ```
 
-*No framework documentation for this member.*
+Which budget sheet in the project's budget workbook this run uses. Set from the model setup.
+
+**Remarks.** The named sheet's columns are the budget categories the run can fund, and nothing else is a valid category. A treatment type pointing at a category with no column here is caught during setup and named; a category introduced at runtime by `TreatmentInstance.AssignBudgetCategoryFractions` cannot be, and fails mid-run instead.
 
 ### CommandID
 
@@ -85,7 +92,7 @@ public string BudgetTagName { get; set; }
 public int CommandID { get; set; }
 ```
 
-*No framework documentation for this member.*
+Identifier of the command or job that started the run, for logging. Zero when the host does not supply one.
 
 ### DebugStrategyElementIndex
 
@@ -125,7 +132,9 @@ Discount Rate (percent), e.g. 6.7 for 6.7%
 public string DomainModelClassName { get; set; }
 ```
 
-*No framework documentation for this member.*
+Name of the class inside that assembly which implements the domain model interface. Matched case-insensitively against the type name.
+
+**Remarks.** This must match your entry class's name exactly. A mismatch fails the run at load time with "class not found" - which is loud, but points at the assembly rather than at the name that was actually wrong.
 
 ### DomainModelDLLFilePath
 
@@ -133,7 +142,9 @@ public string DomainModelClassName { get; set; }
 public string DomainModelDLLFilePath { get; set; }
 ```
 
-*No framework documentation for this member.*
+Full path to the compiled domain model assembly the framework loads for this run.
+
+**Remarks.** Set by the framework from the project setup. A domain model does not use it.
 
 ### ElementIdentifiers
 
@@ -213,7 +224,9 @@ Calendar year of the first modelling period (i.e. period zero), e.g. 2024
 public ILogItemData Logger { get; set; }
 ```
 
-*No framework documentation for this member.*
+Sink for run progress and log messages. Supplied by whatever is hosting the run.
+
+**Remarks.** Excluded from serialisation. A domain model logs through the framework model, not through this.
 
 ### MCDACostScalingColumn
 
@@ -261,7 +274,7 @@ Name of the model type to run. Must be one of the allowed model types in the _Mo
 public string ModelVersionCode { get; set; }
 ```
 
-*No framework documentation for this member.*
+Version code for the model setup. Carried on the configuration and serialised with it, but nothing in the framework reads it.
 
 ### MonteCarloExportParameters
 
@@ -269,7 +282,9 @@ public string ModelVersionCode { get; set; }
 public List<string> MonteCarloExportParameters { get; set; }
 ```
 
-*No framework documentation for this member.*
+Parameters to export from a Monte Carlo run, across all simulations.
+
+**Remarks.** Only meaningful for Monte Carlo runs, where exporting every parameter for every simulation would be unmanageably large. Ignored by other model types.
 
 ### NumberOfModellingPeriods
 
@@ -277,7 +292,7 @@ public List<string> MonteCarloExportParameters { get; set; }
 public int NumberOfModellingPeriods { get; set; }
 ```
 
-*No framework documentation for this member.*
+How many periods the model runs for. Periods are 1-based, and there is always one more epoch than there are periods, because epoch 0 holds the initial state.
 
 ### ObjectiveParameterName
 
@@ -293,7 +308,9 @@ Name of the Model Parameter that is the Objective for BCA optimisation.
 public int RandomSeed { get; set; }
 ```
 
-*No framework documentation for this member.*
+Seed for the run's random number generator, which is what makes a run reproducible: the same seed and the same inputs give the same forecast.
+
+**Remarks.** The framework seeds both its own generator and a domain model's `Rando` from this. Use those rather than constructing a `Random` of your own, or the run stops being reproducible without anything appearing to be wrong.
 
 ### RawDataFilePath
 
@@ -333,7 +350,7 @@ Does Routine Maintenance result in a condition reset? If true, then the Reset me
 public string RunKey { get; set; }
 ```
 
-*No framework documentation for this member.*
+Identifier for this run, appended to every output file name so that results from different runs sit side by side without overwriting each other.
 
 ### RunParallel
 
@@ -341,7 +358,9 @@ public string RunKey { get; set; }
 public bool RunParallel { get; set; }
 ```
 
-*No framework documentation for this member.*
+True if the framework processes elements in parallel.
+
+**Remarks.** This is why a domain model must not keep mutable state that spans elements. With parallel processing on, several elements are inside your trigger and increment methods at the same time. A field on your domain model written during one element and read during another produces results that vary between runs and cannot be reproduced. Per-element state belongs in model parameters; anything genuinely network-wide belongs in `DoEndOfPeriodCalculations`, which runs once per period after every element is done.
 
 ### TriggerMaintenance
 
@@ -357,7 +376,7 @@ Flag to indicate if Routine Maintenance treatments should be triggered during th
 public int UserID { get; set; }
 ```
 
-*No framework documentation for this member.*
+Identifier of the user who started the run, for logging. Zero when the host does not supply one.
 
 ### WorkFolder
 
@@ -365,11 +384,13 @@ public int UserID { get; set; }
 public string WorkFolder { get; set; }
 ```
 
-Path to work folder, for desktop implementations. This is needed in the model run to:
+Root folder for this run's project files - the client folder, holding `inputs/`, `supporting/` and `outputs/`.
 
-1. Load Machine Learning models from the 'ml' sb-folder
+**Remarks.** This is the property to build side-car data paths from, and it is the only folder property the framework exposes.
 
-2. Pass to the Exporter for exporting data after the run
+`Path.Combine(WorkFolder, "supporting/my_coefficients.csv")` resolves to the same file under an ordinary run and under an in-browser debug run. A path built relative to the domain model's own bundle folder does not: the bundle is staged under a different folder name when debugging, so a bundle-relative path reads the wrong folder in one of the two cases. Verified on both run types.
+
+It also gives the framework the `ml` sub-folder for machine-learning models, and is passed to the exporter for writing results.
 
 ## Methods
 
@@ -379,7 +400,9 @@ Path to work folder, for desktop implementations. This is needed in the model ru
 public string GetElementIdentifiersString()
 ```
 
-*No framework documentation for this member.*
+The element identifier column names joined with a pipe, for logging and export headers.
+
+**Returns.** The joined names, or an empty string if none are configured.
 
 ### GetExportParameterNameString
 
@@ -387,7 +410,9 @@ public string GetElementIdentifiersString()
 public string GetExportParameterNameString()
 ```
 
-*No framework documentation for this member.*
+The export parameter names joined with a pipe, for logging and export headers.
+
+**Returns.** The joined names, or an empty string if none are configured.
 
 ### Setup — overload 1 of 2
 
@@ -395,15 +420,19 @@ public string GetExportParameterNameString()
 public void Setup(jcDataSet setup, ILogItemData logger)
 ```
 
-*No framework documentation for this member.*
+Fills the configuration from the project's meta setup data, validating each setting as it goes. Called by the framework before the run starts.
 
 | # | Parameter | Type | Description |
 |---|---|---|---|
-| 1 | `setup` | `jcDataSet` | — |
-| 2 | `logger` | `ILogItemData` | — |
+| 1 | `setup` | `jcDataSet` | The meta setup table, which must have a "Setting" column of setting names. |
+| 2 | `logger` | `ILogItemData` | Sink for setup messages and warnings. |
 
 > This member is overloaded. Use named arguments so it is unambiguous which
 > overload you are calling.
+
+**Throws.**
+
+- `System.Exception` — Thrown, naming the setting, if a required setting is missing or holds a value the framework does not accept.
 
 ### Setup — overload 2 of 2
 
@@ -415,18 +444,24 @@ public void Setup(
     int commandID = 0)
 ```
 
-*No framework documentation for this member.*
+Sets only the run's location and identity - work folder, logger and the user and command identifiers - leaving every modelling setting at its default.
 
 | # | Parameter | Type | Description |
 |---|---|---|---|
-| 1 | `workFolder` | `string` | — |
-| 2 | `logger` | `ILogItemData` | — |
-| 3 | `userID` | `int` | — |
-| 4 | `commandID` | `int` | — |
+| 1 | `workFolder` | `string` | The client folder for this run. See `JCass_ModelCore.ModelObjects.ModelConfiguration.WorkFolder`. |
+| 2 | `logger` | `ILogItemData` | Sink for setup messages. |
+| 3 | `userID` | `int` | Identifier of the user starting the run, for logging. |
+| 4 | `commandID` | `int` | Identifier of the command or job, for logging. |
 
 > Positional order matters and 4 arguments is more than anyone reliably remembers.
 > Call this with **named arguments** — `quantity: q, unitRate: r` — so a wrong order
 > is a compile error rather than a silently wrong model.
+
+**Throws.**
+
+- `System.Exception` — Thrown if the command name check fails.
+
+**Remarks.** The counterpart to the overload that takes setup data, for hosts that configure the model in code rather than from a setup file. It does not read any modelling settings, so anything not assigned afterwards keeps the constructor's defaults.
 
 ### UpdateForGoalSeek
 
@@ -434,10 +469,12 @@ public void Setup(
 public void UpdateForGoalSeek(int feedbackMode, List<string> paramsToOutput, bool exportData = false)
 ```
 
-*No framework documentation for this member.*
+Turns down logging and exporting for a goal-seeking run, which executes the model many times over and would otherwise produce one full set of output per iteration.
 
 | # | Parameter | Type | Description |
 |---|---|---|---|
-| 1 | `feedbackMode` | `int` | — |
-| 2 | `paramsToOutput` | `List<string>` | — |
-| 3 | `exportData` | `bool` | — |
+| 1 | `feedbackMode` | `int` | Logging verbosity to use for the iterations. See `JCass_ModelCore.ModelObjects.ModelConfiguration.FeedbackMode`. |
+| 2 | `paramsToOutput` | `List<string>` | Parameters to keep exporting. |
+| 3 | `exportData` | `bool` | True to keep writing output files during the iterations. |
+
+**Remarks.** Called by the goal-seeking model. A domain model does not call this - it changes the configuration mid-run, which is otherwise exactly what not to do.

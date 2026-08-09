@@ -22,7 +22,13 @@
 > **Should a domain model use this?**  
 > Only in models that generate multi-treatment strategies for benefit-cost optimisation.
 
-Class to hold information setup data for a treatment strategy
+The definition of one treatment strategy: a first treatment plus up to three follow-ups, each placed a stated number of periods later. One of these per row of the strategies setup sheet.
+
+**Remarks.** Only benefit-cost models use strategies. Where an MCDA model triggers individual treatments and lets the optimiser rank them, a BCA model evaluates whole sequences over a look-ahead period and compares their costs and benefits.
+
+A domain model reads these through `model.StrategiesSetupData` when generating candidates. It does not create them - they come from the setup.
+
+The shape is fixed at four treatments, and unused slots are left blank rather than omitted. A strategy of one treatment still has `treat2` through `treat4` columns; they are simply empty. That is why every property below always exists.
 
 ## Constructors
 
@@ -32,11 +38,18 @@ Class to hold information setup data for a treatment strategy
 public StrategySetupInfo(Dictionary<string, object> setupRow)
 ```
 
-*No framework documentation for this member.*
+Creates a strategy definition from a row of the strategies setup sheet. Called by the framework.
 
 | # | Parameter | Type | Description |
 |---|---|---|---|
-| 1 | `setupRow` | `Dictionary<string, object>` | — |
+| 1 | `setupRow` | `Dictionary<string, object>` | The row. All twelve columns must be present, including those for unused treatment slots. |
+
+**Throws.**
+
+- `System.Collections.Generic.KeyNotFoundException` — Thrown if any of the twelve columns is absent.
+- `System.FormatException` — Thrown if a wait period or force flag cannot be read as a number or a boolean. A blank wait period or force cell fails here, so unused slots need `0` and `FALSE` rather than empty cells.
+
+**Remarks.** Treatment names are trimmed of surrounding whitespace; nothing else is. Names are not checked against the treatment types here.
 
 ## Properties
 
@@ -46,7 +59,7 @@ public StrategySetupInfo(Dictionary<string, object> setupRow)
 public string FirstTreatment { get; set; }
 ```
 
-*No framework documentation for this member.*
+Treatment applied at the start of the strategy. Must match a treatment type name.
 
 ### ForceFirstTreatment
 
@@ -54,7 +67,7 @@ public string FirstTreatment { get; set; }
 public bool ForceFirstTreatment { get; set; }
 ```
 
-*No framework documentation for this member.*
+True if the first treatment must be placed regardless of how the strategy ranks economically. Forced strategies are funded ahead of ranked ones.
 
 ### StrategyName
 
@@ -62,7 +75,7 @@ public bool ForceFirstTreatment { get; set; }
 public string StrategyName { get; set; }
 ```
 
-*No framework documentation for this member.*
+Name of the strategy, used as its key in the setup and in strategy debug output.
 
 ### Treat2Force
 
@@ -70,7 +83,7 @@ public string StrategyName { get; set; }
 public bool Treat2Force { get; set; }
 ```
 
-*No framework documentation for this member.*
+True if the second treatment must be placed regardless of ranking.
 
 ### Treat2Name
 
@@ -78,7 +91,7 @@ public bool Treat2Force { get; set; }
 public string Treat2Name { get; set; }
 ```
 
-*No framework documentation for this member.*
+Second treatment in the sequence, or an empty string if the strategy has only one.
 
 ### Treat2WaitPeriod
 
@@ -86,7 +99,9 @@ public string Treat2Name { get; set; }
 public int Treat2WaitPeriod { get; set; }
 ```
 
-*No framework documentation for this member.*
+How many periods after the first treatment the second one falls.
+
+**Remarks.** A wait that pushes a treatment past the last modelled period means it is never placed, and nothing reports that - see `TreatmentSet.AppendTreatmentAndReduceBudget`. Check long waits against the run's period count.
 
 ### Treat3Force
 
@@ -94,7 +109,7 @@ public int Treat2WaitPeriod { get; set; }
 public bool Treat3Force { get; set; }
 ```
 
-*No framework documentation for this member.*
+True if the third treatment must be placed regardless of ranking.
 
 ### Treat3Name
 
@@ -102,7 +117,7 @@ public bool Treat3Force { get; set; }
 public string Treat3Name { get; set; }
 ```
 
-*No framework documentation for this member.*
+Third treatment in the sequence, or an empty string if unused.
 
 ### Treat3WaitPeriod
 
@@ -110,7 +125,7 @@ public string Treat3Name { get; set; }
 public int Treat3WaitPeriod { get; set; }
 ```
 
-*No framework documentation for this member.*
+How many periods after the first treatment the third one falls.
 
 ### Treat4Force
 
@@ -118,7 +133,7 @@ public int Treat3WaitPeriod { get; set; }
 public bool Treat4Force { get; set; }
 ```
 
-*No framework documentation for this member.*
+True if the fourth treatment must be placed regardless of ranking.
 
 ### Treat4Name
 
@@ -126,7 +141,7 @@ public bool Treat4Force { get; set; }
 public string Treat4Name { get; set; }
 ```
 
-*No framework documentation for this member.*
+Fourth treatment in the sequence, or an empty string if unused.
 
 ### Treat4WaitPeriod
 
@@ -134,4 +149,4 @@ public string Treat4Name { get; set; }
 public int Treat4WaitPeriod { get; set; }
 ```
 
-*No framework documentation for this member.*
+How many periods after the first treatment the fourth one falls.

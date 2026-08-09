@@ -24,8 +24,13 @@
 >  
 > Only the author-facing members are listed here. `ModelBase` has a large surface and the rest of it is framework plumbing — model control, exporting, optimiser orchestration — that a domain model has no business calling.
 
-*The framework carries no `<summary>` for this type. The signatures below come
-from the assembly metadata and are authoritative; the description is not available.*
+The framework model: it owns the loop over periods and elements, holds the input data, the model parameters, the lookups and the budget, and calls the domain model at each stage.
+
+**Remarks.** A domain model reaches this as the protected `model` field on `DomainModelBase`.
+
+You call it; you never create it and you never inherit it. The concrete model types - forecast, MCDA, benefit-cost - are the framework's own, chosen by the project's setup. The class you write inherits `DomainModelBase`.
+
+Most of this class is framework plumbing. What a domain model actually uses is the small set of accessors: reading input data, reading and writing model parameters, reading lookups, and checking the budget.
 
 ## Properties
 
@@ -35,7 +40,9 @@ from the assembly metadata and are authoritative; the description is not availab
 public ModelConfiguration Configuration { get; }
 ```
 
-*No framework documentation for this member.*
+The run's configuration - periods, rates, model type, and `WorkFolder`, which is the client folder a domain model builds side-car data paths from.
+
+**Remarks.** Read it; do not write to it mid-run. See `JCass_ModelCore.ModelObjects.ModelConfiguration`.
 
 ### Lookups
 
@@ -59,7 +66,9 @@ Domain/Project lookup set for Multi-Column Lookup Tables. Key is the set name, a
 public Random Random { get; }
 ```
 
-*No framework documentation for this member.*
+The run's random number generator, seeded from `JCass_ModelCore.Models.ModelBase.RandomSeed`.
+
+**Remarks.** Use this, or a domain model's own `Rando`, rather than constructing a `Random`. Both are seeded from the model configuration, which is what makes a run reproducible. A privately constructed `Random` is seeded from the clock, and the model then stops giving the same answer twice with nothing to show that anything changed.
 
 ### RandomSeed
 
@@ -77,7 +86,9 @@ Random seed for simulations. Setting this will re-initialise the Random object, 
 public Budget Budget;
 ```
 
-*No framework documentation for this member.*
+The run's budget: what money is available in each category and each period, and how much of it is left.
+
+**Remarks.** Read it - typically to ask whether a candidate could be afforded. The framework does the spending; a domain model proposes candidates and the optimiser decides what is funded.
 
 ### NParameters
 
@@ -95,12 +106,20 @@ Number of model parameters
 public double GetInputDataNumber(int elementIndex, string header)
 ```
 
-*No framework documentation for this member.*
+Reads a numeric value from the raw input data for one element - the network data as loaded, before any modelling.
 
 | # | Parameter | Type | Description |
 |---|---|---|---|
-| 1 | `elementIndex` | `int` | — |
-| 2 | `header` | `string` | — |
+| 1 | `elementIndex` | `int` | Zero-based element index. |
+| 2 | `header` | `string` | Input data column name. |
+
+**Returns.** The value.
+
+**Throws.**
+
+- `System.Exception` — Thrown, naming the column, if it is not in the input data or is not numeric.
+
+**Remarks.** Raw input data never changes during a run. It is what the element started as, and it is the same in period 1 and period 20. Anything that evolves - condition, age, treatment history - is a model parameter, read with `JCass_ModelCore.Models.ModelBase.GetParameterValueNumber(System.Int32,System.String,System.Int32)`. Confusing the two is one of the easiest mistakes to make and one of the hardest to see, because both return a plausible number.
 
 ### GetInputDataText
 
@@ -108,12 +127,20 @@ public double GetInputDataNumber(int elementIndex, string header)
 public string GetInputDataText(int elementIndex, string header)
 ```
 
-*No framework documentation for this member.*
+Reads a text value from the raw input data for one element - a material, a class, a treatment history code.
 
 | # | Parameter | Type | Description |
 |---|---|---|---|
-| 1 | `elementIndex` | `int` | — |
-| 2 | `header` | `string` | — |
+| 1 | `elementIndex` | `int` | Zero-based element index. |
+| 2 | `header` | `string` | Input data column name. |
+
+**Returns.** The value.
+
+**Throws.**
+
+- `System.Exception` — Thrown, naming the column, if it is not in the input data or is not a text column.
+
+**Remarks.** See `JCass_ModelCore.Models.ModelBase.GetInputDataNumber(System.Int32,System.String)` for why raw input data and model parameters are not the same thing.
 
 ### GetLookupValueNumber
 
@@ -121,12 +148,20 @@ public string GetInputDataText(int elementIndex, string header)
 public double GetLookupValueNumber(string lookupSetName, string lookupKey)
 ```
 
-*No framework documentation for this member.*
+Reads a numeric value from the model's lookups - the route by which every tunable number reaches a domain model.
 
 | # | Parameter | Type | Description |
 |---|---|---|---|
-| 1 | `lookupSetName` | `string` | — |
-| 2 | `lookupKey` | `string` | — |
+| 1 | `lookupSetName` | `string` | Name of the lookup set. |
+| 2 | `lookupKey` | `string` | Key within that set. |
+
+**Returns.** The value as a double.
+
+**Throws.**
+
+- `System.Exception` — Thrown, naming the set or the key, if either is not found or the value will not convert.
+
+**Remarks.** Thresholds, limits and rates belong here, not in C#. A value in the lookups is one a modeller changes and re-runs themselves; the same value written as a constant in code needs a developer, a rebuild and a republish. It throws rather than defaulting, on purpose - a missing threshold silently becoming zero would change every forecast with nothing to show for it.
 
 ### GetLookupValueText
 
@@ -134,12 +169,20 @@ public double GetLookupValueNumber(string lookupSetName, string lookupKey)
 public string GetLookupValueText(string lookupSetName, string lookupKey)
 ```
 
-*No framework documentation for this member.*
+Reads a text value from the model's lookups.
 
 | # | Parameter | Type | Description |
 |---|---|---|---|
-| 1 | `lookupSetName` | `string` | — |
-| 2 | `lookupKey` | `string` | — |
+| 1 | `lookupSetName` | `string` | Name of the lookup set. |
+| 2 | `lookupKey` | `string` | Key within that set. |
+
+**Returns.** The value as text.
+
+**Throws.**
+
+- `System.Exception` — Thrown, naming the set or the key, if either is not found.
+
+**Remarks.** A domain model inheriting `DomainModelBase` can call the equivalent helper on itself instead. Both do the same thing.
 
 ### GetParameterValues
 
@@ -152,9 +195,11 @@ Gets dictionaries of all parameter values for an element at an epoch - both nume
 | # | Parameter | Type | Description |
 |---|---|---|---|
 | 1 | `iElem` | `int` | Zero-based element index |
-| 2 | `iEpoch` | `int` | Epoch for which to get parameter values |
+| 2 | `iEpoch` | `int` | Epoch for which to get parameter values. Epoch 0 is the initial state; epoch N is the end of period N. |
 
-**Returns.** Keys are StringComparer.Ordinal for faster lookup
+**Returns.** Two dictionaries, numeric first then text, each keyed by parameter name.
+
+**Remarks.** Both dictionaries use ordinal string comparison, so parameter names are matched case-sensitively and exactly.
 
 ### GetSpecialPlaceholderValues
 
@@ -162,10 +207,19 @@ Gets dictionaries of all parameter values for an element at an epoch - both nume
 public Dictionary<string, object> GetSpecialPlaceholderValues(int iElem, int period, TreatmentInstance treatment = null)
 ```
 
-*No framework documentation for this member.*
+Builds the framework's reserved placeholder values for one element in one period: where it is in time, what treatment is coming next, what has been done to it before, and - during a reset
+- what is being applied now.
 
 | # | Parameter | Type | Description |
 |---|---|---|---|
-| 1 | `iElem` | `int` | — |
-| 2 | `period` | `int` | — |
-| 3 | `treatment` | `TreatmentInstance` | — |
+| 1 | `iElem` | `int` | Zero-based element index. |
+| 2 | `period` | `int` | Modelling period. |
+| 3 | `treatment` | `TreatmentInstance` | The treatment being applied, when called during a reset. Null otherwise. |
+
+**Returns.** Placeholder name to value.
+
+**Remarks.** These keys are reserved words. They cannot be used as raw data column names or as model parameter names, and the framework checks that at setup - see `ReservedKeyNames`. Naming an input column `period` or `elem_index` fails the setup rather than quietly shadowing a placeholder.
+
+Absence is expressed as a sentinel, not as null. Where there is no next treatment, `next_treatment_period` and `periods_to_next_treatment` are 999 and the text placeholders are the literal string `"none"`; where there is no current treatment, `this_treatment_cost` is `0`. Comparisons still behave sensibly, but anything that averages or sums `periods_to_next_treatment` across elements silently takes 999 as a real number. Test for the sentinel before doing arithmetic on it.
+
+`previous_treatments` is the only entry that can genuinely be null.

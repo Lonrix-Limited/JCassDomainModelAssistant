@@ -24,8 +24,13 @@
 >  
 > You will not normally implement this interface directly; you inherit `DomainModelBase`, which implements it for you. Read it to understand what the framework will call, and when.
 
-*The framework carries no `<summary>` for this type. The signatures below come
-from the assembly metadata and are authoritative; the description is not available.*
+The contract between the framework and a domain model: the methods the framework will call, and when.
+
+**Remarks.** Read this to understand the shape of a model run. You do not normally implement it directly - inherit `JCass_ModelCore.DomainModels.DomainModelBase`, which implements it and adds the helpers a domain model needs.
+
+The framework finds your class by looking through the assembly you supply for a public, non-abstract type implementing this interface with a parameterless constructor, and matching its name against the class name in the model setup. That is why the entry class must be public, must not be abstract, and must not require constructor arguments.
+
+The methods correspond to the stages of a modelling period: setup once, then per element - initialise, trigger candidates, apply increments or resets - and once per period at the end.
 
 ## Methods
 

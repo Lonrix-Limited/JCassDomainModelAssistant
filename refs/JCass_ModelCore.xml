@@ -4,6 +4,60 @@
         <name>JCass_ModelCore</name>
     </assembly>
     <members>
+        <member name="T:JCass_ModelCore.DomainModels.DomainModelBase">
+            <summary>
+            Base class for every domain model. Inherit from this, implement the abstract methods, and the
+            framework will call them at the right point in every modelling period.
+            </summary>
+            <remarks>
+            The framework owns the loop over periods and elements, the optimisation and the budgeting. A
+            domain model owns the engineering: what deteriorates and how fast, what treatments are worth
+            considering, and what a treatment resets. The abstract methods below are the seam between the
+            two, and each one corresponds to a stage of model execution.
+            <para>
+            <b>Setup order matters and it is not obvious.</b> The framework creates your class with its
+            parameterless constructor, then calls <c>SetupBase</c>, which assigns <see cref="F:JCass_ModelCore.DomainModels.DomainModelBase.model"/>, seeds
+            <see cref="F:JCass_ModelCore.DomainModels.DomainModelBase.Rando"/> and calls <see cref="M:JCass_ModelCore.DomainModels.DomainModelBase.SetupInstance"/>. Nothing that touches the framework
+            works before that - see <see cref="M:JCass_ModelCore.DomainModels.DomainModelBase.SetupInstance"/> for what is and is not ready by then.
+            </para>
+            </remarks>
+        </member>
+        <member name="F:JCass_ModelCore.DomainModels.DomainModelBase.Rando">
+            <summary>
+            Random number generator for this domain model, seeded by the framework from the model's
+            configured random seed.
+            </summary>
+            <remarks>
+            <b>Use this rather than creating your own <c>Random</c>.</b> It is seeded from the model
+            configuration, which is what makes a run reproducible: the same seed and the same inputs
+            give the same forecast. A privately constructed <c>Random</c> is seeded from the clock and
+            quietly destroys that property - the model still runs, and it stops giving the same answer
+            twice.
+            <para>Assigned by the framework in <c>SetupBase</c>; it is null before then.</para>
+            </remarks>
+        </member>
+        <member name="F:JCass_ModelCore.DomainModels.DomainModelBase.model">
+            <summary>
+            The framework model. This is how a domain model reaches input data, model parameters,
+            lookups, the budget and the model configuration.
+            </summary>
+            <remarks>
+            <b>Assigned by the framework in <c>SetupBase</c>, which runs after your constructor.</b> It
+            is null inside your constructor, so anything that reads inputs or lookups belongs in
+            <see cref="M:JCass_ModelCore.DomainModels.DomainModelBase.SetupInstance"/> and not in the constructor.
+            </remarks>
+        </member>
+        <member name="M:JCass_ModelCore.DomainModels.DomainModelBase.#ctor">
+            <summary>
+            Creates the domain model. The framework instantiates your class through its parameterless
+            constructor when it loads your assembly, so your own constructor must not require arguments.
+            </summary>
+            <remarks>
+            <b>Do no work here.</b> <see cref="F:JCass_ModelCore.DomainModels.DomainModelBase.model"/> is not assigned until the framework calls
+            <c>SetupBase</c> afterwards, so anything in a constructor that touches inputs, lookups or
+            configuration fails with a null reference. <see cref="M:JCass_ModelCore.DomainModels.DomainModelBase.SetupInstance"/> is the place for it.
+            </remarks>
+        </member>
         <member name="M:JCass_ModelCore.DomainModels.DomainModelBase.Initialise(System.Int32,System.Collections.Generic.Dictionary{System.String,System.Double},System.Collections.Generic.Dictionary{System.String,System.String},System.Action{System.String,System.Double},System.Action{System.String,System.String})">
             <summary>
             Evaluates the Initial Values for all parameters for the element at the start of the analysis. This method is called from the Framework Model 
@@ -87,32 +141,150 @@
             </summary>    
             <param name="iPeriod">Modelling period (values like 1,2,...n)</param>
         </member>
+        <member name="M:JCass_ModelCore.DomainModels.DomainModelBase.SetRandomSeed(System.Int32)">
+            <summary>
+            Re-seeds <see cref="F:JCass_ModelCore.DomainModels.DomainModelBase.Rando"/>. <b>Called by the framework</b> during setup, using the seed
+            from the model configuration.
+            </summary>
+            <param name="seed">Seed value.</param>
+            <remarks>
+            A domain model does not normally call this. Re-seeding mid-run makes the forecast depend on
+            when you did it, which is the opposite of what a seed is for.
+            </remarks>
+        </member>
+        <member name="M:JCass_ModelCore.DomainModels.DomainModelBase.SetupBase(JCass_ModelCore.Models.ModelBase)">
+            <summary>
+            Wires this domain model to the framework model, seeds the random generator and then calls
+            <see cref="M:JCass_ModelCore.DomainModels.DomainModelBase.SetupInstance"/>. <b>Called by the framework</b> immediately after it constructs
+            your class.
+            </summary>
+            <param name="model">The framework model.</param>
+            <remarks>
+            Do not call this yourself and do not override it. Put your own setup work in
+            <see cref="M:JCass_ModelCore.DomainModels.DomainModelBase.SetupInstance"/>, which this method calls last and which exists for exactly that.
+            </remarks>
+        </member>
+        <member name="M:JCass_ModelCore.DomainModels.DomainModelBase.SetupInstance">
+            <summary>
+            Your model's own setup: read lookups, load side-car coefficient files, build sub-models, and
+            store them on your domain model object for the rest of the run to use. Called once, before
+            any element is processed.
+            </summary>
+            <remarks>
+            <b>This is the first place your code can touch the framework.</b> The constructor cannot -
+            <see cref="F:JCass_ModelCore.DomainModels.DomainModelBase.model"/> is still null there.
+            <para>
+            <b>What IS ready when this runs.</b> The framework deliberately loads the domain model last
+            so that setup can use project data: <c>model.Lookups</c> and <c>model.MultiColumnLookups</c>
+            are populated, treatment types and unit rates are loaded, the budget is set up,
+            <c>model.Configuration</c> is available - including <c>WorkFolder</c>, which is what you
+            combine with a <c>supporting/</c> path to find a side-car CSV - and <c>model.ParamNames</c>
+            is populated, so <see cref="M:JCass_ModelCore.DomainModels.DomainModelBase.PIndex(System.String)"/> works.
+            </para>
+            <para>
+            <b>What is NOT ready, and fails silently.</b> The per-element data arrays are built after
+            this method returns. <c>model.NElements</c>, <c>model.NPeriods</c> and
+            <c>model.NParameters</c> are all still <b>zero</b> here - not null, not an error, just zero.
+            Sizing an array off one of them during setup produces an empty array and a model that runs
+            to completion with nothing in it. Read those in <c>Initialise</c> or later, where they are
+            correct.
+            </para>
+            <para>
+            Guard every file you read and name the path in the exception message. A setup file that is
+            missing and not guarded surfaces much later as a wrong number rather than as a missing file.
+            </para>
+            </remarks>
+        </member>
+        <member name="M:JCass_ModelCore.DomainModels.DomainModelBase.GetExecutionStageNames">
+            <summary>
+            The execution stage names the framework recognises in a model's function-block setup, in
+            execution order: precalcs, initialise, increment, triggers, resets, maintenance, postcalcs.
+            </summary>
+            <returns>The allowed stage names.</returns>
+            <remarks>Used to validate setup data. A domain model does not normally call it.</remarks>
+        </member>
         <member name="M:JCass_ModelCore.DomainModels.DomainModelBase.PIndex(System.String)">
             <summary>
-            Returns the Zero-based if a parameter in the forecast data array based on the parameter name
+            Returns the zero-based position of a model parameter in the forecast data array, given the
+            parameter's name.
             </summary>
-            <param name="paramName">Name or code for the parameter</param>
-            <returns></returns>
+            <param name="paramName">Name or code of the parameter, as defined in the model setup.</param>
+            <returns>Zero-based index of the parameter.</returns>
+            <exception cref="T:System.Collections.Generic.KeyNotFoundException">Thrown if no parameter of that name is defined in the model setup.</exception>
+            <remarks>
+            The exception is a spelling check you get for free: a parameter name that does not match the
+            setup fails immediately and by name, rather than silently reading the wrong column.
+            </remarks>
         </member>
         <member name="M:JCass_ModelCore.DomainModels.DomainModelBase.GetLookupValueNumber(System.String,System.String)">
             <summary>
-            Helper for implenters to get a numeric value from the model lookups. This method will throw an exception if the lookup set or key is not found.
+            Reads a numeric value from the model's lookups. This is how a tunable number - a trigger
+            threshold, an age limit, a unit rate - reaches your code.
             </summary>
-            <param name="lookupSetName">Name of the Lookup set</param>
-            <param name="settingKey">Name of the key within the lookup set</param>
-            <returns>Double value</returns>
-            <exception cref="T:System.Exception">Exceptions are thrown if there is no lookup with with key 'lookupSetName' and 
-            no setting within that set with key = 'settingKey'</exception>
+            <param name="lookupSetName">Name of the lookup set.</param>
+            <param name="settingKey">Key within that lookup set.</param>
+            <returns>The value, converted to a double.</returns>
+            <exception cref="T:System.Exception">Thrown, naming the set or the key, if either is not found.</exception>
+            <remarks>
+            <b>Put every tunable number here rather than in C#.</b> A number in the lookups is one the
+            modeller changes themselves and re-runs; the same number written as a constant in code needs
+            a developer, a rebuild and a republish to change. Structural values - unit conversions,
+            array bounds, sentinels - are not tunable and stay in code as named constants.
+            <para>
+            It throws rather than returning a default, on purpose: a missing threshold that silently
+            became zero would change every forecast without anything to show for it. Available from
+            <see cref="M:JCass_ModelCore.DomainModels.DomainModelBase.SetupInstance"/> onwards.
+            </para>
+            </remarks>
         </member>
         <member name="M:JCass_ModelCore.DomainModels.DomainModelBase.GetLookupValueText(System.String,System.String)">
             <summary>
-            Helper for implenters to get a text value from the model lookups. This method will throw an exception if the lookup set or key is not found.
+            Reads a text value from the model's lookups - a material class, a treatment name, a policy
+            switch.
             </summary>
-            <param name="lookupSetName">Name of the Lookup set</param>
-            <param name="settingKey">Name of the key within the lookup set</param>
-            <returns>Double value</returns>
-            <exception cref="T:System.Exception">Exceptions are thrown if there is no lookup with with key 'lookupSetName' and 
-            no setting within that set with key = 'settingKey'</exception>
+            <param name="lookupSetName">Name of the lookup set.</param>
+            <param name="settingKey">Key within that lookup set.</param>
+            <returns>The value as a string, or an empty string if the stored value is null.</returns>
+            <exception cref="T:System.Exception">Thrown, naming the set or the key, if either is not found.</exception>
+            <remarks>
+            The text counterpart of <see cref="M:JCass_ModelCore.DomainModels.DomainModelBase.GetLookupValueNumber(System.String,System.String)"/>, and the same rule applies: if a
+            modeller would ever change it to recalibrate the model, it belongs in the lookups rather
+            than in code. Available from <see cref="M:JCass_ModelCore.DomainModels.DomainModelBase.SetupInstance"/> onwards.
+            </remarks>
+        </member>
+        <member name="M:JCass_ModelCore.DomainModels.DomainModelBase.GetEmptySetupSet(System.String)">
+            <summary>
+            Returns a template setup table of the requested kind, with the right columns and one or two
+            example rows, for use when generating a starting setup file.
+            </summary>
+            <param name="dataType">One of: raw_headers, parameters, treatments, mcda_setup, network_functions, functionSet.</param>
+            <returns>An empty-but-shaped data set with example rows.</returns>
+            <exception cref="T:System.Exception">Thrown if <paramref name="dataType"/> is not one of the handled values.</exception>
+            <remarks>
+            A tooling helper for producing setup templates, not part of a model's runtime path. A domain
+            model does not call this during a run.
+            </remarks>
+        </member>
+        <member name="T:JCass_ModelCore.DomainModels.IDomainModel">
+            <summary>
+            The contract between the framework and a domain model: the methods the framework will call,
+            and when.
+            </summary>
+            <remarks>
+            Read this to understand the shape of a model run. <b>You do not normally implement it
+            directly</b> - inherit <see cref="T:JCass_ModelCore.DomainModels.DomainModelBase"/>, which implements it and adds the helpers
+            a domain model needs.
+            <para>
+            The framework finds your class by looking through the assembly you supply for a public,
+            non-abstract type implementing this interface with a parameterless constructor, and matching
+            its name against the class name in the model setup. That is why the entry class must be
+            public, must not be abstract, and must not require constructor arguments.
+            </para>
+            <para>
+            The methods correspond to the stages of a modelling period: setup once, then per element -
+            initialise, trigger candidates, apply increments or resets - and once per period at the end.
+            </para>
+            </remarks>
         </member>
         <member name="M:JCass_ModelCore.DomainModels.IDomainModel.SetupBase(JCass_ModelCore.Models.ModelBase)">
             <summary>
@@ -209,6 +381,43 @@
             </summary>        
             <param name="iPeriod">Modelling period (values like 1,2,...n)</param>
         </member>
+        <member name="T:JCass_ModelCore.DomainModels.IDomainModelGroupingFunctions">
+            <summary>
+            Optional interface for domain models whose elements are treated in groups rather than
+            individually - a whole road section resurfaced together, say, rather than segment by segment.
+            </summary>
+            <remarks>
+            Implement this <b>in addition to</b> inheriting <c>DomainModelBase</c>, and only when the model
+            setup defines a grouping column. Most domain models do not need it.
+            <para>
+            Grouping changes what the optimiser is choosing between: whole groups rather than single
+            elements. The framework still asks your triggers for candidates element by element, then hands
+            each group's candidates back here for a final decision.
+            </para>
+            </remarks>
+        </member>
+        <member name="M:JCass_ModelCore.DomainModels.IDomainModelGroupingFunctions.FinaliseGroupTreatments(JCass_ModelCore.Models.ModelBase,System.String,System.Int32,System.Collections.Generic.List{System.Int32},System.Collections.Generic.List{JCass_ModelCore.Treatments.TreatmentInstance})">
+            <summary>
+            Decides what actually happens to a group, given every treatment its elements triggered.
+            Called once per group per period, after triggering and before optimisation.
+            </summary>
+            <param name="model">The framework model.</param>
+            <param name="groupName">The group's key, from the setup's grouping column.</param>
+            <param name="iPeriod">Modelling period.</param>
+            <param name="elementIndexesForGroup">Zero-based indexes of every element in the group, including those that triggered nothing.</param>
+            <param name="triggeredTreatments">The treatments the group's elements triggered. Modify this list in place to change what the group is put forward for.</param>
+            <returns>The treatment name settled on for the group, for reporting.</returns>
+            <remarks>
+            This is where a group's competing candidates are reconciled - typically by choosing one
+            treatment for the whole group and extending it to elements that did not trigger it
+            themselves, so the group is treated as a unit.
+            <para>
+            <b>The list is the output.</b> The return value is a label; what the model actually does is
+            whatever is left in <paramref name="triggeredTreatments"/> when this returns. Returning a
+            treatment name without having changed the list changes nothing.
+            </para>
+            </remarks>
+        </member>
         <member name="M:JCass_ModelCore.Exporting.DeskTopExporter.#ctor(JCass_ModelCore.ModelObjects.ModelConfiguration,System.String)">
             <summary>
             Create a DeskTopExporter that writes CSV/Excel outputs for a model run.
@@ -226,6 +435,33 @@
             </summary>
             <param name="treatments">Final set of selected treatments</param>
         </member>
+        <member name="T:JCass_ModelCore.ModelObjects.Budget">
+            <summary>
+            The money available to the run: an amount per budget category per period, reduced as treatments
+            are funded.
+            </summary>
+            <remarks>
+            Loaded from the budget sheet named by <c>ModelConfiguration.BudgetTagName</c>. Each column of
+            that sheet other than <c>period</c> and <c>colour</c> becomes a budget category, so
+            <b>the sheet's columns define what categories exist</b>.
+            <para>
+            A domain model reads this - usually to ask whether a candidate could be afforded - and never
+            writes to it. The framework subtracts costs as it funds treatments.
+            </para>
+            <para>
+            <b>Balances are live, not planned.</b> Every accessor returns what is left in that period right
+            now, part-way through the framework's funding pass, not the period's original allocation. The
+            same call earlier or later in a period gives a different answer.
+            </para>
+            </remarks>
+        </member>
+        <member name="M:JCass_ModelCore.ModelObjects.Budget.GetMaximumBudgetPeriod">
+            <summary>
+            The highest period the budget sheet defines an allocation for.
+            </summary>
+            <returns>The last budgeted period.</returns>
+            <exception cref="T:System.InvalidOperationException">Thrown if no budget data has been loaded.</exception>
+        </member>
         <member name="P:JCass_ModelCore.ModelObjects.Budget.IsMonolithicBudget">
             <summary>
             Is this a monolithic budget? We presume that is always the case if there is only one budget category
@@ -236,6 +472,45 @@
             Name of the Monolithic Budget Category. If this is not a monolithic budget, an error will be thrown if this property is used.
             </summary>
         </member>
+        <member name="P:JCass_ModelCore.ModelObjects.Budget.BudgetCategories">
+            <summary>
+            The budget categories this run can fund - one per column of the budget sheet, excluding
+            <c>period</c> and <c>colour</c>.
+            </summary>
+            <remarks>
+            This list is the authority on what categories exist. A treatment cost directed at a category
+            not in here cannot be funded, and the framework will say so - see
+            <see cref="M:JCass_ModelCore.ModelObjects.Budget.CanApplyTreatment(JCass_ModelCore.Treatments.TreatmentInstance)"/>.
+            </remarks>
+        </member>
+        <member name="M:JCass_ModelCore.ModelObjects.Budget.#ctor(JCass_ModelCore.Models.ModelBase)">
+            <summary>
+            Creates the budget for a run. <b>Called by the framework</b>; a domain model reads
+            <c>model.Budget</c> rather than constructing one.
+            </summary>
+            <param name="model">The framework model.</param>
+        </member>
+        <member name="M:JCass_ModelCore.ModelObjects.Budget.Setup(JCass_Data.Objects.jcDataSet)">
+            <summary>
+            Loads the per-period allocations from the budget sheet. <b>Called by the framework</b> during
+            setup.
+            </summary>
+            <param name="setupData">The budget sheet. Must have a <c>period</c> column; every other column except <c>colour</c> becomes a budget category.</param>
+            <exception cref="T:System.ArgumentException">Thrown if the sheet lists the same period twice.</exception>
+        </member>
+        <member name="M:JCass_ModelCore.ModelObjects.Budget.CanApplyTreatmentStrategy(JCass_ModelCore.Treatments.TreatmentStrategy)">
+            <summary>
+            Whether a treatment strategy can be afforded, judged on its first treatment alone.
+            </summary>
+            <param name="strategy">The strategy to test.</param>
+            <returns>True if the first treatment fits the budget for its period.</returns>
+            <remarks>
+            <b>Only the first treatment is checked.</b> Later treatments in the strategy are not tested
+            against future budgets - since November 2025 follow-ups are expected to come back through the
+            domain model's own triggers, where they are budgeted like anything else. A strategy can
+            therefore start and then not be completed as planned.
+            </remarks>
+        </member>
         <member name="M:JCass_ModelCore.ModelObjects.Budget.CanApplyTreatment(JCass_ModelCore.Treatments.TreatmentInstance)">
             <summary>
             Checks if a treatment can be applied in the current budget period. If the treatment relates to multiple budget categories, it 
@@ -243,7 +518,76 @@
             ANY budget category exceeds the budget for that category, the treatment cannot be applied. Note that default situation will be that 
             the treatment only relates to a single budget category (default as specified in model setup), so in that default case this method will 
             return true if the treatment cost is less than or equal to the budget for that category in the treatment period.
-            </summary>    
+            </summary>
+            <param name="treatment">The treatment to test. Its cost must already have been calculated.</param>
+            <returns>True if every category the cost falls into has enough left in that period.</returns>
+            <exception cref="T:System.Exception">Thrown if the budget has no allocation for the treatment's period.</exception>
+            <exception cref="T:System.Collections.Generic.KeyNotFoundException">Thrown if the cost is directed at a budget category that is not a column of the budget sheet.</exception>
+            <remarks>
+            <b>A category with no budget column fails here, and it fails badly rather than quietly.</b>
+            The framework checks each treatment type's own budget category at setup and reports it as a
+            setup error by name. It cannot check a category supplied at runtime by
+            <c>TreatmentInstance.AssignBudgetCategoryFractions</c>, so that one surfaces mid-run as a
+            bare <c>KeyNotFoundException</c> naming nothing useful. If a run dies that way, compare the
+            category names your fractions use against <see cref="P:JCass_ModelCore.ModelObjects.Budget.BudgetCategories"/>.
+            <para>
+            The cost must already have been calculated, or the test is made against a cost of zero and
+            passes trivially.
+            </para>
+            </remarks>
+        </member>
+        <member name="M:JCass_ModelCore.ModelObjects.Budget.SubtractTreatmentCost(JCass_ModelCore.Treatments.TreatmentInstance)">
+            <summary>
+            Deducts a funded treatment's cost from the budget, split across categories as the treatment
+            specifies. <b>Called by the framework</b> when a treatment is committed.
+            </summary>
+            <param name="treatment">The treatment being funded.</param>
+            <exception cref="T:System.Collections.Generic.KeyNotFoundException">Thrown if the treatment's period or a budget category is not in the budget.</exception>
+            <remarks>
+            <b>This does not re-check affordability</b> and will drive a balance negative if called
+            without <see cref="M:JCass_ModelCore.ModelObjects.Budget.CanApplyTreatment(JCass_ModelCore.Treatments.TreatmentInstance)"/> first. <see cref="M:JCass_ModelCore.ModelObjects.Budget.CheckForNegativeBudgets(JCass_ModelCore.Models.ModelBase)"/> reports
+            that afterwards, as a log warning rather than a failure.
+            </remarks>
+        </member>
+        <member name="M:JCass_ModelCore.ModelObjects.Budget.GetBudgetBalance(System.Int32,System.String)">
+            <summary>
+            How much is left in one budget category in one period, right now.
+            </summary>
+            <param name="period">Modelling period.</param>
+            <param name="budgetCategory">Budget category name, as it appears in <see cref="P:JCass_ModelCore.ModelObjects.Budget.BudgetCategories"/>.</param>
+            <returns>The remaining amount. Can be negative.</returns>
+            <exception cref="T:System.Exception">Thrown, naming the period or the category, if either is not in the budget.</exception>
+        </member>
+        <member name="M:JCass_ModelCore.ModelObjects.Budget.GetBudgetBalances(System.Int32)">
+            <summary>
+            How much is left in every budget category in one period, right now.
+            </summary>
+            <param name="period">Modelling period.</param>
+            <returns>A copy: category name to remaining amount. Changing it does not change the budget.</returns>
+            <exception cref="T:System.Exception">Thrown, naming the period, if it is not in the budget.</exception>
+        </member>
+        <member name="M:JCass_ModelCore.ModelObjects.Budget.CheckForNegativeBudgets(JCass_ModelCore.Models.ModelBase)">
+            <summary>
+            Logs a warning for any period and category whose balance has gone negative.
+            </summary>
+            <param name="model">The framework model, used for logging.</param>
+            <remarks>
+            <b>A warning, not a failure</b> - the run continues with the overspend in it. It only
+            inspects categories that some treatment type points at, so a category overspent solely
+            through <c>AssignBudgetCategoryFractions</c> is not reported here.
+            </remarks>
+        </member>
+        <member name="M:JCass_ModelCore.ModelObjects.Budget.GetBudgetForPeriod(System.Int32)">
+            <summary>
+            The live balances for one period, <b>by reference</b>.
+            </summary>
+            <param name="iPeriod">Modelling period.</param>
+            <returns>The budget's own dictionary for that period - changing it changes the budget.</returns>
+            <exception cref="T:System.Collections.Generic.KeyNotFoundException">Thrown if the period is not in the budget.</exception>
+            <remarks>
+            Use <see cref="M:JCass_ModelCore.ModelObjects.Budget.GetBudgetBalances(System.Int32)"/> instead unless you specifically need the live object.
+            That one returns a copy and cannot corrupt the run by accident.
+            </remarks>
         </member>
         <member name="M:JCass_ModelCore.ModelObjects.InputSet.GetDeepClone">
             <summary>
@@ -251,16 +595,66 @@
             </summary>
             <returns></returns>
         </member>
+        <member name="T:JCass_ModelCore.ModelObjects.ModelConfiguration">
+            <summary>
+            Everything about how a model run is configured: how many periods, which model type, the
+            discount and inflation rates, where the run's files live, and which domain model to load.
+            </summary>
+            <remarks>
+            Populated from the project's setup data before the run starts, and reachable from a domain
+            model as <c>model.Configuration</c>.
+            <para>
+            <b>Read it; do not write to it.</b> Changing a value here part-way through a run changes the
+            rules the run is being scored under, and nothing recalculates what has already happened.
+            </para>
+            </remarks>
+        </member>
         <member name="P:JCass_ModelCore.ModelObjects.ModelConfiguration.ExportParameterNames">
             <summary>
             List of Parameters for which data should be exported. If there is only one value = 'all', then data
             for ALL parameters are exported
             </summary>
         </member>
+        <member name="P:JCass_ModelCore.ModelObjects.ModelConfiguration.ModelVersionCode">
+            <summary>
+            Version code for the model setup. Carried on the configuration and serialised with it, but
+            nothing in the framework reads it.
+            </summary>
+        </member>
+        <member name="P:JCass_ModelCore.ModelObjects.ModelConfiguration.RandomSeed">
+            <summary>
+            Seed for the run's random number generator, which is what makes a run reproducible: the same
+            seed and the same inputs give the same forecast.
+            </summary>
+            <remarks>
+            The framework seeds both its own generator and a domain model's <c>Rando</c> from this. Use
+            those rather than constructing a <c>Random</c> of your own, or the run stops being
+            reproducible without anything appearing to be wrong.
+            </remarks>
+        </member>
+        <member name="P:JCass_ModelCore.ModelObjects.ModelConfiguration.NumberOfModellingPeriods">
+            <summary>
+            How many periods the model runs for. Periods are 1-based, and there is always one more epoch
+            than there are periods, because epoch 0 holds the initial state.
+            </summary>
+        </member>
         <member name="P:JCass_ModelCore.ModelObjects.ModelConfiguration.ModelTypeName">
             <summary>
             Name of the model type to run. Must be one of the allowed model types in the _ModelTypesAllowed list.
             </summary>
+        </member>
+        <member name="P:JCass_ModelCore.ModelObjects.ModelConfiguration.RunParallel">
+            <summary>
+            True if the framework processes elements in parallel.
+            </summary>
+            <remarks>
+            <b>This is why a domain model must not keep mutable state that spans elements.</b> With
+            parallel processing on, several elements are inside your trigger and increment methods at
+            the same time. A field on your domain model written during one element and read during
+            another produces results that vary between runs and cannot be reproduced. Per-element state
+            belongs in model parameters; anything genuinely network-wide belongs in
+            <c>DoEndOfPeriodCalculations</c>, which runs once per period after every element is done.
+            </remarks>
         </member>
         <member name="P:JCass_ModelCore.ModelObjects.ModelConfiguration.FeedbackMode">
             <summary>
@@ -273,15 +667,80 @@
         </member>
         <member name="P:JCass_ModelCore.ModelObjects.ModelConfiguration.WorkFolder">
             <summary>
-            Path to work folder, for desktop implementations. This is needed in the model run to:
-            <para>1. Load Machine Learning models from the 'ml' sb-folder</para>
-            <para>2. Pass to the Exporter for exporting data after the run</para>
+            Root folder for this run's project files - the client folder, holding <c>inputs/</c>,
+            <c>supporting/</c> and <c>outputs/</c>.
             </summary>
+            <remarks>
+            <b>This is the property to build side-car data paths from, and it is the only folder
+            property the framework exposes.</b>
+            <para>
+            <c>Path.Combine(WorkFolder, "supporting/my_coefficients.csv")</c> resolves to the same file
+            under an ordinary run and under an in-browser debug run. A path built relative to the domain
+            model's own bundle folder does not: the bundle is staged under a different folder name when
+            debugging, so a bundle-relative path reads the wrong folder in one of the two cases. Verified
+            on both run types.
+            </para>
+            <para>
+            It also gives the framework the <c>ml</c> sub-folder for machine-learning models, and is
+            passed to the exporter for writing results.
+            </para>
+            </remarks>
+        </member>
+        <member name="P:JCass_ModelCore.ModelObjects.ModelConfiguration.DomainModelDLLFilePath">
+            <summary>
+            Full path to the compiled domain model assembly the framework loads for this run.
+            </summary>
+            <remarks>Set by the framework from the project setup. A domain model does not use it.</remarks>
+        </member>
+        <member name="P:JCass_ModelCore.ModelObjects.ModelConfiguration.DomainModelClassName">
+            <summary>
+            Name of the class inside that assembly which implements the domain model interface. Matched
+            case-insensitively against the type name.
+            </summary>
+            <remarks>
+            <b>This must match your entry class's name exactly.</b> A mismatch fails the run at load
+            time with "class not found" - which is loud, but points at the assembly rather than at the
+            name that was actually wrong.
+            </remarks>
         </member>
         <member name="P:JCass_ModelCore.ModelObjects.ModelConfiguration.MaximumTreatmentsPerPeriod">
             <summary>
             Maximum number of non-routine treatments that can be applied in a single period. Currently, only implemented
             in the MCDA ungrouped model. Default value is 99,9999 (i.e. effectively no limit)
+            </summary>
+        </member>
+        <member name="P:JCass_ModelCore.ModelObjects.ModelConfiguration.RunKey">
+            <summary>
+            Identifier for this run, appended to every output file name so that results from different
+            runs sit side by side without overwriting each other.
+            </summary>
+        </member>
+        <member name="P:JCass_ModelCore.ModelObjects.ModelConfiguration.BudgetTagName">
+            <summary>
+            Which budget sheet in the project's budget workbook this run uses. Set from the model setup.
+            </summary>
+            <remarks>
+            <b>The named sheet's columns are the budget categories the run can fund</b>, and nothing
+            else is a valid category. A treatment type pointing at a category with no column here is
+            caught during setup and named; a category introduced at runtime by
+            <c>TreatmentInstance.AssignBudgetCategoryFractions</c> cannot be, and fails mid-run instead.
+            </remarks>
+        </member>
+        <member name="P:JCass_ModelCore.ModelObjects.ModelConfiguration.Logger">
+            <summary>
+            Sink for run progress and log messages. Supplied by whatever is hosting the run.
+            </summary>
+            <remarks>Excluded from serialisation. A domain model logs through the framework model, not through this.</remarks>
+        </member>
+        <member name="P:JCass_ModelCore.ModelObjects.ModelConfiguration.UserID">
+            <summary>
+            Identifier of the user who started the run, for logging. Zero when the host does not supply one.
+            </summary>
+        </member>
+        <member name="P:JCass_ModelCore.ModelObjects.ModelConfiguration.CommandID">
+            <summary>
+            Identifier of the command or job that started the run, for logging. Zero when the host does
+            not supply one.
             </summary>
         </member>
         <member name="P:JCass_ModelCore.ModelObjects.ModelConfiguration.BCAOptimisationMethod">
@@ -390,6 +849,15 @@
             Name of the column that holds Group Codes/Ids for a Grouped MCDA model. Optional - only valid for Grouped MCDA models
             </summary>
         </member>
+        <member name="P:JCass_ModelCore.ModelObjects.ModelConfiguration.MonteCarloExportParameters">
+            <summary>
+            Parameters to export from a Monte Carlo run, across all simulations.
+            </summary>
+            <remarks>
+            Only meaningful for Monte Carlo runs, where exporting every parameter for every simulation
+            would be unmanageably large. Ignored by other model types.
+            </remarks>
+        </member>
         <member name="P:JCass_ModelCore.ModelObjects.ModelConfiguration.BCAStrategyPeriodsToSkip">
             <summary>
             Number of periods to skip between repeated branches of the same treatment. If zero, then all triggered branches are considered. If
@@ -417,6 +885,166 @@
             <summary>
             Period Index for which to export detailed treatment candidate set debugging information. Set to -1 to disable debug export.
             </summary>
+        </member>
+        <member name="M:JCass_ModelCore.ModelObjects.ModelConfiguration.#ctor">
+            <summary>
+            Creates a configuration with the framework's defaults, which one of the <c>Setup</c>
+            overloads then overwrites from the project's setup data.
+            </summary>
+            <remarks>
+            The defaults are a working MCDA model: 10 periods from calendar epoch 2024, 3% discount and
+            inflation, incremental benefit-cost optimisation over a 15-period look-ahead, routine
+            maintenance off, and the three debug indices set to -1 meaning "no debug output".
+            </remarks>
+        </member>
+        <member name="M:JCass_ModelCore.ModelObjects.ModelConfiguration.Setup(JCass_Data.Objects.jcDataSet,JCass_Data.Objects.ILogItemData)">
+            <summary>
+            Fills the configuration from the project's meta setup data, validating each setting as it
+            goes. <b>Called by the framework</b> before the run starts.
+            </summary>
+            <param name="setup">The meta setup table, which must have a "Setting" column of setting names.</param>
+            <param name="logger">Sink for setup messages and warnings.</param>
+            <exception cref="T:System.Exception">Thrown, naming the setting, if a required setting is missing or holds a value the framework does not accept.</exception>
+        </member>
+        <member name="M:JCass_ModelCore.ModelObjects.ModelConfiguration.Setup(System.String,JCass_Data.Objects.ILogItemData,System.Int32,System.Int32)">
+            <summary>
+            Sets only the run's location and identity - work folder, logger and the user and command
+            identifiers - leaving every modelling setting at its default.
+            </summary>
+            <param name="workFolder">The client folder for this run. See <see cref="P:JCass_ModelCore.ModelObjects.ModelConfiguration.WorkFolder"/>.</param>
+            <param name="logger">Sink for setup messages.</param>
+            <param name="userID">Identifier of the user starting the run, for logging.</param>
+            <param name="commandID">Identifier of the command or job, for logging.</param>
+            <exception cref="T:System.Exception">Thrown if the command name check fails.</exception>
+            <remarks>
+            The counterpart to the overload that takes setup data, for hosts that configure the model in
+            code rather than from a setup file. It does <b>not</b> read any modelling settings, so
+            anything not assigned afterwards keeps the constructor's defaults.
+            </remarks>
+        </member>
+        <member name="M:JCass_ModelCore.ModelObjects.ModelConfiguration.GetElementIdentifiersString">
+            <summary>
+            The element identifier column names joined with a pipe, for logging and export headers.
+            </summary>
+            <returns>The joined names, or an empty string if none are configured.</returns>
+        </member>
+        <member name="M:JCass_ModelCore.ModelObjects.ModelConfiguration.GetExportParameterNameString">
+            <summary>
+            The export parameter names joined with a pipe, for logging and export headers.
+            </summary>
+            <returns>The joined names, or an empty string if none are configured.</returns>
+        </member>
+        <member name="M:JCass_ModelCore.ModelObjects.ModelConfiguration.UpdateForGoalSeek(System.Int32,System.Collections.Generic.List{System.String},System.Boolean)">
+            <summary>
+            Turns down logging and exporting for a goal-seeking run, which executes the model many times
+            over and would otherwise produce one full set of output per iteration.
+            </summary>
+            <param name="feedbackMode">Logging verbosity to use for the iterations. See <see cref="P:JCass_ModelCore.ModelObjects.ModelConfiguration.FeedbackMode"/>.</param>
+            <param name="paramsToOutput">Parameters to keep exporting.</param>
+            <param name="exportData">True to keep writing output files during the iterations.</param>
+            <remarks>
+            <b>Called by the goal-seeking model.</b> A domain model does not call this - it changes the
+            configuration mid-run, which is otherwise exactly what not to do.
+            </remarks>
+        </member>
+        <member name="T:JCass_ModelCore.ModelObjects.ModelParameter">
+            <summary>
+            The definition of one model parameter: its name, type, allowed range and display precision. One
+            of these per row of the model setup's parameters sheet.
+            </summary>
+            <remarks>
+            Model parameters are the values that evolve as the model runs - condition, age, treatment
+            history - as distinct from raw input data, which never changes. A domain model reads these
+            definitions through <c>model.Parameters</c>; it does not create them.
+            </remarks>
+        </member>
+        <member name="P:JCass_ModelCore.ModelObjects.ModelParameter.Index">
+            <summary>
+            Zero-based position of this parameter in the model's parameter list. This is what
+            <c>DomainModelBase.PIndex</c> returns.
+            </summary>
+        </member>
+        <member name="P:JCass_ModelCore.ModelObjects.ModelParameter.Name">
+            <summary>
+            Parameter name, as written in the setup. Domain models address parameters by this name, and
+            it is matched exactly and case-sensitively.
+            </summary>
+        </member>
+        <member name="P:JCass_ModelCore.ModelObjects.ModelParameter.DataType">
+            <summary>
+            The parameter's type as written in the setup: <c>"number"</c>, or anything else for text.
+            </summary>
+            <remarks>
+            Only the exact string <c>"number"</c> makes a parameter numeric. A misspelling such as
+            "numeric" or "Number" silently produces a text parameter, and every later write of a numeric
+            value to it goes through text conversion instead.
+            </remarks>
+        </member>
+        <member name="P:JCass_ModelCore.ModelObjects.ModelParameter.Minimum">
+            <summary>
+            Lowest value this parameter may hold. <b>Enforced by clamping on every write</b>, not by
+            validation - see the remarks.
+            </summary>
+            <remarks>
+            <b>This is the framework's most dangerous default.</b> Every numeric value written to a
+            parameter is passed through <c>Math.Clamp</c> against this and <see cref="P:JCass_ModelCore.ModelObjects.ModelParameter.Maximum"/>. Both
+            default to <b>zero</b> when the setup row leaves them blank, and nothing validates them at
+            setup.
+            <para>
+            So a numeric parameter with blank minimum and maximum is clamped to the range zero-to-zero:
+            <b>every value written to it becomes 0</b>, for every element, for every period, with no
+            error and no warning. The model runs to completion and the parameter is flat.
+            </para>
+            <para>
+            A setup where minimum exceeds maximum is worse in a more useful way - <c>Math.Clamp</c>
+            throws, so the run fails rather than lying.
+            </para>
+            <para>
+            Set a real range on every numeric parameter. If a parameter genuinely has no bounds, give it
+            generous ones rather than leaving the cells empty.
+            </para>
+            </remarks>
+        </member>
+        <member name="P:JCass_ModelCore.ModelObjects.ModelParameter.Maximum">
+            <summary>
+            Highest value this parameter may hold, enforced by clamping on every write. Defaults to zero
+            when the setup leaves it blank - see <see cref="P:JCass_ModelCore.ModelObjects.ModelParameter.Minimum"/> for why that matters more than it
+            appears to.
+            </summary>
+        </member>
+        <member name="P:JCass_ModelCore.ModelObjects.ModelParameter.IsNetworkStatistic">
+            <summary>
+            True if this parameter holds a network-level statistic rather than a per-element value.
+            </summary>
+            <remarks>Always false as constructed from a setup row; the framework sets it where it applies.</remarks>
+        </member>
+        <member name="P:JCass_ModelCore.ModelObjects.ModelParameter.Decimals">
+            <summary>
+            Decimal places used when this parameter is rounded for export and for KPI reporting.
+            Defaults to 2 for numeric parameters, 0 for text.
+            </summary>
+            <remarks>
+            Affects exported and reported values only. The value held during the run is not rounded, so
+            a forecast is not changed by this - only what you read afterwards.
+            </remarks>
+        </member>
+        <member name="P:JCass_ModelCore.ModelObjects.ModelParameter.IsNumeric">
+            <summary>
+            True if <see cref="P:JCass_ModelCore.ModelObjects.ModelParameter.DataType"/> is exactly <c>"number"</c>.
+            </summary>
+        </member>
+        <member name="M:JCass_ModelCore.ModelObjects.ModelParameter.#ctor(System.Collections.Generic.Dictionary{System.String,System.Object},System.Int32)">
+            <summary>
+            Creates a parameter definition from a row of the setup's parameters sheet. <b>Called by the
+            framework.</b>
+            </summary>
+            <param name="setupRow">The row. Must contain <c>parameter_name</c>, <c>data_type</c>, <c>minimum</c> and <c>maximum</c>; <c>decimals</c> is optional and defaults to 2.</param>
+            <param name="index">Zero-based position of this parameter in the model's parameter list.</param>
+            <exception cref="T:System.Exception">Thrown, naming the column, if a required column is absent.</exception>
+            <remarks>
+            A blank <c>minimum</c> or <c>maximum</c> cell is <b>not</b> an error and does not default to
+            "unbounded" - it defaults to zero. See <see cref="P:JCass_ModelCore.ModelObjects.ModelParameter.Minimum"/>.
+            </remarks>
         </member>
         <member name="T:JCass_ModelCore.ModelObjects.ModelParameterData">
             <summary>
@@ -449,6 +1077,51 @@
             <summary>
             Reference to the parent model
             </summary>
+        </member>
+        <member name="M:JCass_ModelCore.ModelObjects.ModelParameterData.SetNumericValue(System.Int32,System.String,System.Int32,System.Double)">
+            <summary>
+            Stores a numeric parameter value for one element at one epoch, <b>clamped to the
+            parameter's configured minimum and maximum</b>.
+            </summary>
+            <param name="elementIndex">Zero-based element index.</param>
+            <param name="paramName">Parameter name, as defined in the model setup.</param>
+            <param name="epochIndex">Epoch to write.</param>
+            <param name="value">Value to store, before clamping.</param>
+            <exception cref="T:System.ArgumentException">Thrown if the parameter is not a defined numeric parameter, or if its configured minimum exceeds its maximum.</exception>
+            <remarks>
+            <b>The clamp is silent.</b> A value outside the parameter's range is not rejected and not
+            logged - it is quietly replaced by the nearest bound. If a parameter's setup row leaves
+            minimum and maximum blank, both are zero, and every value written here becomes zero for
+            every element in every period. See <c>ModelParameter.Minimum</c>.
+            </remarks>
+        </member>
+        <member name="M:JCass_ModelCore.ModelObjects.ModelSetupChecker.CheckNumericParameterRanges">
+            <summary>
+            Checks that every numeric model parameter has a minimum and maximum that can actually hold a
+            forecast.
+            </summary>
+            <remarks>
+            This exists because the range is enforced by <b>clamping on every write</b>, in
+            <c>ModelParameterData.SetNumericValue</c>, and both bounds default to <b>zero</b> when the
+            setup sheet leaves the cells blank.
+            <para>
+            A parameter left that way is clamped to the range zero-to-zero: every value written to it
+            becomes 0, for every element, in every period, with no error and no warning. The run
+            completes and the parameter is flat - which reads as a modelling problem rather than a setup
+            problem, and is where the time goes.
+            </para>
+            <para>
+            Both cases are reported as setup errors rather than warnings. A flat parameter invalidates
+            the forecast, and a run that produces an invalid forecast without saying so is worse than
+            one that refuses to start. A parameter that genuinely has no bounds should be given generous
+            ones, not blank cells.
+            </para>
+            <para>
+            Minimum greater than maximum is caught here too. It would otherwise throw from
+            <c>Math.Clamp</c> part-way through the run - loud, but at the wrong moment and without
+            naming the parameter.
+            </para>
+            </remarks>
         </member>
         <member name="M:JCass_ModelCore.ModelObjects.ModelSetupChecker.CheckModelParameters">
             <summary>
@@ -587,6 +1260,25 @@
             </summary>
             <exception cref="T:System.Exception"></exception>
         </member>
+        <member name="T:JCass_ModelCore.Models.ModelBase">
+            <summary>
+            The framework model: it owns the loop over periods and elements, holds the input data, the model
+            parameters, the lookups and the budget, and calls the domain model at each stage.
+            </summary>
+            <remarks>
+            A domain model reaches this as the protected <c>model</c> field on <c>DomainModelBase</c>.
+            <para>
+            <b>You call it; you never create it and you never inherit it.</b> The concrete model types -
+            forecast, MCDA, benefit-cost - are the framework's own, chosen by the project's setup. The class
+            you write inherits <c>DomainModelBase</c>.
+            </para>
+            <para>
+            Most of this class is framework plumbing. What a domain model actually uses is the small set of
+            accessors: reading input data, reading and writing model parameters, reading lookups, and
+            checking the budget.
+            </para>
+            </remarks>
+        </member>
         <member name="F:JCass_ModelCore.Models.ModelBase.ReservedKeyNames">
             <summary>
             List of Reserved Names that cannot be used for column names in input set. Can also be used to do
@@ -604,6 +1296,17 @@
             random seed at any point and get the same sequence of random numbers from that point on. 
             This is useful for testing and debugging, as it allows you to get the same random numbers for each run.
             </summary>
+        </member>
+        <member name="P:JCass_ModelCore.Models.ModelBase.Random">
+            <summary>
+            The run's random number generator, seeded from <see cref="P:JCass_ModelCore.Models.ModelBase.RandomSeed"/>.
+            </summary>
+            <remarks>
+            <b>Use this, or a domain model's own <c>Rando</c>, rather than constructing a
+            <c>Random</c>.</b> Both are seeded from the model configuration, which is what makes a run
+            reproducible. A privately constructed <c>Random</c> is seeded from the clock, and the model
+            then stops giving the same answer twice with nothing to show that anything changed.
+            </remarks>
         </member>
         <member name="F:JCass_ModelCore.Models.ModelBase._doParallel">
             <summary>
@@ -640,6 +1343,16 @@
             Input header information. Key is column name, value is information on the column
             </summary>
         </member>
+        <member name="F:JCass_ModelCore.Models.ModelBase.Budget">
+            <summary>
+            The run's budget: what money is available in each category and each period, and how much of
+            it is left.
+            </summary>
+            <remarks>
+            Read it - typically to ask whether a candidate could be afforded. <b>The framework does the
+            spending</b>; a domain model proposes candidates and the optimiser decides what is funded.
+            </remarks>
+        </member>
         <member name="P:JCass_ModelCore.Models.ModelBase.Lookups">
             <summary>
             Domain Model lookup set for looking up parameters/constants/etc.
@@ -651,6 +1364,13 @@
             Domain/Project lookup set for Multi-Column Lookup Tables. Key is the set name, and
             value is the lookup table as jcDataSet. See function 'JFuncLookupMultiColumn'
             </summary>
+        </member>
+        <member name="P:JCass_ModelCore.Models.ModelBase.Configuration">
+            <summary>
+            The run's configuration - periods, rates, model type, and <c>WorkFolder</c>, which is the
+            client folder a domain model builds side-car data paths from.
+            </summary>
+            <remarks>Read it; do not write to it mid-run. See <see cref="T:JCass_ModelCore.ModelObjects.ModelConfiguration"/>.</remarks>
         </member>
         <member name="P:JCass_ModelCore.Models.ModelBase.GroupingSetup">
             <summary>
@@ -679,14 +1399,116 @@
             without having to completely re-initialise the model.
             </summary>
         </member>
+        <member name="M:JCass_ModelCore.Models.ModelBase.GetInputDataNumber(System.Int32,System.String)">
+            <summary>
+            Reads a numeric value from the raw input data for one element - the network data as loaded,
+            before any modelling.
+            </summary>
+            <param name="elementIndex">Zero-based element index.</param>
+            <param name="header">Input data column name.</param>
+            <returns>The value.</returns>
+            <exception cref="T:System.Exception">Thrown, naming the column, if it is not in the input data or is not numeric.</exception>
+            <remarks>
+            <b>Raw input data never changes during a run.</b> It is what the element started as, and it
+            is the same in period 1 and period 20. Anything that evolves - condition, age, treatment
+            history - is a model parameter, read with <see cref="M:JCass_ModelCore.Models.ModelBase.GetParameterValueNumber(System.Int32,System.String,System.Int32)"/>. Confusing
+            the two is one of the easiest mistakes to make and one of the hardest to see, because both
+            return a plausible number.
+            </remarks>
+        </member>
+        <member name="M:JCass_ModelCore.Models.ModelBase.GetInputDataValue(System.Int32,System.String)">
+            <summary>
+            Reads an input value without knowing its type, returning a double or a string according to
+            the column definition.
+            </summary>
+            <param name="elementIndex">Zero-based element index.</param>
+            <param name="header">Input data column name.</param>
+            <returns>The value, boxed as a double or a string.</returns>
+            <exception cref="T:System.Exception">Thrown, naming the column, if it is not in the input data.</exception>
+            <remarks>
+            Prefer <see cref="M:JCass_ModelCore.Models.ModelBase.GetInputDataNumber(System.Int32,System.String)"/> or <see cref="M:JCass_ModelCore.Models.ModelBase.GetInputDataText(System.Int32,System.String)"/> where you know the
+            type. This exists for code that handles columns generically.
+            </remarks>
+        </member>
+        <member name="M:JCass_ModelCore.Models.ModelBase.GetInputDataText(System.Int32,System.String)">
+            <summary>
+            Reads a text value from the raw input data for one element - a material, a class, a
+            treatment history code.
+            </summary>
+            <param name="elementIndex">Zero-based element index.</param>
+            <param name="header">Input data column name.</param>
+            <returns>The value.</returns>
+            <exception cref="T:System.Exception">Thrown, naming the column, if it is not in the input data or is not a text column.</exception>
+            <remarks>See <see cref="M:JCass_ModelCore.Models.ModelBase.GetInputDataNumber(System.Int32,System.String)"/> for why raw input data and model parameters are not the same thing.</remarks>
+        </member>
+        <member name="M:JCass_ModelCore.Models.ModelBase.GetParameterValueNumber(System.Int32,System.String,System.Int32)">
+            <summary>
+            Reads a numeric model parameter for one element at one epoch. Model parameters are the values
+            that evolve as the model runs.
+            </summary>
+            <param name="ielem">Zero-based element index.</param>
+            <param name="name">Parameter name, as defined in the model setup.</param>
+            <param name="iEpoch">Epoch to read. Epoch 0 is the initial state; epoch N is the end of period N.</param>
+            <returns>The value.</returns>
+            <exception cref="T:System.Collections.Generic.KeyNotFoundException">Thrown if no parameter of that name is defined.</exception>
+            <remarks>
+            <b>An epoch marks the END of a period</b>, and there is one more epoch than there are
+            periods. Reading "the value at the start of period N" means reading epoch N-1. Getting that
+            off by one shifts every forecast by a period and produces results that look entirely
+            plausible.
+            </remarks>
+        </member>
+        <member name="M:JCass_ModelCore.Models.ModelBase.GetParameterValueText(System.Int32,System.String,System.Int32)">
+            <summary>
+            Reads a text model parameter for one element at one epoch.
+            </summary>
+            <param name="ielem">Zero-based element index.</param>
+            <param name="name">Parameter name, as defined in the model setup.</param>
+            <param name="iEpoch">Epoch to read. See <see cref="M:JCass_ModelCore.Models.ModelBase.GetParameterValueNumber(System.Int32,System.String,System.Int32)"/> for what an epoch is.</param>
+            <returns>The value.</returns>
+            <exception cref="T:System.Collections.Generic.KeyNotFoundException">Thrown if no parameter of that name is defined.</exception>
+        </member>
+        <member name="M:JCass_ModelCore.Models.ModelBase.SetParameterValueNumber(System.Int32,System.String,System.Int32,System.Double)">
+            <summary>
+            Writes a numeric model parameter for one element at one epoch.
+            </summary>
+            <param name="ielem">Zero-based element index.</param>
+            <param name="parameterName">Parameter name, as defined in the model setup.</param>
+            <param name="iEpoch">Epoch to write.</param>
+            <param name="value">Value to store.</param>
+            <exception cref="T:System.Collections.Generic.KeyNotFoundException">Thrown if no parameter of that name is defined.</exception>
+            <remarks>
+            Domain models normally write parameters through the sink actions the framework passes into
+            <c>Initialise</c>, <c>Increment</c> and <c>Reset</c>, not through this. Writing directly
+            bypasses the framework's own handling of the current epoch's values and is easy to get wrong.
+            </remarks>
+        </member>
+        <member name="M:JCass_ModelCore.Models.ModelBase.SetParameterValueText(System.Int32,System.String,System.Int32,System.String)">
+            <summary>
+            Writes a text model parameter for one element at one epoch.
+            </summary>
+            <param name="ielem">Zero-based element index.</param>
+            <param name="parameterName">Parameter name, as defined in the model setup.</param>
+            <param name="iEpoch">Epoch to write.</param>
+            <param name="value">Value to store.</param>
+            <exception cref="T:System.Collections.Generic.KeyNotFoundException">Thrown if no parameter of that name is defined.</exception>
+            <remarks>
+            As with <see cref="M:JCass_ModelCore.Models.ModelBase.SetParameterValueNumber(System.Int32,System.String,System.Int32,System.Double)"/>, domain models normally write through the sink
+            actions the framework passes into <c>Initialise</c>, <c>Increment</c> and <c>Reset</c>.
+            </remarks>
+        </member>
         <member name="M:JCass_ModelCore.Models.ModelBase.GetParameterValues(System.Int32,System.Int32)">
             <summary>
             Gets dictionaries of all parameter values for an element at an epoch - both numeric and text parameters held in 
             separate dictionaries
             </summary>
             <param name="iElem">Zero-based element index</param>
-            <param name="iEpoch">Epoch for which to get parameter values</param>
-            <returns>Keys are StringComparer.Ordinal for faster lookup</returns>
+            <param name="iEpoch">Epoch for which to get parameter values. Epoch 0 is the initial state; epoch N is the end of period N.</param>
+            <returns>Two dictionaries, numeric first then text, each keyed by parameter name.</returns>
+            <remarks>
+            Both dictionaries use ordinal string comparison, so parameter names are matched
+            case-sensitively and exactly.
+            </remarks>
         </member>
         <member name="M:JCass_ModelCore.Models.ModelBase.GetInputValues(System.Int32)">
             <summary>
@@ -733,6 +1555,91 @@
             <param name="treatments">Treatments for the period under consideration</param>
             <returns></returns>
         </member>
+        <member name="M:JCass_ModelCore.Models.ModelBase.GetLookupValueText(System.String,System.String)">
+            <summary>
+            Reads a text value from the model's lookups.
+            </summary>
+            <param name="lookupSetName">Name of the lookup set.</param>
+            <param name="lookupKey">Key within that set.</param>
+            <returns>The value as text.</returns>
+            <exception cref="T:System.Exception">Thrown, naming the set or the key, if either is not found.</exception>
+            <remarks>
+            A domain model inheriting <c>DomainModelBase</c> can call the equivalent helper on itself
+            instead. Both do the same thing.
+            </remarks>
+        </member>
+        <member name="M:JCass_ModelCore.Models.ModelBase.GetLookupValueNumber(System.String,System.String)">
+            <summary>
+            Reads a numeric value from the model's lookups - the route by which every tunable number
+            reaches a domain model.
+            </summary>
+            <param name="lookupSetName">Name of the lookup set.</param>
+            <param name="lookupKey">Key within that set.</param>
+            <returns>The value as a double.</returns>
+            <exception cref="T:System.Exception">Thrown, naming the set or the key, if either is not found or the value will not convert.</exception>
+            <remarks>
+            <b>Thresholds, limits and rates belong here, not in C#.</b> A value in the lookups is one a
+            modeller changes and re-runs themselves; the same value written as a constant in code needs a
+            developer, a rebuild and a republish. It throws rather than defaulting, on purpose - a
+            missing threshold silently becoming zero would change every forecast with nothing to show
+            for it.
+            </remarks>
+        </member>
+        <member name="M:JCass_ModelCore.Models.ModelBase.GetSpecialPlaceholderValues(System.Int32,System.Int32,JCass_ModelCore.Treatments.TreatmentInstance)">
+            <summary>
+            Builds the framework's reserved placeholder values for one element in one period: where it is
+            in time, what treatment is coming next, what has been done to it before, and - during a reset
+            - what is being applied now.
+            </summary>
+            <param name="iElem">Zero-based element index.</param>
+            <param name="period">Modelling period.</param>
+            <param name="treatment">The treatment being applied, when called during a reset. Null otherwise.</param>
+            <returns>Placeholder name to value.</returns>
+            <remarks>
+            <b>These keys are reserved words.</b> They cannot be used as raw data column names or as
+            model parameter names, and the framework checks that at setup - see
+            <c>ReservedKeyNames</c>. Naming an input column <c>period</c> or <c>elem_index</c> fails the
+            setup rather than quietly shadowing a placeholder.
+            <para>
+            <b>Absence is expressed as a sentinel, not as null.</b> Where there is no next treatment,
+            <c>next_treatment_period</c> and <c>periods_to_next_treatment</c> are <b>999</b> and the text
+            placeholders are the literal string <c>"none"</c>; where there is no current treatment,
+            <c>this_treatment_cost</c> is <c>0</c>. Comparisons still behave sensibly, but anything that
+            averages or sums <c>periods_to_next_treatment</c> across elements silently takes 999 as a
+            real number. Test for the sentinel before doing arithmetic on it.
+            </para>
+            <para><c>previous_treatments</c> is the only entry that can genuinely be null.</para>
+            </remarks>
+        </member>
+        <member name="T:JCass_ModelCore.MonteCarlo.DistributionSimulator">
+            <summary>
+            Draws a random value for one parameter from a distribution chosen by which cohort an element
+            falls into. The workhorse of a Monte Carlo model's deterioration.
+            </summary>
+            <remarks>
+            Cohorts are defined in a setup file: each row gives a label, a rule that decides whether an
+            element belongs to that cohort, and a piecewise-linear description of the distribution's shape.
+            At simulation time the element's data is matched against the rules, and a value is drawn from
+            the matching cohort's distribution.
+            <para>
+            <b>Cohort order is priority order.</b> Rules are evaluated in the order the setup file lists
+            them and the first match wins, so a broad catch-all rule placed above a specific one silently
+            takes every element that would have matched the specific one. Order the setup file from most
+            specific to most general.
+            </para>
+            <para>
+            Build these once in <c>SetupInstance</c> and keep them on your domain model. Constructing one
+            parses every cohort rule and builds a curve per cohort, which is not work to repeat per element
+            per period.
+            </para>
+            <para>
+            The shape is expressed as a distribution's inverse: a uniform random number between 0 and 1 goes
+            in as the x value, and the curve maps it to a parameter value. So the curve is the quantile
+            function of whatever distribution was fitted, usually produced in R or Python and delivered as
+            a CSV.
+            </para>
+            </remarks>
+        </member>
         <member name="M:JCass_ModelCore.MonteCarlo.DistributionSimulator.#ctor(System.String,JCass_Data.Objects.jcDataSet)">
             <summary>
             Constructs a DistributionSimulator for a given parameter, using setup data that defines cohorts with rules and associated piecewise linear models for the distribution shapes.
@@ -740,6 +1647,22 @@
             <param name="parameterName">The name of the parameter for which the distribution simulator is being created. Used only for error messages and logging.</param>
             <param name="setupData">The setup data defining cohorts, rules, and associated piecewise linear models for the distribution shapes. Should have
             columns: "cohort_label", "cohort_rule", "cohort_shape".</param>
+        </member>
+        <member name="M:JCass_ModelCore.MonteCarlo.DistributionSimulator.GetSimulatedValue(System.Collections.Generic.Dictionary{System.String,System.Object},System.Random)">
+            <summary>
+            Draws a value for one element: works out which cohort it belongs to, then samples that
+            cohort's distribution.
+            </summary>
+            <param name="dataRow">The element's data, against which the cohort rules are evaluated. Must contain every column the rules reference.</param>
+            <param name="randomizer">Random number generator to draw from.</param>
+            <returns>The simulated value.</returns>
+            <exception cref="T:System.Exception">Thrown, naming the parameter, if no cohort rule matches the row, if a rule references a column the row does not have, or if the value cannot be sampled.</exception>
+            <remarks>
+            <b>Pass the framework's random generator</b> - <c>model.Random</c>, or a domain model's own
+            <c>Rando</c> - and not a newly constructed one. Both are seeded from the model
+            configuration, which is what makes a Monte Carlo run reproducible; a fresh <c>Random</c> is
+            seeded from the clock, and the run silently stops giving the same answer twice.
+            </remarks>
         </member>
         <member name="T:JCass_ModelCore.MonteCarlo.MarkovTransitionSimulator">
             <summary>
@@ -960,7 +1883,205 @@
         </member>
         <member name="T:JCass_ModelCore.Treatments.StrategySetupInfo">
             <summary>
-            Class to hold information setup data for a treatment strategy
+            The definition of one treatment strategy: a first treatment plus up to three follow-ups, each
+            placed a stated number of periods later. One of these per row of the strategies setup sheet.
+            </summary>
+            <remarks>
+            Only benefit-cost models use strategies. Where an MCDA model triggers individual treatments and
+            lets the optimiser rank them, a BCA model evaluates whole sequences over a look-ahead period and
+            compares their costs and benefits.
+            <para>
+            A domain model reads these through <c>model.StrategiesSetupData</c> when generating candidates.
+            It does not create them - they come from the setup.
+            </para>
+            <para>
+            <b>The shape is fixed at four treatments</b>, and unused slots are left blank rather than
+            omitted. A strategy of one treatment still has <c>treat2</c> through <c>treat4</c> columns; they
+            are simply empty. That is why every property below always exists.
+            </para>
+            </remarks>
+        </member>
+        <member name="P:JCass_ModelCore.Treatments.StrategySetupInfo.StrategyName">
+            <summary>
+            Name of the strategy, used as its key in the setup and in strategy debug output.
+            </summary>
+        </member>
+        <member name="P:JCass_ModelCore.Treatments.StrategySetupInfo.FirstTreatment">
+            <summary>
+            Treatment applied at the start of the strategy. Must match a treatment type name.
+            </summary>
+        </member>
+        <member name="P:JCass_ModelCore.Treatments.StrategySetupInfo.ForceFirstTreatment">
+            <summary>
+            True if the first treatment must be placed regardless of how the strategy ranks
+            economically. Forced strategies are funded ahead of ranked ones.
+            </summary>
+        </member>
+        <member name="P:JCass_ModelCore.Treatments.StrategySetupInfo.Treat2Name">
+            <summary>
+            Second treatment in the sequence, or an empty string if the strategy has only one.
+            </summary>
+        </member>
+        <member name="P:JCass_ModelCore.Treatments.StrategySetupInfo.Treat2WaitPeriod">
+            <summary>
+            How many periods after the first treatment the second one falls.
+            </summary>
+            <remarks>
+            A wait that pushes a treatment past the last modelled period means it is never placed, and
+            nothing reports that - see <c>TreatmentSet.AppendTreatmentAndReduceBudget</c>. Check long
+            waits against the run's period count.
+            </remarks>
+        </member>
+        <member name="P:JCass_ModelCore.Treatments.StrategySetupInfo.Treat2Force">
+            <summary>
+            True if the second treatment must be placed regardless of ranking.
+            </summary>
+        </member>
+        <member name="P:JCass_ModelCore.Treatments.StrategySetupInfo.Treat3Name">
+            <summary>
+            Third treatment in the sequence, or an empty string if unused.
+            </summary>
+        </member>
+        <member name="P:JCass_ModelCore.Treatments.StrategySetupInfo.Treat3WaitPeriod">
+            <summary>
+            How many periods after the first treatment the third one falls.
+            </summary>
+        </member>
+        <member name="P:JCass_ModelCore.Treatments.StrategySetupInfo.Treat3Force">
+            <summary>
+            True if the third treatment must be placed regardless of ranking.
+            </summary>
+        </member>
+        <member name="P:JCass_ModelCore.Treatments.StrategySetupInfo.Treat4Name">
+            <summary>
+            Fourth treatment in the sequence, or an empty string if unused.
+            </summary>
+        </member>
+        <member name="P:JCass_ModelCore.Treatments.StrategySetupInfo.Treat4WaitPeriod">
+            <summary>
+            How many periods after the first treatment the fourth one falls.
+            </summary>
+        </member>
+        <member name="P:JCass_ModelCore.Treatments.StrategySetupInfo.Treat4Force">
+            <summary>
+            True if the fourth treatment must be placed regardless of ranking.
+            </summary>
+        </member>
+        <member name="M:JCass_ModelCore.Treatments.StrategySetupInfo.#ctor(System.Collections.Generic.Dictionary{System.String,System.Object})">
+            <summary>
+            Creates a strategy definition from a row of the strategies setup sheet. <b>Called by the
+            framework.</b>
+            </summary>
+            <param name="setupRow">The row. All twelve columns must be present, including those for unused treatment slots.</param>
+            <exception cref="T:System.Collections.Generic.KeyNotFoundException">Thrown if any of the twelve columns is absent.</exception>
+            <exception cref="T:System.FormatException">Thrown if a wait period or force flag cannot be read as a number or a boolean. A blank wait period or force cell fails here, so unused slots need <c>0</c> and <c>FALSE</c> rather than empty cells.</exception>
+            <remarks>
+            Treatment names are trimmed of surrounding whitespace; nothing else is. Names are not checked
+            against the treatment types here.
+            </remarks>
+        </member>
+        <member name="T:JCass_ModelCore.Treatments.TreatmentInstance">
+            <summary>
+            One treatment proposed for one element in one modelling period: what it is, how much of it,
+            what it costs and why it was put forward.
+            </summary>
+            <remarks>
+            This is the currency between a domain model and the framework. A domain model creates instances
+            of this class in its trigger methods and returns them as candidates; the framework then ranks
+            them, funds what fits the budget, and passes the winners back to <c>Reset</c>.
+            <para>
+            Domain models construct these. Everything else here - costing, ranking, funding, exporting - is
+            done by the framework, and the properties it fills in are marked as such below.
+            </para>
+            </remarks>
+        </member>
+        <member name="F:JCass_ModelCore.Treatments.TreatmentInstance.ElementIndex">
+            <summary>
+            Zero-based index of the network element this treatment applies to. This is the same index
+            the framework passes into every domain model method.
+            </summary>
+        </member>
+        <member name="F:JCass_ModelCore.Treatments.TreatmentInstance.TreatmentName">
+            <summary>
+            Name of the treatment, which must match a treatment type defined in the model setup.
+            </summary>
+            <remarks>
+            The name is used as a dictionary key into the model's treatment types whenever a cost is
+            allocated or a row is exported. A name with no matching treatment type therefore does not
+            fail where it was created - it fails later, during costing or export.
+            </remarks>
+        </member>
+        <member name="F:JCass_ModelCore.Treatments.TreatmentInstance.TreatmentPeriod">
+            <summary>
+            Modelling period in which the treatment is placed. Periods are 1-based; the constructor
+            rejects zero or negative values.
+            </summary>
+        </member>
+        <member name="P:JCass_ModelCore.Treatments.TreatmentInstance.Cost">
+            <summary>
+            Cost of the treatment, discounted and inflated to the period it falls in. Read-only.
+            </summary>
+            <remarks>
+            <b>This is zero until the framework calculates it.</b> A domain model supplies
+            <see cref="F:JCass_ModelCore.Treatments.TreatmentInstance.Quantity"/> and the unit rate; the framework multiplies them by the present-worth
+            factor for the period in <c>CalculateDiscountedAndInflatedCost</c> and rounds to two decimal
+            places. Reading <c>Cost</c> straight after constructing an instance returns 0, not the
+            treatment's cost.
+            </remarks>
+        </member>
+        <member name="F:JCass_ModelCore.Treatments.TreatmentInstance.Quantity">
+            <summary>
+            How much of the treatment is applied, in whatever unit the treatment type's unit rate is
+            expressed in. Cost is quantity multiplied by unit rate, so the two must agree on units.
+            </summary>
+        </member>
+        <member name="F:JCass_ModelCore.Treatments.TreatmentInstance.Reason">
+            <summary>
+            Short text saying why the treatment was triggered. Exported against every treatment as
+            <c>treatment_reason</c>, so it is what a modeller reads when asking why the model did
+            something. Worth writing for that reader rather than for a developer.
+            </summary>
+        </member>
+        <member name="F:JCass_ModelCore.Treatments.TreatmentInstance.Comment">
+            <summary>
+            Free text carried with the treatment and exported as <c>treatment_comment</c>. Unlike
+            <see cref="F:JCass_ModelCore.Treatments.TreatmentInstance.Reason"/> the framework attaches no meaning to it.
+            </summary>
+        </member>
+        <member name="F:JCass_ModelCore.Treatments.TreatmentInstance.Force">
+            <summary>
+            True if this treatment must be placed regardless of how it ranks economically.
+            </summary>
+            <remarks>
+            Forced treatments bypass the ranking rather than the budget. In an MCDA model a forced
+            treatment is assigned the maximum rank parameter; in a BCA model forced strategies are
+            separated out and funded ahead of the ranked ones. Use it for interventions that policy or
+            safety requires, not to push a treatment the model would otherwise reject.
+            </remarks>
+        </member>
+        <member name="F:JCass_ModelCore.Treatments.TreatmentInstance.IsFollowUp">
+            <summary>
+            True if this treatment is a follow-up within a multi-treatment strategy rather than the
+            first treatment of one. <b>Set by the framework's strategy generator</b> - a domain model
+            does not assign it.
+            </summary>
+        </member>
+        <member name="F:JCass_ModelCore.Treatments.TreatmentInstance.IsCommitted">
+            <summary>
+            True if this treatment came from the model's committed-treatments setup data rather than
+            from a domain model trigger. <b>Set by the framework</b> when it loads that data; a domain
+            model does not assign it.
+            </summary>
+            <remarks>
+            Committed treatments are always loaded with <see cref="F:JCass_ModelCore.Treatments.TreatmentInstance.Force"/> set to true, because a
+            treatment somebody has already committed to is not a candidate for the optimiser to reject.
+            </remarks>
+        </member>
+        <member name="F:JCass_ModelCore.Treatments.TreatmentInstance.FollowUpWaitPeriods">
+            <summary>
+            For a follow-up treatment, the number of periods to wait after the strategy's first
+            treatment before this one is placed. <b>Set by the framework's strategy generator</b>
+            alongside <see cref="F:JCass_ModelCore.Treatments.TreatmentInstance.IsFollowUp"/>.
             </summary>
         </member>
         <member name="F:JCass_ModelCore.Treatments.TreatmentInstance.CustomPropertiesNumber">
@@ -977,8 +2098,26 @@
         </member>
         <member name="F:JCass_ModelCore.Treatments.TreatmentInstance.RankParamSimple">
             <summary>
-            Temporary simple ranking for maintenance. Higher parameter value means higher priority.
+            Priority of this treatment among the routine-maintenance candidates competing for the
+            maintenance budget. Higher wins. <b>Set this from your domain model</b> on treatments
+            returned by <c>GetTriggeredMaintenance</c>.
             </summary>
+            <remarks>
+            Maintenance is not optimised the way capital treatments are. The framework simply sorts
+            every triggered maintenance treatment by this value, descending, and funds down the list
+            until the budget runs out. So this value is the whole of your control over what gets done
+            first when maintenance money is short.
+            <para>
+            <b>Left at its default of 0 the ordering is arbitrary</b> - every candidate compares equal,
+            and which ones get funded is decided by the order elements happen to be processed in. That
+            is stable enough to look deliberate and it is not. Set it whenever maintenance can be
+            budget-constrained, using whatever expresses urgency in your domain: severity, a condition
+            index, exposure, or cost-effectiveness.
+            </para>
+            <para>
+            It has no effect on capital treatment candidates, which are ranked by the optimiser instead.
+            </para>
+            </remarks>
         </member>
         <member name="F:JCass_ModelCore.Treatments.TreatmentInstance.TreatmentSuitabilityScore">
             <summary>
@@ -1001,15 +2140,79 @@
             Unit Rate inherited from the TreatmentType definition or optionally specified in the constructor.
             </summary>
         </member>
+        <member name="M:JCass_ModelCore.Treatments.TreatmentInstance.#ctor(System.Int32,System.String,System.Int32,System.Double,System.Double,System.Boolean,System.String,System.String)">
+            <summary>
+            Creates a treatment candidate for one element in one period. This is what a domain model's
+            trigger methods return.
+            </summary>
+            <param name="element_index">Zero-based index of the element, as passed into the domain model method.</param>
+            <param name="name">Treatment name. Must match a treatment type in the model setup - see <see cref="F:JCass_ModelCore.Treatments.TreatmentInstance.TreatmentName"/>.</param>
+            <param name="period">Modelling period the treatment falls in. Must be 1 or greater.</param>
+            <param name="quantity">How much of the treatment is applied, in the same unit as <paramref name="unitRate"/>.</param>
+            <param name="unitRate">Cost per unit of quantity. Read this from the model's lookups; do not hard-code it.</param>
+            <param name="force">True to place this treatment regardless of how it ranks - see <see cref="F:JCass_ModelCore.Treatments.TreatmentInstance.Force"/>.</param>
+            <param name="reason">Why the treatment was triggered. Exported, and read by modellers.</param>
+            <param name="comment">Free text carried with the treatment. No meaning to the framework.</param>
+            <exception cref="T:System.Exception">Thrown if <paramref name="period"/> is zero or negative.</exception>
+            <remarks>
+            <b>Call this with named arguments.</b> Eight positional parameters, of which two are
+            consecutive doubles and three are consecutive strings, means a call with the right values in
+            the wrong order compiles cleanly and produces a wrong model rather than an error.
+            <para>
+            The unit rate is supplied per instance and is no longer inherited from the treatment type -
+            see <see cref="P:JCass_ModelCore.Treatments.TreatmentInstance.UnitRate"/>. It belongs in the project's lookups, so that a modeller can
+            recalibrate rates without a rebuild.
+            </para>
+            </remarks>
+        </member>
+        <member name="M:JCass_ModelCore.Treatments.TreatmentInstance.CalculateDiscountedAndInflatedCost(JCass_ModelCore.Models.ModelBase,System.Int32)">
+            <summary>
+            Calculates <see cref="P:JCass_ModelCore.Treatments.TreatmentInstance.Cost"/> as quantity multiplied by unit rate, adjusted by the
+            present-worth factor for the period, rounded to two decimal places.
+            </summary>
+            <param name="model">The framework model, which supplies the discount and inflation rates.</param>
+            <param name="absolutePeriod">Period to discount to.</param>
+            <remarks>
+            <b>Called by the framework.</b> A domain model does not normally call this - the framework
+            costs candidates after they are triggered. Until it runs, <see cref="P:JCass_ModelCore.Treatments.TreatmentInstance.Cost"/> is zero.
+            </remarks>
+        </member>
         <member name="M:JCass_ModelCore.Treatments.TreatmentInstance.AssignBudgetCategoryFractions(System.Collections.Generic.Dictionary{System.String,System.Decimal})">
             <summary>
             Assigns the budget category fractions for this treatment instance if the treatment is related to multiple budget categories. The values must sum to 1 else an exception will be thrown. This 
             method needs to be called explicitly by custom implementers to set the budget category fractions for a treatment instance based on domain logic - this will vary by treatment type and 
             networkr/client rules.
             </summary>
-            <param name="budgetCategoryFractions"></param>
-            <remarks>Do NOT remove this method if references shows Zero!!! This needs to be called explicitly by custom implementers, and since these are read only at runtime, the 
-            reference is not in the code base.</remarks>
+            <param name="budgetCategoryFractions">Budget category name to the fraction of this treatment's cost charged to it. Must sum to 1.</param>
+            <exception cref="T:System.Exception">Thrown if the fractions do not sum to 1 (checked to six decimal places).</exception>
+            <remarks>
+            Leave this alone and the whole cost goes to the treatment type's own budget category, which
+            is what most treatments want.
+            <para>
+            <b>A category named here must have a matching column in the project's budget setup</b>, and
+            this is the one place that is not checked for you. The framework validates each treatment
+            type's own budget category during setup and reports a mismatch by name. It cannot validate a
+            category that only exists once your code has run, so a name that does not match a budget
+            column kills the run mid-way with a bare <c>KeyNotFoundException</c> that names nothing.
+            Check your names against <c>model.Budget.BudgetCategories</c>.
+            </para>
+            <para>
+            Do NOT remove this method if the reference count shows zero. It is called explicitly by
+            custom domain models, which are compiled separately, so no call site appears in this code
+            base.
+            </para>
+            </remarks>
+        </member>
+        <member name="M:JCass_ModelCore.Treatments.TreatmentInstance.GetBudgetCategoryCosts(System.Collections.Generic.Dictionary{System.String,JCass_ModelCore.Treatments.TreatmentType})">
+            <summary>
+            Splits this treatment's cost across budget categories, using the fractions assigned by
+            <see cref="M:JCass_ModelCore.Treatments.TreatmentInstance.AssignBudgetCategoryFractions(System.Collections.Generic.Dictionary{System.String,System.Decimal})"/> or, where none were assigned, charging the whole
+            cost to the treatment type's own budget category.
+            </summary>
+            <param name="treatmentTypes">The model's treatment types, keyed by treatment name.</param>
+            <returns>Budget category name to the cost charged to it.</returns>
+            <exception cref="T:System.Exception">Thrown if an assigned fraction is outside the range 0 to 1.</exception>
+            <remarks><b>Called by the framework</b> when funding and exporting spending.</remarks>
         </member>
         <member name="M:JCass_ModelCore.Treatments.TreatmentInstance.GetBudgetCategoryInfoForExport(System.Collections.Generic.Dictionary{System.String,JCass_ModelCore.Treatments.TreatmentType})">
             <summary>
@@ -1052,6 +2255,50 @@
             <param name="modelConfig">Model Configuration</param>
             <returns>True if this treatment's name matches the name of the routine maintenance treatment specified in the Meta Setup file and
             stored as property modelConfig.RoutineMaintenanceTreatmentName</returns>
+        </member>
+        <member name="M:JCass_ModelCore.Treatments.TreatmentInstance.GetSetupFunctionValueString(System.Collections.Generic.Dictionary{System.String,System.Object},System.Collections.Generic.Dictionary{System.String,System.Object},System.String)">
+            <summary>
+            Resolves a setup cell that names a function into that function's text result.
+            </summary>
+            <param name="row">The setup row.</param>
+            <param name="functionValues">Function key to evaluated value, for the element and period in hand.</param>
+            <param name="setupColumn">Column of <paramref name="row"/> holding the function key.</param>
+            <returns>The function's value as text.</returns>
+            <exception cref="T:System.Exception">Thrown, naming the key, if the function is not in <paramref name="functionValues"/>.</exception>
+            <remarks><b>Framework plumbing</b> for setup sheets that reference function blocks. A domain model does not call this.</remarks>
+        </member>
+        <member name="M:JCass_ModelCore.Treatments.TreatmentInstance.GetSetupFunctionValueNumber(System.Collections.Generic.Dictionary{System.String,System.Object},System.Collections.Generic.Dictionary{System.String,System.Object},System.String)">
+            <summary>
+            Resolves a setup cell that names a function into that function's numeric result.
+            </summary>
+            <param name="row">The setup row.</param>
+            <param name="functionValues">Function key to evaluated value, for the element and period in hand.</param>
+            <param name="setupColumn">Column of <paramref name="row"/> holding the function key.</param>
+            <returns>The function's value as a double.</returns>
+            <exception cref="T:System.Exception">Thrown, naming the key, if the function is not in <paramref name="functionValues"/>.</exception>
+            <remarks><b>Framework plumbing.</b> A domain model does not call this.</remarks>
+        </member>
+        <member name="M:JCass_ModelCore.Treatments.TreatmentInstance.GetRankingDebugInformationRowForMCDA(JCass_ModelCore.Models.ModelBase,System.Int32)">
+            <summary>
+            Builds one row of MCDA ranking debug output for this treatment: its rank, its cost, and every
+            raw-data column and model parameter the ranking setup used to score it.
+            </summary>
+            <param name="model">The framework model.</param>
+            <param name="iPeriod">Modelling period. Parameter values are read from the previous epoch.</param>
+            <returns>Column name to value, matching the structure from <see cref="M:JCass_ModelCore.Treatments.TreatmentInstance.GetRankDebugInformationStructure(JCass_ModelCore.Models.ModelBase)"/>.</returns>
+            <remarks>
+            <b>Framework plumbing</b>, produced only when a debug ranking period is configured. It is
+            what you read to answer "why did the model choose that treatment over this one" - which
+            makes it worth knowing exists, even though a domain model never calls it.
+            </remarks>
+        </member>
+        <member name="M:JCass_ModelCore.Treatments.TreatmentInstance.GetRankDebugInformationStructure(JCass_ModelCore.Models.ModelBase)">
+            <summary>
+            Builds the empty, correctly-columned data set that MCDA ranking debug rows are written into.
+            </summary>
+            <param name="model">The framework model, which supplies the element identifiers and the ranking setup's columns.</param>
+            <returns>An empty data set with the right columns.</returns>
+            <remarks><b>Framework plumbing.</b> Pairs with <see cref="M:JCass_ModelCore.Treatments.TreatmentInstance.GetRankingDebugInformationRowForMCDA(JCass_ModelCore.Models.ModelBase,System.Int32)"/>.</remarks>
         </member>
         <member name="F:JCass_ModelCore.Treatments.TreatmentSet._treatments">
             <summary>
@@ -1198,15 +2445,78 @@
             Creates the Strategy Key Debug Sets on the model if this element is the one for which strategy details
             </summary>
         </member>
+        <member name="T:JCass_ModelCore.Treatments.TreatmentType">
+            <summary>
+            The definition of a treatment: its name, what family it belongs to, and which budget category
+            pays for it. One of these per row of the model setup's treatments sheet.
+            </summary>
+            <remarks>
+            A domain model <b>reads</b> these, through <c>model.TreatmentTypes</c>, keyed by treatment name.
+            It never creates one - they come from the setup data.
+            <para>
+            <b>Treatment types carry no unit rate.</b> That was removed in May 2026: a rate stored on the
+            type could not vary by element or by condition, and could not be changed without a rebuild.
+            Supply the rate per <c>TreatmentInstance</c> instead, read from the project's lookups.
+            </para>
+            </remarks>
+        </member>
+        <member name="P:JCass_ModelCore.Treatments.TreatmentType.Name">
+            <summary>
+            Name of the treatment. This is the key domain models use when creating a
+            <c>TreatmentInstance</c>, and it must match exactly.
+            </summary>
+        </member>
+        <member name="P:JCass_ModelCore.Treatments.TreatmentType.Description">
+            <summary>
+            Free-text description of the treatment, for reports and for whoever reads the setup file.
+            </summary>
+        </member>
+        <member name="P:JCass_ModelCore.Treatments.TreatmentType.Category">
+            <summary>
+            The treatment's family - for example resurfacing, rehabilitation, maintenance. Used for
+            grouping in exports and for rules that apply to a whole class of treatment.
+            </summary>
+        </member>
+        <member name="P:JCass_ModelCore.Treatments.TreatmentType.BudgetCategory">
+            <summary>
+            Which budget pays for this treatment by default.
+            </summary>
+            <remarks>
+            <b>Must match a column of the run's budget sheet.</b> The framework checks this at setup and
+            names any mismatch, so getting it wrong here fails early and clearly. A treatment can
+            override the split at runtime with
+            <c>TreatmentInstance.AssignBudgetCategoryFractions</c> - and those category names are
+            <i>not</i> checked at setup.
+            </remarks>
+        </member>
+        <member name="M:JCass_ModelCore.Treatments.TreatmentType.#ctor(System.String,System.String,System.Double,System.String)">
+            <summary>
+            Creates a treatment type from explicit values.
+            </summary>
+            <param name="name">Treatment name.</param>
+            <param name="category">Treatment family.</param>
+            <param name="unitRate">Ignored. See the remarks.</param>
+            <param name="description">Description of the treatment.</param>
+            <remarks>
+            <b>Deprecated, and nothing in the framework calls it.</b> Two reasons not to use it:
+            <paramref name="unitRate"/> is accepted and then discarded, because treatment types stopped
+            carrying unit rates in May 2026; and it leaves <see cref="P:JCass_ModelCore.Treatments.TreatmentType.BudgetCategory"/> empty, which
+            fails the setup check. Treatment types come from the setup data, through the constructor that
+            takes a data row.
+            </remarks>
+        </member>
         <member name="M:JCass_ModelCore.Treatments.TreatmentType.#ctor(System.Collections.Generic.Dictionary{System.String,System.Object})">
             <summary>
-            Construct a TreatmentType object from a dictionary row
+            Creates a treatment type from a row of the setup's treatments sheet. <b>This is how the
+            framework builds them.</b>
             </summary>
-            <param name="row"></param>
+            <param name="row">The row. Must contain <c>treatment_name</c>, <c>description</c>, <c>category</c> and <c>budget_category</c>.</param>
+            <exception cref="T:System.Collections.Generic.KeyNotFoundException">Thrown if any of those four columns is absent.</exception>
         </member>
         <member name="M:JCass_ModelCore.Treatments.TreatmentType.#ctor">
             <summary>
-            Parameterless constructor needed to construct object from json
+            Parameterless constructor, required so the type can be deserialised from JSON. Leaves every
+            property empty.
             </summary>
         </member>
         <member name="T:JCass_ModelCore.Utilities.OutputStamper">

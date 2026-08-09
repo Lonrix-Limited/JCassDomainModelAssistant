@@ -36,7 +36,9 @@ General form of a simple piece-wise linear model. You provide the model with a s
 public PieceWiseLinearModel()
 ```
 
-*No framework documentation for this member.*
+Creates an empty model. Not usable until `SetupFromXYPairs` has been called.
+
+**Remarks.** Exists so the type can be deserialised. Prefer a constructor that builds a usable model.
 
 ### PieceWiseLinearModel — overload 2 of 3
 
@@ -83,7 +85,9 @@ Constructs a PieceWiseLinear model from separate lists of X and Y values. X valu
 public bool CanExtrapolate { get; }
 ```
 
-*No framework documentation for this member.*
+Whether `GetValue` continues the end segments beyond the supplied points (true) or holds the end Y values flat (false). Defaults to true.
+
+**Remarks.** Extrapolation is the more dangerous default and worth choosing deliberately: a curve fitted over a limited range will happily return values well outside it when asked.
 
 ## Methods
 
