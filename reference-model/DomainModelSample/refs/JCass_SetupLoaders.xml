@@ -1,0 +1,587 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>JCass_SetupLoaders</name>
+    </assembly>
+    <members>
+        <member name="M:JCass_SetupLoaders.Desktop.DesktopLoader.GetTreatmentColours(System.String)">
+            <summary>
+            Gets the treatment colours from the background colours of cells in the 'treatments' sheet of the 
+            model setup file, looking specifically for the background of colours in the  'treatment_name' column.
+            </summary>
+            <param name="setupFilePath">Path to the model setup file</param>    
+        </member>
+        <member name="T:JCass_SetupLoaders.Desktop.DomainModelInfo">
+            <summary>
+            Class to hold lists related to Domain Model for quick population of lists etc. Note that this does
+            intentionally not do a full load and check of the Domain Model. We only load what is needed to populate
+            dropdown lists etc. A more thorough check is done when the DesktopLoader loads the model data before a run
+            in the UI
+            </summary>
+        </member>
+        <member name="P:JCass_SetupLoaders.Desktop.WorkBench.DomainModelDllFile">
+            <summary>
+            Domain model dll filename (not full path) for the case where a C# Domain Model is used. This DLL will be expected to be
+            in the 'domain_model' subfolder of the work folder. If no custom domain model is used, this should be "none" otherwise
+            an error will be raised when an attempt is made to load the model
+            </summary>
+        </member>
+        <member name="P:JCass_SetupLoaders.Desktop.WorkBench.DomainModelClassName">
+            <summary>
+            Name of the class implementing the custom Domain Model. This is expected to be a class in the DLL file specified by
+            the DomainModelDllFile property. If no custom domain model is used, this should be "none". If a class name is specified, it
+            should inherit from the DomainModelBase class in the JCass_ModelCore library and thus implement the IDomainModel interface.
+            </summary>
+        </member>
+        <member name="P:JCass_SetupLoaders.Desktop.WorkBench.KPISetupFile">
+            <summary>
+            Name of the file containing the KPI setups. Also holds default grouping for a Grouped Model if applicable.
+            </summary>
+        </member>
+        <member name="P:JCass_SetupLoaders.Desktop.WorkBench.BudgetsFilePath">
+            <summary>
+            Path to the Budgets file. Should be a file named 'budgets.xlsx' in the 'inputs' subfolder of the work folder
+            </summary>
+        </member>
+        <member name="P:JCass_SetupLoaders.Desktop.WorkBench.LookupsFilePath">
+            <summary>
+            Path to the Lookups file. Should be a file named 'lookups.xlsx' in the 'inputs' subfolder of the work folder
+            </summary>
+        </member>
+        <member name="T:JCass_SetupLoaders.WebFolder.BudgetCategoryOverrideApplier">
+             <summary>
+             Cross-validates a parsed <see cref="T:JCass_SetupLoaders.WebFolder.BudgetCategoryOverrideSet"/> against
+             the bundle's <c>treatments</c> sheet and the active tag's
+             <c>budget_data</c> sheet, then patches the <c>budget_category</c> column
+             of the <c>treatments</c> jcDataSet in place. Extracted from
+             <c>WebFolderLoader</c> so the validation + patch logic is unit-testable
+             without spinning up the rest of the loader.
+            
+             <para><b>Semantics:</b> all-or-nothing. If any cross-validation error
+             surfaces, the returned error list is non-empty and the <c>treatments</c>
+             dataset is left untouched. Callers should log every error and abort the
+             patch (the <c>WebFolderLoader</c> wires this into the existing
+             <c>_setupErrors</c> + <c>HasErrors</c> flow).</para>
+            
+             <para><b>Case sensitivity:</b> treatment-name matching against the
+             bundle's <c>treatments</c> sheet is case-sensitive
+             (<see cref="P:System.StringComparer.Ordinal"/>); budget-category matching against
+             the budget sheet's column headers is also case-sensitive. Either is a
+             locked decision in <c>docs/web-app/budget-category-overrides-execution-plan.md</c>.</para>
+             </summary>
+        </member>
+        <member name="M:JCass_SetupLoaders.WebFolder.BudgetCategoryOverrideApplier.Apply(JCass_Data.Objects.jcDataSet,JCass_Data.Objects.jcDataSet,JCass_SetupLoaders.WebFolder.BudgetCategoryOverrideSet)">
+            <summary>
+            Validates <paramref name="overrides"/> against <paramref name="treatments"/>
+            and <paramref name="budgetData"/>; on success patches the
+            <c>budget_category</c> column of <paramref name="treatments"/> in place.
+            </summary>
+            <param name="treatments">The bundle's <c>treatments</c> jcDataSet —
+            must carry the <c>treatment_name</c> and <c>budget_category</c> columns
+            (the framework's <c>new TreatmentType(row)</c> reads them).</param>
+            <param name="budgetData">The active tag's <c>budget_&lt;tag&gt;</c>
+            sheet read into a jcDataSet. Legal categories = column headers minus
+            <c>period</c> and <c>colour</c>, mirroring <c>Budget.Setup</c>.</param>
+            <param name="overrides">Parsed override set from
+            <see cref="T:JCass_SetupLoaders.WebFolder.WebFolderBudgetCategoriesReader"/>.</param>
+            <returns>Empty list on success; otherwise one error per failed check.
+            When the returned list is non-empty <paramref name="treatments"/> is
+            unchanged.</returns>
+        </member>
+        <member name="M:JCass_SetupLoaders.WebFolder.BudgetCategoryOverrideApplier.ValidateTreatmentsShape(JCass_Data.Objects.jcDataSet)">
+            <summary>
+            Checks that the bundle's <c>treatments</c> jcDataSet carries the two
+            columns the applier needs (<see cref="F:JCass_SetupLoaders.WebFolder.BudgetCategoryOverrideApplier.ColTreatmentName"/> and
+            <see cref="F:JCass_SetupLoaders.WebFolder.BudgetCategoryOverrideApplier.ColBudgetCategory"/>). Defensive — the framework's own
+            <c>new TreatmentType(row)</c> would crash on either being absent, so
+            failing fast here yields a clearer error message.
+            </summary>
+        </member>
+        <member name="M:JCass_SetupLoaders.WebFolder.BudgetCategoryOverrideApplier.BuildTreatmentRowIndex(JCass_Data.Objects.jcDataSet)">
+            <summary>
+            Builds a case-sensitive (<see cref="P:System.StringComparer.Ordinal"/>)
+            treatment-name → row-index lookup over the bundle's <c>treatments</c>
+            jcDataSet. Blank treatment names are skipped; duplicate names take the
+            first occurrence (the framework's own setup checker already rejects
+            bundle-level duplicates, so this helper just stays graceful).
+            </summary>
+        </member>
+        <member name="M:JCass_SetupLoaders.WebFolder.BudgetCategoryOverrideApplier.BuildLegalCategorySet(JCass_Data.Objects.jcDataSet)">
+            <summary>
+            Builds the legal-category set for the active tag's budget jcDataSet,
+            mirroring the <c>Budget.Setup</c> convention: every column header
+            except <c>period</c> and <c>colour</c> is a budget category.
+            </summary>
+        </member>
+        <member name="M:JCass_SetupLoaders.WebFolder.BudgetCategoryOverrideApplier.ValidateOverrides(JCass_SetupLoaders.WebFolder.BudgetCategoryOverrideSet,System.Collections.Generic.Dictionary{System.String,System.Int32},System.Collections.Generic.HashSet{System.String})">
+            <summary>
+            Walks every override and emits an error per unknown treatment / unknown
+            budget category. Returns the pending patch list (one entry per valid
+            override) and the error list. Both lists are populated regardless of
+            each other so the caller can apply the all-or-nothing semantic by
+            inspecting the error count before applying patches.
+            </summary>
+        </member>
+        <member name="M:JCass_SetupLoaders.WebFolder.BudgetCategoryOverrideApplier.ApplyPatches(JCass_Data.Objects.jcDataSet,System.Collections.Generic.List{System.ValueTuple{System.Int32,System.String}})">
+            <summary>
+            Mutates the <c>treatments</c> jcDataSet in place, rewriting the
+            <c>budget_category</c> cell of each patched row. <c>jcDataSet.Row(i)</c>
+            returns the underlying Dictionary, so this directly updates the live
+            data the framework's <c>new TreatmentType(row)</c> will subsequently read.
+            </summary>
+        </member>
+        <member name="T:JCass_SetupLoaders.WebFolder.StylesColourEntry">
+            <summary>
+            Single treatment colour entry parsed from the <c>treatment_colours</c>
+            sheet of <c>inputs/styles.xlsx</c>. <see cref="P:JCass_SetupLoaders.WebFolder.StylesColourEntry.Text"/> is null when the
+            styles file did not specify a foreground colour — callers derive an
+            auto-contrast value at render time.
+            </summary>
+        </member>
+        <member name="T:JCass_SetupLoaders.WebFolder.StylesBinEntry">
+            <summary>
+            Single bin entry parsed from <c>input_columns</c> or <c>model_parameters</c>.
+            A bin matches when <c>value &lt;= BinUpper</c> and the previous bin's
+            upper bound is not (semantically the lower bound is the previous bin's
+            upper or <c>-Infinity</c> for the first bin).
+            </summary>
+        </member>
+        <member name="T:JCass_SetupLoaders.WebFolder.WebFolderStyles">
+            <summary>
+            Aggregate result of parsing a client's optional <c>inputs/styles.xlsx</c>.
+            Every dictionary is non-null but may be empty when the corresponding sheet
+            is missing or contains only malformed rows. <see cref="P:JCass_SetupLoaders.WebFolder.WebFolderStyles.FileExists"/>
+            distinguishes "no file uploaded" from "file uploaded but everything was
+            dropped".
+            </summary>
+        </member>
+        <member name="T:JCass_SetupLoaders.WebFolder.StylesParseSeverity">
+            <summary>
+            Severity of a single styles-file parse diagnostic. Errors are syntactic
+            problems (bad colour hex, non-numeric bin upper, missing required cell);
+            warnings are reserved by the validator for semantic mismatches against
+            the bundle (unknown treatment / column / parameter, bins on a text
+            column).
+            </summary>
+        </member>
+        <member name="T:JCass_SetupLoaders.WebFolder.StylesParseIssue">
+            <summary>
+            Single parse-time diagnostic captured by the reader's diagnostic-mode
+            overload. <see cref="P:JCass_SetupLoaders.WebFolder.StylesParseIssue.ExcelRow"/> is 1-indexed (matching what the user
+            sees in Excel — header is row 1, the first data row is row 2).
+            </summary>
+        </member>
+        <member name="T:JCass_SetupLoaders.WebFolder.StylesParseOccurrence">
+            <summary>
+            Per-row "this name was seen here" record kept alongside the parse report
+            in diagnostic mode. The validator walks these to emit per-row warnings
+            about unknown / mismatched names — the parsed dictionaries lose row-level
+            provenance once entries are aggregated by name.
+            </summary>
+        </member>
+        <member name="T:JCass_SetupLoaders.WebFolder.WebFolderStylesParseReport">
+            <summary>
+            Result of <see cref="M:JCass_SetupLoaders.WebFolder.WebFolderStylesReader.ReadWithDiagnostics(System.String)"/>.
+            Carries the same parsed payload the silent overload returns, plus the list
+            of rows that were dropped (<see cref="P:JCass_SetupLoaders.WebFolder.WebFolderStylesParseReport.Issues"/>) and per-row name
+            occurrences (<see cref="P:JCass_SetupLoaders.WebFolder.WebFolderStylesParseReport.Occurrences"/>) used by the validator to emit
+            per-row warnings against bundle metadata.
+            </summary>
+        </member>
+        <member name="T:JCass_SetupLoaders.WebFolder.BudgetCategoryOverrideSet">
+            <summary>
+            Single per-client override entry sourced from <c>inputs/budget_categories.xlsx</c>.
+            Reassigns the <c>budget_category</c> of one treatment without forking the
+            domain-model bundle. <see cref="P:JCass_SetupLoaders.WebFolder.BudgetCategoryOverrideSet.Overrides"/> maps treatment name to its new
+            budget-category label; <see cref="P:JCass_SetupLoaders.WebFolder.BudgetCategoryOverrideSet.Comments"/> carries the optional free-text
+            comment column (entries are only present for rows whose comment was non-blank).
+            Both dictionaries use case-sensitive (<c>StringComparer.Ordinal</c>) keys —
+            the cross-validation in <c>WebFolderLoader</c> matches treatment names against
+            the bundle's <c>treatments</c> sheet case-sensitively.
+            </summary>
+        </member>
+        <member name="P:JCass_SetupLoaders.WebFolder.BudgetCategoryOverrideSet.IsEmpty">
+            <summary>True when no overrides parsed — useful for short-circuiting
+            callers that do not want to differentiate between "no file" and
+            "file with no rows".</summary>
+        </member>
+        <member name="T:JCass_SetupLoaders.WebFolder.WebFolderBudgetCategoriesReader">
+            <summary>
+            Parser for the optional per-client <c>inputs/budget_categories.xlsx</c>
+            file. The reader does <b>not</b> validate against the bundle's treatment
+            list or against any budget's category columns — those cross-validations
+            live in <c>BudgetCategoryOverrideApplier</c> alongside the loader-side
+            patch. This reader only enforces the file's structural contract:
+            required sheet present, required columns present (case-sensitive header
+            literals), no duplicate <c>treatment_name</c> keys, no partial-blank rows.
+            <para>See <c>docs/web-app/budget-categories-file.md</c> for the
+            user-facing schema.</para>
+            </summary>
+        </member>
+        <member name="M:JCass_SetupLoaders.WebFolder.WebFolderBudgetCategoriesReader.Read(System.String)">
+            <summary>
+            Reads the override file at <paramref name="filePath"/>.
+            <list type="bullet">
+              <item>File missing → <c>(null, empty errors)</c> — caller treats
+              <c>null</c> as "no override; use bundle values unchanged".</item>
+              <item>File present but structurally invalid (missing sheet, missing
+              required column, duplicate key, partial-blank row, unreadable
+              workbook) → <c>(null, errors)</c>. The caller logs each error and
+              sets <c>HasErrors</c>; no patch is applied.</item>
+              <item>File present and valid → <c>(set, empty errors)</c>.</item>
+            </list>
+            Excel row numbers in error messages are 1-based to match what the
+            user sees in Excel (header is row 1; first data row is row 2).
+            </summary>
+        </member>
+        <member name="M:JCass_SetupLoaders.WebFolder.WebFolderBudgetCategoriesReader.TryReadSheet(JCass_Excel.IExcelWorkbook,System.Collections.Generic.List{System.String})">
+            <summary>
+            Verifies the required <see cref="F:JCass_SetupLoaders.WebFolder.WebFolderBudgetCategoriesReader.SheetName"/> exists and reads it into
+            a <see cref="T:JCass_Data.Objects.jcDataSet"/>. Returns <c>null</c> and appends a message to
+            <paramref name="errors"/> when the sheet is missing or unreadable.
+            </summary>
+        </member>
+        <member name="M:JCass_SetupLoaders.WebFolder.WebFolderBudgetCategoriesReader.CheckRequiredColumns(JCass_Data.Objects.jcDataSet,System.Collections.Generic.List{System.String})">
+            <summary>
+            Confirms both required columns (<see cref="F:JCass_SetupLoaders.WebFolder.WebFolderBudgetCategoriesReader.ColTreatmentName"/> and
+            <see cref="F:JCass_SetupLoaders.WebFolder.WebFolderBudgetCategoriesReader.ColBudgetCategory"/>) are present using case-sensitive
+            matching — per the locked decision, header literals must match exactly.
+            Appends one error per missing column and returns <c>false</c> if any
+            were missing.
+            </summary>
+        </member>
+        <member name="M:JCass_SetupLoaders.WebFolder.WebFolderBudgetCategoriesReader.ParseRows(JCass_Data.Objects.jcDataSet,System.Collections.Generic.List{System.String})">
+            <summary>
+            Walks the data rows and assembles the override + comment dictionaries.
+            Blank-blank rows are skipped silently; partial-blank rows and duplicate
+            <see cref="F:JCass_SetupLoaders.WebFolder.WebFolderBudgetCategoriesReader.ColTreatmentName"/> keys append an error and skip the row.
+            The returned <see cref="T:JCass_SetupLoaders.WebFolder.BudgetCategoryOverrideSet"/> is only meaningful
+            when <paramref name="errors"/> is still empty after the call.
+            </summary>
+        </member>
+        <member name="T:JCass_SetupLoaders.WebFolder.WebFolderBundleReader">
+             <summary>
+             Reader for the new-shape domain-model bundle file
+             (<see cref="F:JCass_SetupLoaders.WebFolder.WebFolderBundleReader.BundleFileName"/>) introduced by the workbench-removal refactor
+             (M1, see docs/web-app/workbench-removal-plan.md § 4). Author-owned content
+             — the DLL entry-point pair plus the four DLL-bound setup sheets — is moved
+             out of the user's setup file and into this single fixed-name file that
+             travels with the DLL in the version zip.
+            
+             <para>This reader is additive: the old <see cref="T:JCass_SetupLoaders.WebFolder.WebFolderDomainModelInfo"/>
+             path remains in place for the old shape until the loader switchover (Step 3
+             of the execution plan).</para>
+            
+             <para>Used in two places: admin upload validation
+             (<c>DomainModelsService.UploadVersionAsync</c>) and — once Step 3 lands —
+             the runtime loader. Sharing the reader avoids "valid at upload, broken at
+             run" drift.</para>
+             </summary>
+        </member>
+        <member name="F:JCass_SetupLoaders.WebFolder.WebFolderBundleReader.BundleFileName">
+            <summary>Fixed bundle filename at the root of the version zip.</summary>
+        </member>
+        <member name="F:JCass_SetupLoaders.WebFolder.WebFolderBundleReader.MetaSheetName">
+            <summary>Two-column key/value sheet declaring DLL + class + display name.</summary>
+        </member>
+        <member name="F:JCass_SetupLoaders.WebFolder.WebFolderBundleReader.RequiredSheetNames">
+            <summary>
+            All sheets the bundle must contain. <c>mcda_setup</c> is intentionally
+            excluded — it's user-owned post-refactor and lives in
+            <c>inputs/mcda_setups.xlsx</c>.
+            </summary>
+        </member>
+        <member name="M:JCass_SetupLoaders.WebFolder.WebFolderBundleReader.TryLoad(System.String)">
+            <summary>
+            Reads the bundle file at <paramref name="bundleFilePath"/>. On any
+            validation failure, <see cref="P:JCass_SetupLoaders.WebFolder.WebFolderBundleReader.IsLoaded"/> stays false and
+            <see cref="P:JCass_SetupLoaders.WebFolder.WebFolderBundleReader.SetupErrors"/> carries human-readable messages.
+            </summary>
+        </member>
+        <member name="T:JCass_SetupLoaders.WebFolder.WebFolderDomainModelInfo">
+             <summary>
+             Lists derived from the staged domain-model bundle file
+             (<c>clients/{id}/domain_model/domain_model_setup.xlsx</c>) for use by
+             runner UIs (parameter / treatment / input-header dropdowns) and by
+             postprocessing operations.
+            
+             <para>Post-M1 this class is a thin projection over
+             <see cref="T:JCass_SetupLoaders.WebFolder.WebFolderBundleReader"/> — the canonical bundle parser. Do
+             not duplicate parsing logic here; delegate to the reader.</para>
+             </summary>
+        </member>
+        <member name="P:JCass_SetupLoaders.WebFolder.WebFolderDomainModelInfo.MainDll">
+            <summary>Bundle <c>meta</c> sheet — DLL filename for the entry-point assembly.</summary>
+        </member>
+        <member name="P:JCass_SetupLoaders.WebFolder.WebFolderDomainModelInfo.MainClass">
+            <summary>Bundle <c>meta</c> sheet — fully-qualified main class name.</summary>
+        </member>
+        <member name="P:JCass_SetupLoaders.WebFolder.WebFolderDomainModelInfo.ModelName">
+            <summary>Bundle <c>meta</c> sheet — display name shown in admin UIs.</summary>
+        </member>
+        <member name="M:JCass_SetupLoaders.WebFolder.WebFolderDomainModelInfo.TryLoad(System.String)">
+            <summary>
+            Loads the bundle at <paramref name="bundleFilePath"/> and projects its
+            data into the dropdown-friendly lists this class exposes. On failure,
+            <see cref="P:JCass_SetupLoaders.WebFolder.WebFolderDomainModelInfo.IsLoaded"/> stays false and <see cref="P:JCass_SetupLoaders.WebFolder.WebFolderDomainModelInfo.SetupErrors"/>
+            contains human-readable messages.
+            </summary>
+        </member>
+        <member name="T:JCass_SetupLoaders.WebFolder.WebFolderLoader">
+             <summary>
+             Server-side folder-based loader for the Cassandra v1 web stack. Reads
+             every input from the fixed-name layout under
+             <c>clients/{clientId}/inputs/</c> plus the staged domain-model bundle
+             at <c>clients/{clientId}/domain_model/domain_model_setup.xlsx</c>.
+            
+             <para>Workbench-removal refactor (M1, Step 3): replaces the previous
+             workbench-based loader. Constructor takes a
+             <see cref="T:JCass_SetupLoaders.WebFolder.WebFolderProjectSettings"/> directly; DLL/class info comes
+             from the bundle's <c>meta</c> sheet via
+             <see cref="T:JCass_SetupLoaders.WebFolder.WebFolderBundleReader"/>.</para>
+             </summary>
+        </member>
+        <member name="F:JCass_SetupLoaders.WebFolder.WebFolderLoader.DomainModelDataSheetNames">
+            <summary>
+            Sheets the loader reads from the staged bundle file. The bundle
+            reader (<see cref="F:JCass_SetupLoaders.WebFolder.WebFolderBundleReader.RequiredSheetNames"/>) is
+            the source of truth for "must be present"; this list is what we
+            physically pull data from after validation.
+            </summary>
+        </member>
+        <member name="M:JCass_SetupLoaders.WebFolder.WebFolderLoader.ApplyBundleEntryPointToModelConfig">
+            <summary>
+            Reads the bundle's <c>meta</c> sheet via
+            <see cref="T:JCass_SetupLoaders.WebFolder.WebFolderBundleReader"/> and writes the entry-point pair
+            onto the live <see cref="T:JCass_ModelCore.ModelObjects.ModelConfiguration"/>. The bundle file
+            itself is read again later in <see cref="M:JCass_SetupLoaders.WebFolder.WebFolderLoader.GetSetupData"/> for the
+            four data sheets — this is the cheap meta-only read.
+            </summary>
+        </member>
+        <member name="M:JCass_SetupLoaders.WebFolder.WebFolderLoader.GetTreatmentColours(System.String)">
+            <summary>
+            Reads the cell-background colours from the bundle's <c>treatments</c>
+            sheet and returns a <c>treatment_name → colour</c> dictionary. The
+            caller (e.g. exporters) supplies the absolute path to the staged
+            bundle file.
+            </summary>
+        </member>
+        <member name="M:JCass_SetupLoaders.WebFolder.WebFolderLoader.ApplyBudgetCategoryOverrides(System.Collections.Generic.Dictionary{System.String,JCass_Data.Objects.jcDataSet})">
+            <summary>
+            Applies the optional per-client <c>inputs/budget_categories.xlsx</c>
+            override file (if present) to the just-loaded <c>treatments</c>
+            jcDataSet. Errors from the reader or the cross-validation are routed
+            through <see cref="F:JCass_SetupLoaders.WebFolder.WebFolderLoader._setupErrors"/> so they reach the run-log tail via
+            the existing <see cref="M:JCass_SetupLoaders.WebFolder.WebFolderLoader.GetSetupStructure(System.Boolean)"/> dump and flip
+            <see cref="P:JCass_SetupLoaders.WebFolder.WebFolderLoader.HasErrors"/>. The framework code path (<c>TreatmentType</c>,
+            <c>Budget</c>, <c>ModelSetupChecker</c>) is unmodified — the patch is
+            applied to the in-memory jcDataSet before those types consume it.
+            </summary>
+        </member>
+        <member name="T:JCass_SetupLoaders.WebFolder.WebFolderModelConfigHelper">
+            <summary>
+            Reads the <c>base_config</c> + <c>config_&lt;tag&gt;</c> sheets from the
+            fixed-name <c>inputs/configurations.xlsx</c> file (post-M1 schema —
+            see <c>docs/web-app/workbench-removal-plan.md</c> § 5). Replaces the
+            old workbench-driven path; the merge logic (base settings overridden
+            per-tag) is preserved verbatim.
+            </summary>
+        </member>
+        <member name="M:JCass_SetupLoaders.WebFolder.WebFolderModelConfigHelper.LoadModelConfigurationsFromConfigurationsFile(System.String,JCass_SetupLoaders.WebFolder.WebFolderProjectSettings)">
+            <summary>
+            Loads every <c>config_*</c> sheet from <paramref name="configurationsFilePath"/>,
+            each merged on top of the <c>base_config</c> defaults, and returns
+            a dictionary keyed by the tag (the part after <c>config_</c>).
+            </summary>
+        </member>
+        <member name="M:JCass_SetupLoaders.WebFolder.WebFolderModelConfigHelper.GetSingleConfigurationFromFile(System.String,System.String,JCass_SetupLoaders.WebFolder.WebFolderProjectSettings)">
+            <summary>
+            Loads a single configuration tag. Used by callers that want one
+            configuration without paying the cost of parsing every <c>config_*</c>
+            sheet (e.g. ad-hoc admin tooling). Currently unused on the web run path
+            — kept as parity with the desktop sibling.
+            </summary>
+        </member>
+        <member name="T:JCass_SetupLoaders.WebFolder.WebFolderProjectSettings">
+             <summary>
+             Resolves the fixed-name file layout for a client's project folder under
+             <c>clients/{clientId}/</c>. Replaces the workbench-driven
+             <c>WebFolderWorkBench</c> abstraction removed in the M1 refactor —
+             see <c>docs/web-app/workbench-removal-plan.md</c> for the schema lock
+             and <c>workbench-removal-execution-plan.md</c> Step 3 for the cutover
+             plan.
+            
+             <para>All public path getters return canonical absolute paths regardless
+             of whether the file currently exists. Optional files
+             (<see cref="P:JCass_SetupLoaders.WebFolder.WebFolderProjectSettings.CommittedTreatmentsFile"/>, <see cref="P:JCass_SetupLoaders.WebFolder.WebFolderProjectSettings.MultiColumnLookupsFile"/>,
+             <see cref="P:JCass_SetupLoaders.WebFolder.WebFolderProjectSettings.GoalSeekSetupFile"/>, <see cref="P:JCass_SetupLoaders.WebFolder.WebFolderProjectSettings.McdaSetupFile"/>,
+             <see cref="P:JCass_SetupLoaders.WebFolder.WebFolderProjectSettings.BudgetCategoryOverridesFile"/>) are signalled by file presence;
+             consumers call <see cref="M:System.IO.File.Exists(System.String)"/> on the returned path.</para>
+             </summary>
+        </member>
+        <member name="T:JCass_SetupLoaders.WebFolder.WebFolderProjectSettings.FileNames">
+            <summary>
+            Fixed input-file names under <c>clients/{id}/inputs/</c> plus the
+            authoritative catalog used by every preflight site and by the Files
+            page classification badge.
+            <para>If you add a new constant, also add it to <see cref="F:JCass_SetupLoaders.WebFolder.WebFolderProjectSettings.FileNames.AllFixedNames"/>
+            (and to <see cref="F:JCass_SetupLoaders.WebFolder.WebFolderProjectSettings.FileNames.AlwaysRequired"/> if the run cannot start without
+            it). The two arrays sit immediately below the constants for that
+            reason — keep them together.</para>
+            </summary>
+        </member>
+        <member name="F:JCass_SetupLoaders.WebFolder.WebFolderProjectSettings.FileNames.AlwaysRequired">
+            <summary>Files the framework refuses to start a run without.</summary>
+        </member>
+        <member name="F:JCass_SetupLoaders.WebFolder.WebFolderProjectSettings.FileNames.AllFixedNames">
+            <summary>All fixed-name input files recognised by the framework
+            (required + optional). Files in <c>inputs/</c> whose name is not
+            in this list are "other" — candidates for moving to Supporting.</summary>
+        </member>
+        <member name="M:JCass_SetupLoaders.WebFolder.WebFolderProjectSettings.FileNames.ClassifyInputFile(System.String)">
+            <summary>
+            Classifies an input filename for the Files-page Role badge. Returns
+            <c>"required"</c>, <c>"optional"</c>, or <c>"other"</c>. Comparison
+            is case-insensitive so a user-uploaded <c>Lookups.xlsx</c> still
+            matches.
+            </summary>
+        </member>
+        <member name="F:JCass_SetupLoaders.WebFolder.WebFolderProjectSettings.DefaultDomainModelFolderName">
+            <summary>
+            Default subfolder name under the client root where the staged domain-model
+            bundle lives. Regular flows use this; the Debug Model subsystem overrides
+            via the constructor's <c>domainModelFolderName</c> parameter to point at
+            <c>debug_domain_model/</c> (its own scratchpad bundle staged by
+            <c>DebugWorkspaceService</c>) so a debug run does not compete with any
+            concurrently-running regular run's <c>domain_model/</c> contents.
+            </summary>
+        </member>
+        <member name="P:JCass_SetupLoaders.WebFolder.WebFolderProjectSettings.WorkFolder">
+            <summary>Absolute path to the client root (replaces <c>WorkFolder</c> on the old workbench).</summary>
+        </member>
+        <member name="P:JCass_SetupLoaders.WebFolder.WebFolderProjectSettings.DomainModelFolderName">
+            <summary>
+            The subfolder name this instance was built with — <c>domain_model</c>
+            for regular flows, <c>debug_domain_model</c> for the Debug Model
+            subsystem. Exposed so callers rendering user-facing messages can name
+            the folder they actually looked in rather than assuming the default.
+            </summary>
+        </member>
+        <member name="P:JCass_SetupLoaders.WebFolder.WebFolderProjectSettings.DomainModelSetupFile">
+            <summary>Staged domain-model bundle file (always at <c>domain_model/domain_model_setup.xlsx</c>).</summary>
+        </member>
+        <member name="P:JCass_SetupLoaders.WebFolder.WebFolderProjectSettings.StylesFile">
+            <summary>Optional per-client styling file. Presence-based; not consumed by the framework engine.</summary>
+        </member>
+        <member name="P:JCass_SetupLoaders.WebFolder.WebFolderProjectSettings.BudgetCategoryOverridesFile">
+            <summary>Optional per-client override file that reassigns
+            <c>TreatmentType.BudgetCategory</c> values without forking the bundle.
+            Presence-based; applied inside <c>WebFolderLoader.GetSetupData()</c>.
+            See <c>docs/web-app/budget-categories-file.md</c> for the schema.</summary>
+        </member>
+        <member name="P:JCass_SetupLoaders.WebFolder.WebFolderProjectSettings.KPISetupSheets">
+            <summary>Sheets in <see cref="P:JCass_SetupLoaders.WebFolder.WebFolderProjectSettings.KPISetupFile"/> whose names start with <c>kpi_set_</c>.
+            Populated by <see cref="M:JCass_SetupLoaders.WebFolder.WebFolderProjectSettings.Check"/>; empty when the KPI file is absent.</summary>
+        </member>
+        <member name="M:JCass_SetupLoaders.WebFolder.WebFolderProjectSettings.#ctor(System.String,System.String)">
+            <summary>
+            Builds the fixed-name file layout for a client root. Regular flows call
+            with a single argument (defaults <paramref name="domainModelFolderName"/>
+            to <c>domain_model/</c>). The Debug Model subsystem passes
+            <c>debug_domain_model</c> to redirect bundle-file discovery at the
+            scratchpad staged by <c>DebugWorkspaceService</c>; see
+            <c>docs/web-app/debug-model-and-push/archived/debug-model-execution-plan.md</c> Step 6b Session H.
+            </summary>
+            <param name="clientRoot">Absolute path to the client's root folder.</param>
+            <param name="domainModelFolderName">
+            Subfolder name under <paramref name="clientRoot"/> that holds
+            <c>domain_model_setup.xlsx</c>. Defaults to
+            <see cref="F:JCass_SetupLoaders.WebFolder.WebFolderProjectSettings.DefaultDomainModelFolderName"/>.
+            </param>
+        </member>
+        <member name="M:JCass_SetupLoaders.WebFolder.WebFolderProjectSettings.Check">
+            <summary>
+            Validates that the required files are present and populates
+            <see cref="P:JCass_SetupLoaders.WebFolder.WebFolderProjectSettings.KPISetupSheets"/>. Errors are accumulated in
+            <see cref="P:JCass_SetupLoaders.WebFolder.WebFolderProjectSettings.SetupErrors"/> rather than thrown so the caller can surface
+            them as a batch (matches the WorkBench-era contract).
+            </summary>
+        </member>
+        <member name="T:JCass_SetupLoaders.WebFolder.WebFolderProjectSetup">
+             <summary>
+             Aggregate result of <see cref="M:JCass_SetupLoaders.WebFolder.WebFolderProjectLoader.LoadAndCheck(System.String,JCass_Data.Objects.ILogItemData,System.String)"/> —
+             the three artefacts the worker (and postprocessing services) need to
+             drive a model run: file-layout settings, domain-model bundle info, and
+             the parsed configuration dictionary.
+            
+             <para>Replaces the old <c>WebFolderWorkBenchHelper</c> wrapper. Errors
+             from any of the three parse stages are merged into
+             <see cref="P:JCass_SetupLoaders.WebFolder.WebFolderProjectSetup.SetupErrors"/>; check <see cref="P:JCass_SetupLoaders.WebFolder.WebFolderProjectSetup.HasErrors"/> before relying
+             on the contents of <see cref="P:JCass_SetupLoaders.WebFolder.WebFolderProjectSetup.ModelConfigurations"/>.</para>
+             </summary>
+        </member>
+        <member name="T:JCass_SetupLoaders.WebFolder.WebFolderProjectLoader">
+            <summary>
+            Orchestrates the M1 client-folder load: validates the fixed-name file
+            layout, parses the domain-model bundle, then merges
+            <c>configurations.xlsx</c> into a per-tag
+            <see cref="T:JCass_ModelCore.ModelObjects.ModelConfiguration"/> dictionary. Used by the web worker on
+            run start and by the postprocessing workbench cache.
+            </summary>
+        </member>
+        <member name="M:JCass_SetupLoaders.WebFolder.WebFolderProjectLoader.LoadAndCheck(System.String,JCass_Data.Objects.ILogItemData,System.String)">
+            <summary>
+            Loads project settings + domain-model bundle + configurations from
+            <paramref name="clientRoot"/>. Errors from any stage land in the
+            returned <see cref="P:JCass_SetupLoaders.WebFolder.WebFolderProjectSetup.SetupErrors"/>; subsequent
+            stages that depend on a successful prior parse are skipped, so
+            <see cref="P:JCass_SetupLoaders.WebFolder.WebFolderProjectSetup.ModelConfigurations"/> is empty
+            whenever the bundle parse fails.
+            </summary>
+            <param name="clientRoot">Absolute path to the client's root folder.</param>
+            <param name="logger">Log sink for progress + error lines.</param>
+            <param name="domainModelFolderName">
+            Subfolder name under <paramref name="clientRoot"/> that holds
+            <c>domain_model_setup.xlsx</c>. Defaults to
+            <see cref="F:JCass_SetupLoaders.WebFolder.WebFolderProjectSettings.DefaultDomainModelFolderName"/>;
+            the Debug Model subsystem passes <c>debug_domain_model</c> to point
+            at its scratchpad bundle (see
+            <c>docs/web-app/debug-model-and-push/archived/debug-model-execution-plan.md</c> Step 6b Session H).
+            </param>
+        </member>
+        <member name="T:JCass_SetupLoaders.WebFolder.WebFolderStylesReader">
+            <summary>
+            Tolerant parser for the optional per-client <c>inputs/styles.xlsx</c>.
+            Three independent sheets are recognised — <see cref="F:JCass_SetupLoaders.WebFolder.WebFolderStylesReader.SheetTreatmentColours"/>,
+            <see cref="F:JCass_SetupLoaders.WebFolder.WebFolderStylesReader.SheetInputColumns"/>, <see cref="F:JCass_SetupLoaders.WebFolder.WebFolderStylesReader.SheetModelParameters"/>. Each
+            sheet is independently optional; unknown sheet names are ignored. Rows
+            that fail validation are silently dropped at load time when called via
+            <see cref="M:JCass_SetupLoaders.WebFolder.WebFolderStylesReader.Read(System.String)"/>; the diagnostic-mode overload
+            <see cref="M:JCass_SetupLoaders.WebFolder.WebFolderStylesReader.ReadWithDiagnostics(System.String)"/> additionally collects the drops
+            as a structured report consumed by the validator endpoint.
+            </summary>
+        </member>
+        <member name="M:JCass_SetupLoaders.WebFolder.WebFolderStylesReader.Read(System.String)">
+            <summary>
+            Reads the styles file at <paramref name="filePath"/>. Returns an empty
+            payload (with <c>FileExists=false</c>) when the file is missing.
+            Parsing exceptions are swallowed and produce an empty payload with
+            <c>FileExists=true</c> — callers should not branch on parse failure
+            since the user-facing diagnostics live on the validator endpoint.
+            </summary>
+        </member>
+        <member name="M:JCass_SetupLoaders.WebFolder.WebFolderStylesReader.ReadWithDiagnostics(System.String)">
+            <summary>
+            Diagnostic overload: returns the same parsed payload as
+            <see cref="M:JCass_SetupLoaders.WebFolder.WebFolderStylesReader.Read(System.String)"/> alongside the per-row drop list and the
+            per-row name occurrences used by the validator. The cache loader
+            continues to call the silent overload to avoid carrying parse
+            diagnostics through the hot path.
+            </summary>
+        </member>
+        <member name="M:JCass_SetupLoaders.WebFolder.WebFolderStylesReader.ExcelRow(System.Int32)">
+            <summary>jcDataSet row index <c>i</c> (0-indexed, after the header)
+            corresponds to Excel row <c>i + 2</c>: row 1 is the header.</summary>
+        </member>
+    </members>
+</doc>

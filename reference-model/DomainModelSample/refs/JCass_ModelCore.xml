@@ -1,0 +1,1290 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>JCass_ModelCore</name>
+    </assembly>
+    <members>
+        <member name="M:JCass_ModelCore.DomainModels.DomainModelBase.Initialise(System.Int32,System.Collections.Generic.Dictionary{System.String,System.Double},System.Collections.Generic.Dictionary{System.String,System.String},System.Action{System.String,System.Double},System.Action{System.String,System.String})">
+            <summary>
+            Evaluates the Initial Values for all parameters for the element at the start of the analysis. This method is called from the Framework Model 
+            for all elements at the start of the model run. Use the raw/input data values with domain logic to assign an initial value to all
+            modelling parameters. 
+            </summary>
+            <param name="iElemIndex">Zero-based index of the element</param>        
+            <param name="numInputs">Raw numeric input values for the element. Keys are input names, values are input values</param>
+            <param name="textInputs">Raw text input values for the element. Keys are input names, values are input values</param>
+            <param name="numModParamValues">Return value: Sink holding values for numeric parameters (to be updated by Domain Model). Keys are parameter names, values are assigned values</param>
+            <param name="textModParamValues">Return value: Sink holding values for text parameters (to be updated by Domain Model). Keys are parameter names, values are assigned values</param>        
+        </member>
+        <member name="M:JCass_ModelCore.DomainModels.DomainModelBase.GetTreatmentCandidates(System.Int32,System.Int32,System.Collections.Generic.Dictionary{System.String,System.Double},System.Collections.Generic.Dictionary{System.String,System.String},System.Collections.Generic.Dictionary{System.String,System.Double},System.Collections.Generic.Dictionary{System.String,System.String})">
+            <summary>
+            Execute treatment selection/trigger logic to select all treatment instances for an element in the current period. The
+            framework model will call this method for each element in and for each period. This method is only used in MCDA type models
+            that evaluate individual treatments instead of Strategies. Use the raw input values for
+            the element as well as the previous values of the parameters for the element with your domain logic to determine which
+            treatment(s) can be considered for this element in the optimisation stage. If no treatments are applicable, return an empty list.
+            </summary>
+            <param name="iElemIndex">Zero-based index of the element</param>
+            <param name="iPeriod">Modelling period (values like 1,2,...n)</param>
+            <param name="numInputs">Raw numeric input values for the element. Keys are input names, values are input values</param>
+            <param name="textInputs">Raw text input values for the element. Keys are input names, values are input values</param>
+            <param name="numModParamValues">Values for Numeric Model Parameters as they were in the previous epoch. Keys are parameter names</param>
+            <param name="textModParamValues">Values for Text Model Parameters as they were at the previous epoch. Keys are parameter names</param>
+            <returns>A list of all treatment instances to consider for this element in the optimisation stage</returns>
+        </member>
+        <member name="M:JCass_ModelCore.DomainModels.DomainModelBase.GetTriggeredMaintenance(System.Int32,System.Int32,System.Collections.Generic.Dictionary{System.String,System.Double},System.Collections.Generic.Dictionary{System.String,System.String},System.Collections.Generic.Dictionary{System.String,System.Double},System.Collections.Generic.Dictionary{System.String,System.String})">
+            <summary>
+            Uses domain logic to determine if there is routine maintenance triggered for the current element and period. This method is 
+            called from the Framework Model after treatment selection to determine if there is any triggered maintenance that should be applied to the element.
+            If there is no triggered maintenance, return null.
+            </summary>
+            <param name="ielem">Zero-based index of the element</param>
+            <param name="iPeriod">Modelling period (values like 1,2,...n)</param>
+            <param name="numInputs">Raw numeric input values for the element. Keys are input names, values are input values</param>
+            <param name="textInputs">Raw text input values for the element. Keys are input names, values are input values</param>
+            <param name="numModParamValues">Values for Numeric Model Parameters as they were in the previous epoch. Keys are parameter names</param>
+            <param name="textModParamValues">Values for Text Model Parameters as they were at the previous epoch. Keys are parameter names</param>
+            <returns>A Treatment Instance object representing Routine Maintenance</returns>
+        </member>
+        <member name="M:JCass_ModelCore.DomainModels.DomainModelBase.Increment(System.Int32,System.Int32,System.Collections.Generic.Dictionary{System.String,System.Double},System.Collections.Generic.Dictionary{System.String,System.String},System.Collections.Generic.Dictionary{System.String,System.Double},System.Collections.Generic.Dictionary{System.String,System.String},System.Action{System.String,System.Double},System.Action{System.String,System.String})">
+            <summary>
+            Evaluates the Increment for all parameters for the element in the current period. This method is called from the Framework Model 
+            for elements that do not have a treatment selected after optimisation in the current period. 
+            </summary>
+            <param name="iElemIndex">Zero-based index of the element</param>
+            <param name="iPeriod">Modelling period (values like 1,2,...n)</param>
+            <param name="numInputs">Raw numeric input values for the element. Keys are input names, values are input values</param>
+            <param name="textInputs">Raw text input values for the element. Keys are input names, values are input values</param>
+            <param name="currentNumModParamValues">Values for Numeric Model Parameters as they were in the previous epoch. Keys are parameter names</param>
+            <param name="currentTextModParamValues">Values for Text Model Parameters as they were at the previous epoch. Keys are parameter names</param>
+            <param name="numModParamValues">Return value: Sink holding values for numeric parameters (to be updated by Domain Model). Keys are parameter names, values are assigned values</param>
+            <param name="textModParamValues">Return value: Sink holding values for text parameters (to be updated by Domain Model). Keys are parameter names, values are assigned values</param>        
+        </member>
+        <member name="M:JCass_ModelCore.DomainModels.DomainModelBase.Reset(JCass_ModelCore.Treatments.TreatmentInstance,System.Int32,System.Int32,System.Collections.Generic.Dictionary{System.String,System.Double},System.Collections.Generic.Dictionary{System.String,System.String},System.Collections.Generic.Dictionary{System.String,System.Double},System.Collections.Generic.Dictionary{System.String,System.String},System.Action{System.String,System.Double},System.Action{System.String,System.String})">
+            <summary>
+            Evaluates the Reset/Updated values for all parameters for the element at the start of the analysis. This method is called from the Framework Model 
+            for all elements at the start of the model run. Use the raw/input data values with domain logic to assign an initial value to all
+            modelling parameters. 
+            </summary>
+            <param name="treatment">The treatment being applied that triggers this reset; null/None when no treatment.</param>
+            <param name="iElemIndex">Zero-based index of the element</param>
+            <param name="iPeriod">Modelling period (values like 1,2,...n)</param>
+            <param name="numInputs">Raw numeric input values for the element. Keys are input names, values are input values</param>
+            <param name="textInputs">Raw text input values for the element. Keys are input names, values are input values</param>
+            <param name="currentNumModParamValues">Values for Numeric Model Parameters as they were in the previous epoch. Keys are parameter names</param>
+            <param name="currentTextModParamValues">Values for Text Model Parameters as they were at the previous epoch. Keys are parameter names</param>
+            <param name="numModParamValues">Return value: Sink holding values for numeric parameters (to be updated by Domain Model). Keys are parameter names, values are assigned values</param>
+            <param name="textModParamValues">Return value: Sink holding values for text parameters (to be updated by Domain Model). Keys are parameter names, values are assigned values</param>
+        </member>
+        <member name="M:JCass_ModelCore.DomainModels.DomainModelBase.DoEndOfPeriodCalculations(System.Int32)">
+            <summary>
+            Stub for the Domain Model that can be used to perform any end of period calculations after the treatment selection and parameter updates have 
+            been performed for all elements in the current period. This can be used to calculate any additional parameters that are needed for the next period 
+            or for reporting purposes, using the updated parameter values after treatment application. This method is called from the Framework Model at the end of 
+            each period, after all elements have been processed for the current period. You can use this to do things such as calculating network level rankings, statistics,
+            proportions over/under etc. that can be used to drive decisions in the next period. Implementers should store calculated values in the Domain Model object. Take
+            care on how you index or store results. Inless you index by period, your values will be replaced/recycled at the end of each period.
+            </summary>    
+            <param name="iPeriod">Modelling period (values like 1,2,...n)</param>
+        </member>
+        <member name="M:JCass_ModelCore.DomainModels.DomainModelBase.PIndex(System.String)">
+            <summary>
+            Returns the Zero-based if a parameter in the forecast data array based on the parameter name
+            </summary>
+            <param name="paramName">Name or code for the parameter</param>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_ModelCore.DomainModels.DomainModelBase.GetLookupValueNumber(System.String,System.String)">
+            <summary>
+            Helper for implenters to get a numeric value from the model lookups. This method will throw an exception if the lookup set or key is not found.
+            </summary>
+            <param name="lookupSetName">Name of the Lookup set</param>
+            <param name="settingKey">Name of the key within the lookup set</param>
+            <returns>Double value</returns>
+            <exception cref="T:System.Exception">Exceptions are thrown if there is no lookup with with key 'lookupSetName' and 
+            no setting within that set with key = 'settingKey'</exception>
+        </member>
+        <member name="M:JCass_ModelCore.DomainModels.DomainModelBase.GetLookupValueText(System.String,System.String)">
+            <summary>
+            Helper for implenters to get a text value from the model lookups. This method will throw an exception if the lookup set or key is not found.
+            </summary>
+            <param name="lookupSetName">Name of the Lookup set</param>
+            <param name="settingKey">Name of the key within the lookup set</param>
+            <returns>Double value</returns>
+            <exception cref="T:System.Exception">Exceptions are thrown if there is no lookup with with key 'lookupSetName' and 
+            no setting within that set with key = 'settingKey'</exception>
+        </member>
+        <member name="M:JCass_ModelCore.DomainModels.IDomainModel.SetupBase(JCass_ModelCore.Models.ModelBase)">
+            <summary>
+            Method in which you can set up your model, for example, loading machine learning models or other resources that are needed for the model to run.
+            </summary>
+            <param name="model"></param>
+        </member>
+        <member name="M:JCass_ModelCore.DomainModels.IDomainModel.Initialise(System.Int32,System.Collections.Generic.Dictionary{System.String,System.Double},System.Collections.Generic.Dictionary{System.String,System.String},System.Action{System.String,System.Double},System.Action{System.String,System.String})">
+            <summary>
+            Evaluates the Initial Values for all parameters for the element at the start of the analysis. This method is called from the Framework Model 
+            for all elements at the start of the model run. Use the raw/input data values with domain logic to assign an initial value to all
+            modelling parameters. 
+            </summary>
+            <param name="iElemIndex">Zero-based index of the element</param>        
+            <param name="numInputs">Raw numeric input values for the element. Keys are input names, values are input values</param>
+            <param name="textInputs">Raw text input values for the element. Keys are input names, values are input values</param>
+            <param name="numModParamValues">Return value: Sink holding values for numeric parameters (to be updated by Domain Model). Keys are parameter names, values are assigned values</param>
+            <param name="textModParamValues">Return value: Sink holding values for text parameters (to be updated by Domain Model). Keys are parameter names, values are assigned values</param>        
+        </member>
+        <member name="M:JCass_ModelCore.DomainModels.IDomainModel.GetTreatmentCandidates(System.Int32,System.Int32,System.Collections.Generic.Dictionary{System.String,System.Double},System.Collections.Generic.Dictionary{System.String,System.String},System.Collections.Generic.Dictionary{System.String,System.Double},System.Collections.Generic.Dictionary{System.String,System.String})">
+            <summary>
+            Execute treatment selection/trigger logic to select all treatment instances for an element in the current period. The
+            framework model will call this method for each element in and for each period. This method is only used in MCDA type models
+            that evaluate individual treatments instead of Strategies. Use the raw input values for
+            the element as well as the previous values of the parameters for the element with your domain logic to determine which
+            treatment(s) can be considered for this element in the optimisation stage. If no treatments are applicable, return an empty list.
+            </summary>
+            <param name="iElemIndex">Zero-based index of the element</param>
+            <param name="iPeriod">Modelling period (values like 1,2,...n)</param>
+            <param name="numInputs">Raw numeric input values for the element. Keys are input names, values are input values</param>
+            <param name="textInputs">Raw text input values for the element. Keys are input names, values are input values</param>
+            <param name="numModParamValues">Values for Numeric Model Parameters as they were in the previous epoch. Keys are parameter names</param>
+            <param name="textModParamValues">Values for Text Model Parameters as they were at the previous epoch. Keys are parameter names</param>
+            <returns>A list of all treatment instances to consider for this element in the optimisation stage</returns>
+        </member>
+        <member name="M:JCass_ModelCore.DomainModels.IDomainModel.GetTriggeredMaintenance(System.Int32,System.Int32,System.Collections.Generic.Dictionary{System.String,System.Double},System.Collections.Generic.Dictionary{System.String,System.String},System.Collections.Generic.Dictionary{System.String,System.Double},System.Collections.Generic.Dictionary{System.String,System.String})">
+            <summary>
+            Uses domain logic to determine if there is routine maintenance triggered for the current element and period. This method is 
+            called from the Framework Model after treatment selection to determine if there is any triggered maintenance that should be applied to the element.
+            If there is no triggered maintenance, return null.
+            </summary>
+            <param name="ielem">Zero-based index of the element</param>
+            <param name="iPeriod">Modelling period (values like 1,2,...n)</param>
+            <param name="numInputs">Raw numeric input values for the element. Keys are input names, values are input values</param>
+            <param name="textInputs">Raw text input values for the element. Keys are input names, values are input values</param>
+            <param name="numModParamValues">Values for Numeric Model Parameters as they were in the previous epoch. Keys are parameter names</param>
+            <param name="textModParamValues">Values for Text Model Parameters as they were at the previous epoch. Keys are parameter names</param>
+            <returns>A Treatment Instance object representing Routine Maintenance</returns>
+        </member>
+        <member name="M:JCass_ModelCore.DomainModels.IDomainModel.Increment(System.Int32,System.Int32,System.Collections.Generic.Dictionary{System.String,System.Double},System.Collections.Generic.Dictionary{System.String,System.String},System.Collections.Generic.Dictionary{System.String,System.Double},System.Collections.Generic.Dictionary{System.String,System.String},System.Action{System.String,System.Double},System.Action{System.String,System.String})">
+            <summary>
+            Evaluates the Increment for all parameters for the element in the current period. This method is called from the Framework Model 
+            for elements that do not have a treatment selected after optimisation in the current period. 
+            </summary>
+            <param name="iElemIndex">Zero-based index of the element</param>
+            <param name="iPeriod">Modelling period (values like 1,2,...n)</param>
+            <param name="numInputs">Raw numeric input values for the element. Keys are input names, values are input values</param>
+            <param name="textInputs">Raw text input values for the element. Keys are input names, values are input values</param>
+            <param name="currentNumModParamValues">Values for Numeric Model Parameters as they were in the previous epoch. Keys are parameter names</param>
+            <param name="currentTextModParamValues">Values for Text Model Parameters as they were at the previous epoch. Keys are parameter names</param>
+            <param name="numModParamValues">Return value: Sink holding values for numeric parameters (to be updated by Domain Model). Keys are parameter names, values are assigned values</param>
+            <param name="textModParamValues">Return value: Sink holding values for text parameters (to be updated by Domain Model). Keys are parameter names, values are assigned values</param>        
+        </member>
+        <member name="M:JCass_ModelCore.DomainModels.IDomainModel.Reset(JCass_ModelCore.Treatments.TreatmentInstance,System.Int32,System.Int32,System.Collections.Generic.Dictionary{System.String,System.Double},System.Collections.Generic.Dictionary{System.String,System.String},System.Collections.Generic.Dictionary{System.String,System.Double},System.Collections.Generic.Dictionary{System.String,System.String},System.Action{System.String,System.Double},System.Action{System.String,System.String})">
+            <summary>
+            Evaluates the Reset/Updated values for all parameters for the element at the start of the analysis. This method is called from the Framework Model 
+            for all elements at the start of the model run. Use the raw/input data values with domain logic to assign an initial value to all
+            modelling parameters. 
+            </summary>
+            <param name="treatment">The treatment being applied that triggers this reset; null/None when no treatment.</param>
+            <param name="iElemIndex">Zero-based index of the element</param>
+            <param name="iPeriod">Modelling period (values like 1,2,...n)</param>
+            <param name="numInputs">Raw numeric input values for the element. Keys are input names, values are input values</param>
+            <param name="textInputs">Raw text input values for the element. Keys are input names, values are input values</param>
+            <param name="currentNumModParamValues">Values for Numeric Model Parameters as they were in the previous epoch. Keys are parameter names</param>
+            <param name="currentTextModParamValues">Values for Text Model Parameters as they were at the previous epoch. Keys are parameter names</param>
+            <param name="numModParamValues">Return value: Sink holding values for numeric parameters (to be updated by Domain Model). Keys are parameter names, values are assigned values</param>
+            <param name="textModParamValues">Return value: Sink holding values for text parameters (to be updated by Domain Model). Keys are parameter names, values are assigned values</param>
+        </member>
+        <member name="M:JCass_ModelCore.DomainModels.IDomainModel.SetRandomSeed(System.Int32)">
+            <summary>
+            Sets the random seed for the model. This is used to control the randomness in the model, ensuring reproducibility of results.
+            </summary>
+            <param name="seed"></param>
+        </member>
+        <member name="M:JCass_ModelCore.DomainModels.IDomainModel.DoEndOfPeriodCalculations(System.Int32)">
+            <summary>
+            Stub for the Domain Model that can be used to perform any end of period calculations after the treatment selection and parameter updates have 
+            been performed for all elements in the current period. This can be used to calculate any additional parameters that are needed for the next period 
+            or for reporting purposes, using the updated parameter values after treatment application. This method is called from the Framework Model at the end of 
+            each period, after all elements have been processed for the current period. You can use this to do things such as calculating network level rankings, statistics,
+            proportions over/under etc. that can be used to drive decisions in the next period. Implementers should store calculated values in the Domain Model object. Take
+            care on how you index or store results. Inless you index by period, your values will be replaced/recycled at the end of each period.
+            </summary>        
+            <param name="iPeriod">Modelling period (values like 1,2,...n)</param>
+        </member>
+        <member name="M:JCass_ModelCore.Exporting.DeskTopExporter.#ctor(JCass_ModelCore.ModelObjects.ModelConfiguration,System.String)">
+            <summary>
+            Create a DeskTopExporter that writes CSV/Excel outputs for a model run.
+            </summary>
+            <param name="modConfig">Model configuration. Its <c>WorkFolder</c> is used as the root for
+            <c>outputs/</c> and <c>debug/</c> subfolders.</param>
+            <param name="stagingFolder">If set, output files are written to the staging folder instead of
+            <c>&lt;workFolder&gt;/outputs</c>. The caller is responsible for moving files to the final
+            location after a successful run. Null preserves existing desktop behaviour.</param>
+        </member>
+        <member name="M:JCass_ModelCore.Exporting.DeskTopExporter.JoinTreatmentsSelectedIntoDebugRankingSet(JCass_Data.Objects.jcDataSet)">
+            <summary>
+            Join the final treatments information into the Debug set for Treatment Ranking (if applicable) so that the user
+            can see which candidates were selected and which ones were not selected.
+            </summary>
+            <param name="treatments">Final set of selected treatments</param>
+        </member>
+        <member name="P:JCass_ModelCore.ModelObjects.Budget.IsMonolithicBudget">
+            <summary>
+            Is this a monolithic budget? We presume that is always the case if there is only one budget category
+            </summary>
+        </member>
+        <member name="P:JCass_ModelCore.ModelObjects.Budget.MonolithicBudgetCategoryName">
+            <summary>
+            Name of the Monolithic Budget Category. If this is not a monolithic budget, an error will be thrown if this property is used.
+            </summary>
+        </member>
+        <member name="M:JCass_ModelCore.ModelObjects.Budget.CanApplyTreatment(JCass_ModelCore.Treatments.TreatmentInstance)">
+            <summary>
+            Checks if a treatment can be applied in the current budget period. If the treatment relates to multiple budget categories, it 
+            checks that the total cost for each category does not exceed the budget for that category in the treatment period. If the cost in 
+            ANY budget category exceeds the budget for that category, the treatment cannot be applied. Note that default situation will be that 
+            the treatment only relates to a single budget category (default as specified in model setup), so in that default case this method will 
+            return true if the treatment cost is less than or equal to the budget for that category in the treatment period.
+            </summary>    
+        </member>
+        <member name="M:JCass_ModelCore.ModelObjects.InputSet.GetDeepClone">
+            <summary>
+            Needed for Goal Seeking or Monte Carlo model to run in parallel
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="P:JCass_ModelCore.ModelObjects.ModelConfiguration.ExportParameterNames">
+            <summary>
+            List of Parameters for which data should be exported. If there is only one value = 'all', then data
+            for ALL parameters are exported
+            </summary>
+        </member>
+        <member name="P:JCass_ModelCore.ModelObjects.ModelConfiguration.ModelTypeName">
+            <summary>
+            Name of the model type to run. Must be one of the allowed model types in the _ModelTypesAllowed list.
+            </summary>
+        </member>
+        <member name="P:JCass_ModelCore.ModelObjects.ModelConfiguration.FeedbackMode">
+            <summary>
+            Determines how dense the feedback is.
+            <para>3 = Chatty</para>
+            <para>2 = Somewhat Shy</para>
+            <para>1 = Introvert</para>
+            <para>0 = Silent</para>    
+            </summary>
+        </member>
+        <member name="P:JCass_ModelCore.ModelObjects.ModelConfiguration.WorkFolder">
+            <summary>
+            Path to work folder, for desktop implementations. This is needed in the model run to:
+            <para>1. Load Machine Learning models from the 'ml' sb-folder</para>
+            <para>2. Pass to the Exporter for exporting data after the run</para>
+            </summary>
+        </member>
+        <member name="P:JCass_ModelCore.ModelObjects.ModelConfiguration.MaximumTreatmentsPerPeriod">
+            <summary>
+            Maximum number of non-routine treatments that can be applied in a single period. Currently, only implemented
+            in the MCDA ungrouped model. Default value is 99,9999 (i.e. effectively no limit)
+            </summary>
+        </member>
+        <member name="P:JCass_ModelCore.ModelObjects.ModelConfiguration.BCAOptimisationMethod">
+            <summary>
+            Optimisation method to use for Benefit-Cost Analysis types. Set in setup using the treatment selection key in the Meta setup file.
+            Valid values are:
+            <list type="bullet">
+            <listheader><term>Method</term><description>Description</description>
+            <item><term>moora</term><description>Multi-Criteria Decision Analysis ranking using the MOORA (multi-opjective optimisation using ratio analysis) method</description></item>
+            <item><term>bca-greedy</term><description>Benefit-Cost Analysis optimisation using the Bottom-Up Greedy algorithm</description></item>
+            <item><term>bca-egal</term><description>Benefit-Cost Analysis optimisation using the Bottom-Up Egalitarian algorithm</description></item>
+            <item><term>bca-ibcr</term><description>Benefit-Cost Analysis optimisation using the Bottom-Up decreasing Incremenal Cost Benefit algorithm</description></item>
+            </listheader>
+            </list>
+            </summary>
+        </member>
+        <member name="P:JCass_ModelCore.ModelObjects.ModelConfiguration.InitialCalendarEpoch">
+            <summary>
+            Calendar year of the first modelling period (i.e. period zero), e.g. 2024
+            </summary>
+        </member>
+        <member name="P:JCass_ModelCore.ModelObjects.ModelConfiguration.DiscountRatePercent">
+            <summary>
+            Discount Rate (percent), e.g. 6.7 for 6.7%
+            </summary>
+        </member>
+        <member name="P:JCass_ModelCore.ModelObjects.ModelConfiguration.InflationRatePercent">
+            <summary>
+            Infalation Rate (percent), e.g. 6.7 for 6.7%
+            </summary>
+        </member>
+        <member name="P:JCass_ModelCore.ModelObjects.ModelConfiguration.ObjectiveParameterName">
+            <summary>
+            Name of the Model Parameter that is the Objective for BCA optimisation.
+            </summary>
+        </member>
+        <member name="P:JCass_ModelCore.ModelObjects.ModelConfiguration.MinimiseBCAObjectiveParameter">
+            <summary>
+            Flag to indicative if the Objective Parameter is to be minimised (true) or maximised (false)
+            </summary>
+        </member>
+        <member name="P:JCass_ModelCore.ModelObjects.ModelConfiguration.ElementIdentifiers">
+            <summary>
+            Columns in the Input Set to include in output set for easy element identification and debugging/checking.
+            </summary>
+        </member>
+        <member name="P:JCass_ModelCore.ModelObjects.ModelConfiguration.TriggerMaintenance">
+            <summary>
+            Flag to indicate if Routine Maintenance treatments should be triggered during the model run.
+            </summary>
+        </member>
+        <member name="P:JCass_ModelCore.ModelObjects.ModelConfiguration.BCALookAheadPeriods">
+            <summary>
+            Number of look-ahead periods to use for BCA optimisation. Should not be more than the number of years in the budget.
+            </summary>
+        </member>
+        <member name="P:JCass_ModelCore.ModelObjects.ModelConfiguration.RoutineMaintenanceTreatmentName">
+            <summary>
+            Name of the Treatment that represents Routine Maintenance
+            </summary>
+        </member>
+        <member name="P:JCass_ModelCore.ModelObjects.ModelConfiguration.RoutineMaintenanceTriggerReset">
+            <summary>
+            Does Routine Maintenance result in a condition reset? If true, then the Reset method on the Domain Model
+            is called. If false, then the Increment method on the Domain Model is called.
+            </summary>
+        </member>
+        <member name="P:JCass_ModelCore.ModelObjects.ModelConfiguration.RoutineMaintenanceIncludeInFWPExport">
+            <summary>
+            Should we include Routine Maintenance treatments in the FWP table export?
+            
+            </summary>
+        </member>
+        <member name="P:JCass_ModelCore.ModelObjects.ModelConfiguration.ExportLongFormatFile">
+            <summary>
+            Should the parameter data be exported in a 'Long-Format' (narrow format) file. Note that for many 
+            parameters and elements (say more than 10,000), this file can cause 'out-of-memory' problems
+            </summary>
+        </member>
+        <member name="P:JCass_ModelCore.ModelObjects.ModelConfiguration.MinimumTreatmentSuitabilityScoreAllowed">
+            <summary>
+            Minimum Treatment Suitability Score allowed for a treatment to be considered a candidate in MCDA analysis. This property
+            is only used for MCDA analyses. If the treatment suitability score is below this value, the treatment will not be added
+            to the candidate treatments list (this decision is made in the Default Domain Model).
+            </summary>
+        </member>
+        <member name="P:JCass_ModelCore.ModelObjects.ModelConfiguration.RawDataFilePath">
+            <summary>
+            For desktop application postprocessing. Not needed for web.
+            </summary>
+        </member>
+        <member name="P:JCass_ModelCore.ModelObjects.ModelConfiguration.MCDACostScalingColumn">
+            <summary>
+            Name of the input column that contains the quantity by means of which to scale costs for MCDA/MOORA optimisation. Normally, this
+            will map to a input column containing e.g. quantity like length or square metre. If this value is left as 'none', then cost is scaled by 1 (no scaling)
+            </summary>
+        </member>
+        <member name="P:JCass_ModelCore.ModelObjects.ModelConfiguration.ExportData">
+            <summary>
+            Flag that determines if Treatment, Debug and Parameter data should be exported. Default is TRUE, but this
+            can be set to false for Goal Seeking purposes to speed up iterative model runs.
+            </summary>
+        </member>
+        <member name="P:JCass_ModelCore.ModelObjects.ModelConfiguration.GroupColumnName">
+            <summary>
+            Name of the column that holds Group Codes/Ids for a Grouped MCDA model. Optional - only valid for Grouped MCDA models
+            </summary>
+        </member>
+        <member name="P:JCass_ModelCore.ModelObjects.ModelConfiguration.BCAStrategyPeriodsToSkip">
+            <summary>
+            Number of periods to skip between repeated branches of the same treatment. If zero, then all triggered branches are considered. If
+            a value of say 1, then if a treatment is triggered in period 1, the same treatment will not be considered again until period 3, etc.
+            Setting this to 1 or more can significantly speed up BCA-optimisation model runs, with a small potential that slightly sub-optimal 
+            strategies may be picked.
+            </summary>
+        </member>
+        <member name="P:JCass_ModelCore.ModelObjects.ModelConfiguration.BCABenefitIsRelativeToMaintenanceOnly">
+            <summary>
+            Flag to indicate if the Benefit-Cost Analysis benefit and cost calculations are relative to maintenance only (true) or relative to doing nothing (false).
+            </summary>
+        </member>
+        <member name="P:JCass_ModelCore.ModelObjects.ModelConfiguration.DebugStrategyElementIndex">
+            <summary>
+            Element Index for which to export detailed strategy debugging information. Set to -1 to disable debug export.
+            </summary>
+        </member>
+        <member name="P:JCass_ModelCore.ModelObjects.ModelConfiguration.DebugStrategyPeriodIndex">
+            <summary>
+            Period Index for which to export detailed strategy debugging information. Set to -1 to disable debug export.
+            </summary>
+        </member>
+        <member name="P:JCass_ModelCore.ModelObjects.ModelConfiguration.DebugTreatRankPeriod">
+            <summary>
+            Period Index for which to export detailed treatment candidate set debugging information. Set to -1 to disable debug export.
+            </summary>
+        </member>
+        <member name="T:JCass_ModelCore.ModelObjects.ModelParameterData">
+            <summary>
+            Object to hold model parameter data for all elements and parameters over multiple epochs
+            </summary>
+        </member>
+        <member name="F:JCass_ModelCore.ModelObjects.ModelParameterData._numberData">
+            <summary>
+            Numeric Model Forecast Data. Rows are elements, columns are parameters, stacks are epochs. Thus:
+            double value = Data[ielem, iParam, iEpoch];
+            </summary>
+        </member>
+        <member name="F:JCass_ModelCore.ModelObjects.ModelParameterData._textData">
+            <summary>
+            Text Model Forecast Data. Rows are elements, columns are parameters, stacks are epochs. Thus:
+            string value = Data[ielem, iParam, iEpoch];
+            </summary>
+        </member>
+        <member name="F:JCass_ModelCore.ModelObjects.ModelParameterData._numParamIndexes">
+            <summary>
+            Dictionary mapping parameter names to their column indexes in the numeric data array.
+            </summary>
+        </member>
+        <member name="F:JCass_ModelCore.ModelObjects.ModelParameterData._textParamIndexes">
+            <summary>
+            Dictionary mapping parameter names to their column indexes in the text data array.
+            </summary>
+        </member>
+        <member name="F:JCass_ModelCore.ModelObjects.ModelParameterData._model">
+            <summary>
+            Reference to the parent model
+            </summary>
+        </member>
+        <member name="M:JCass_ModelCore.ModelObjects.ModelSetupChecker.CheckModelParameters">
+            <summary>
+            Does various checks on Model Parameters to ensure names follow the right convention (must start with 'par_') and
+            that there are no Raw Data headers that match model parameter names.
+            </summary>
+        </member>
+        <member name="M:JCass_ModelCore.ModelObjects.ModelSetupChecker.CheckRawDataHeadersForReservedWordsAndSpecialCharacters">
+            <summary>
+            Checks that no raw data headers are reserved words and also that special names are not in raw data headers
+            </summary>
+        </member>
+        <member name="M:JCass_ModelCore.ModelObjects.ModelSetupChecker.CheckIdentifierColumnsAreInRawData">
+            <summary>
+            Checks that the specified Identifier columns are all in the Raw Data headers
+            </summary>
+        </member>
+        <member name="M:JCass_ModelCore.ModelObjects.ModelSetupChecker.CheckBudgetCategoriesVsTreatments">
+            <summary>
+            Check that each there is a group/category in the Budget to match all of the treatments' Budget Categories.
+            </summary>
+        </member>
+        <member name="M:JCass_ModelCore.ModelObjects.ModelSetupChecker.CheckMaintenanceTreatmentSetupInfo">
+            <summary>
+            Checks various aspects of the maintenance treatment setup 
+            </summary>
+        </member>
+        <member name="M:JCass_ModelCore.ModelObjects.ModelSetupChecker.CheckNetworkStatsParametersOK">
+            <summary>
+            Checks that the input and output keys for Network Statistics parameters map to available Model _model.Parameters. Also checks
+            that the specified input and output parameters map to Model Parameters that are numeric.
+            </summary>
+        </member>
+        <member name="M:JCass_ModelCore.ModelObjects.ModelSetupChecker.MarkNetworkStatsParameters">
+            <summary>
+            Flags the Model Parameters that are intended as outputs from Network Statistics
+            </summary>
+        </member>
+        <member name="T:JCass_ModelCore.ModelObjects.MultiModelRunner">
+            <summary>
+            Class to initialise and run multiple configurations one after another or in parallel.
+            </summary>
+        </member>
+        <member name="P:JCass_ModelCore.ModelObjects.MultiModelRunner.CancellationCheck">
+            <summary>
+            Delegate that returns whether cancellation is requested. Used to cancel model run while busy
+            </summary>
+        </member>
+        <member name="T:JCass_ModelCore.ModelObjects.StrategyParameterData">
+            <summary>
+            Object to hold model parameter data for all epochs for a specific Element's Strategy
+            </summary>
+        </member>
+        <member name="F:JCass_ModelCore.ModelObjects.StrategyParameterData._numberData">
+            <summary>
+            Numeric Model Forecast Data. Rows are epochs, columns are parameters. Thus:
+            double value = _numberData[iEpoch, iParam];
+            </summary>
+        </member>
+        <member name="F:JCass_ModelCore.ModelObjects.StrategyParameterData._textData">
+            <summary>
+            Text Model Forecast Data. Rows are epochs, columns are parameters. Thus:
+            string value = _textData[iEpoch, iParam];
+            </summary>
+        </member>
+        <member name="F:JCass_ModelCore.ModelObjects.StrategyParameterData._numParamIndexes">
+            <summary>
+            Dictionary mapping parameter names to their column indexes in the numeric data array.
+            </summary>
+        </member>
+        <member name="F:JCass_ModelCore.ModelObjects.StrategyParameterData._textParamIndexes">
+            <summary>
+            Dictionary mapping parameter names to their column indexes in the text data array.
+            </summary>
+        </member>
+        <member name="M:JCass_ModelCore.ModelObjects.StrategyParameterData.CloneWithoutReference">
+            <summary>
+            Create a clone without references to original data
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="F:JCass_ModelCore.Models.MCDAModelGrouped._groupIndexes">
+            <summary>
+            Key is the name or ID for the group, value is the list of element indexes belonging to that group.
+            </summary>
+        </member>
+        <member name="M:JCass_ModelCore.Models.MCDAModelGrouped.SetupGroupIndexes">
+            <summary>
+            Scans the element list, finds all unique group keys (e.g. bridge IDs) and sets up a dictionary that holds the element indexes belonging to each
+            group key.
+            </summary>
+        </member>
+        <member name="M:JCass_ModelCore.Models.MCDAProxValVer1.EvaluateAndAddMCDAOptimalTreatmentsProxVal(System.Int32)">
+            <summary>
+            Evaluate candidate treatments in the current period and add them to the budget based on MOORA ranking for the
+            case that takes into account whether elements are satellites or not
+            </summary>
+            <param name="iPeriod"></param>
+        </member>
+        <member name="M:JCass_ModelCore.Models.MCDAProxValVer1.EvaluateAndAddMCDAOptimalTreatmentsNonProxVal(System.Int32)">
+            <summary>
+            Does conventional MOORA ranking and adds treatments to the budget based on the ranking, without taking into
+            account whether the element is a satellite or not. This method is identical to the one in 'MCDAModelUngrouped.cs'
+            </summary>
+            <param name="iPeriod"></param>
+        </member>
+        <member name="M:JCass_ModelCore.Models.MCDAProxValVer1.AddTreatmentsToFitBudgetNonProxVal(System.Int32,System.Collections.Generic.List{JCass_ModelCore.Treatments.TreatmentInstance})">
+            <summary>
+            Adds treatments to the budget based on MOORA ranking WITHOUT taking into account whether the element is a satellite or not. 
+            This method is identical to the one in 'MCDAModelUngrouped.cs'
+            </summary>
+            <param name="iPeriod"></param>
+            <param name="sortedTreatments"></param>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_ModelCore.Models.MCDAProxValVer1.AddSatelliteTreatmentsToFitBudget(System.Int32,System.Int32[],System.Collections.Generic.List{JCass_ModelCore.Treatments.TreatmentInstance})">
+            <summary>
+            Adds all candidate treatments on satellite elements to the budget, in order of MOORA ranking
+            </summary>
+            <param name="iPeriod">Period of treatment</param>
+            <param name="satelliteIndexes">Element indexes that are satelites on the current element</param>
+            <param name="sortedSatelliteTreatments">MOORA ranked treatments on satelites</param>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_ModelCore.Models.MCDAProxValVer1.GetTreatmentsBasedOnSatelliteStatus(System.Collections.Generic.List{JCass_ModelCore.Treatments.TreatmentInstance},System.Boolean)">
+            <summary>
+            Get the subset of treatment candidates based on whether the element is a satellite or not
+            </summary>
+            <param name="treatmentCandidates">List of all treatment candidates</param>
+            <param name="nonSatellitesOnly">flag to indicate whether to get only non-satellites</param>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_ModelCore.Models.MCDAProxValVer1.SetLastPeriodForProxVal">
+            <summary>
+            Set the last period for ProxVal using the specified lookup key in the 'general' lookup table
+            </summary>
+            <exception cref="T:System.Exception"></exception>
+        </member>
+        <member name="F:JCass_ModelCore.Models.ModelBase.ReservedKeyNames">
+            <summary>
+            List of Reserved Names that cannot be used for column names in input set. Can also be used to do
+            other checks.
+            </summary>
+        </member>
+        <member name="P:JCass_ModelCore.Models.ModelBase.CancellationCheck">
+            <summary>
+            Delegate that returns whether cancellation is requested. Used to cancel model run while busy
+            </summary>
+        </member>
+        <member name="P:JCass_ModelCore.Models.ModelBase.RandomSeed">
+            <summary>
+            Random seed for simulations. Setting this will re-initialise the Random object, so that you can reset the 
+            random seed at any point and get the same sequence of random numbers from that point on. 
+            This is useful for testing and debugging, as it allows you to get the same random numbers for each run.
+            </summary>
+        </member>
+        <member name="F:JCass_ModelCore.Models.ModelBase._doParallel">
+            <summary>
+            Flag to indicate if run should be done in Parallel. Still under 
+            development
+            </summary>
+        </member>
+        <member name="F:JCass_ModelCore.Models.ModelBase.NElements">
+            <summary>
+            Number of elements in the run
+            </summary>
+        </member>
+        <member name="F:JCass_ModelCore.Models.ModelBase.NPeriods">
+            <summary>
+            Number of Modelling Periods
+            </summary>
+        </member>
+        <member name="F:JCass_ModelCore.Models.ModelBase.NParameters">
+            <summary>
+            Number of model parameters
+            </summary>
+        </member>
+        <member name="F:JCass_ModelCore.Models.ModelBase.DoNothingStrategiesCurrentPeriod">
+            <summary>
+            Do-Nothing strategies for the current period. Key is element index. Value is
+            the TreatmentStrategy object. This dictionary allows us to store the first calculated
+            Do-Nothing strategy so that we do not have to re-calculate it for all other treatment
+            strategies. This can be done because the Do-Nothing strategy is the same for all treatment
+            strategies.
+            </summary>
+        </member>
+        <member name="F:JCass_ModelCore.Models.ModelBase.InputDataHeaders">
+            <summary>
+            Input header information. Key is column name, value is information on the column
+            </summary>
+        </member>
+        <member name="P:JCass_ModelCore.Models.ModelBase.Lookups">
+            <summary>
+            Domain Model lookup set for looking up parameters/constants/etc.
+            </summary>
+            <seealso cref="!:LookupsProjectLevel"/>
+        </member>
+        <member name="P:JCass_ModelCore.Models.ModelBase.MultiColumnLookups">
+            <summary>
+            Domain/Project lookup set for Multi-Column Lookup Tables. Key is the set name, and
+            value is the lookup table as jcDataSet. See function 'JFuncLookupMultiColumn'
+            </summary>
+        </member>
+        <member name="P:JCass_ModelCore.Models.ModelBase.GroupingSetup">
+            <summary>
+            Setup to do grouping for an MCDA Grouped model. Optional property, only used for
+            a Grouped Model
+            </summary>
+        </member>
+        <member name="F:JCass_ModelCore.Models.ModelBase.StrategyDetailDebugSets">
+            <summary>
+            Debug information for detailed strategy calculations for the element and period being debugged, if any
+            </summary>
+        </member>
+        <member name="P:JCass_ModelCore.Models.ModelBase.StrategyKeysForDebugElement">
+            <summary>
+            Set containing all possible strategy keys for the element being debugged, if any
+            </summary>
+        </member>
+        <member name="F:JCass_ModelCore.Models.ModelBase.StrategySummaryDebugInfo">
+            <summary>
+            Debug information for summary information for all strategies for the element and period being debugged, if any
+            </summary>
+        </member>
+        <member name="M:JCass_ModelCore.Models.ModelBase.ClearTreatmentSet">
+            <summary>
+            Clear and re-set the Treatment Set. Can be called from e.g. Goal Seek algorithm to clear treatments between iterations 
+            without having to completely re-initialise the model.
+            </summary>
+        </member>
+        <member name="M:JCass_ModelCore.Models.ModelBase.GetParameterValues(System.Int32,System.Int32)">
+            <summary>
+            Gets dictionaries of all parameter values for an element at an epoch - both numeric and text parameters held in 
+            separate dictionaries
+            </summary>
+            <param name="iElem">Zero-based element index</param>
+            <param name="iEpoch">Epoch for which to get parameter values</param>
+            <returns>Keys are StringComparer.Ordinal for faster lookup</returns>
+        </member>
+        <member name="M:JCass_ModelCore.Models.ModelBase.GetInputValues(System.Int32)">
+            <summary>
+            Gets dictionaries of all input values for an element - both numeric and text inputs held in 
+            separate dictionaries
+            </summary>
+            <param name="iElem"></param>
+            <returns>Keys are StringComparer.Ordinal for faster lookup</returns>
+        </member>
+        <member name="M:JCass_ModelCore.Models.ModelBase.GetParameterStatistics(System.String)">
+            <summary>
+            Gets Descriptive Statistics for a parameter over all epochs. Used for Goal-Seeking only at this stage. This is a replication of some code in 
+            the PostProcessing Library, but we cannot use that library here because it is not a dependency of the ModelCore Library.
+            </summary>
+            <param name="paramName">Name of the parameter</param>
+            <returns>Dictionary in which keys are epoch numbers (0,1,2,...) and values are he Descriptive Statistics object for 
+            the epoch for the requested parameter</returns>
+        </member>
+        <member name="M:JCass_ModelCore.Models.ModelBase.HasTreatmentInPeriod(System.Int32,System.Int32)">
+            <summary>
+            Wrapper to help Customisers determine if an element has a treatment in a period
+            </summary>
+            <param name="iElem">Zero based index of element</param>
+            <param name="iPeriod">1-based Period for which to check</param>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_ModelCore.Models.ModelBase.GetNextTreatment(System.Int32,System.Int32)">
+            <summary>
+            Wrapper to help Customisers see when the next treatment (if any) is. Can be used to check for 
+            committed treatments in the near future. If this returns null, that means there are no treatments
+            after iAfterPeriod.
+            </summary>
+            <param name="iAfterPeriod">Check for treatments after this period</param>
+            <param name="iElem">Zero-based element index to check for</param>
+            <returns>Treatment Instance if any is found, else null</returns>
+        </member>
+        <member name="M:JCass_ModelCore.Models.ModelBase.MustDoReset(System.Int32,System.Collections.Generic.Dictionary{System.Int32,JCass_ModelCore.Treatments.TreatmentInstance})">
+            <summary>
+            Checks whether the Treatment situation is such that Reset should be considered. Takes into account that
+            the present treatment (if any) may be maintenance and that the Config settings may call for Routine Maintenance
+            to NOT trigger reset.
+            </summary>
+            <param name="iElemIndex">Zero-based index for the element</param>    
+            <param name="treatments">Treatments for the period under consideration</param>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_ModelCore.MonteCarlo.DistributionSimulator.#ctor(System.String,JCass_Data.Objects.jcDataSet)">
+            <summary>
+            Constructs a DistributionSimulator for a given parameter, using setup data that defines cohorts with rules and associated piecewise linear models for the distribution shapes.
+            </summary>
+            <param name="parameterName">The name of the parameter for which the distribution simulator is being created. Used only for error messages and logging.</param>
+            <param name="setupData">The setup data defining cohorts, rules, and associated piecewise linear models for the distribution shapes. Should have
+            columns: "cohort_label", "cohort_rule", "cohort_shape".</param>
+        </member>
+        <member name="T:JCass_ModelCore.MonteCarlo.MarkovTransitionSimulator">
+            <summary>
+            Simulates the next state from a discrete-state Markov transition matrix.
+            <para>
+            The setup data is a square matrix supplied as a <see cref="T:JCass_Data.Objects.jcDataSet"/>. The first column
+            (header literally <c>state</c>, lowercase) holds the current-state keys (one per row).
+            Every other column header is a next-state key. Cell values are transition probabilities
+            expressed as fractions in [0, 1] (e.g. 0.65, not 65). Blank cells are treated as 0.
+            Each row's probabilities must sum to 1.0 (checked to four decimal places). The set of
+            row keys and the set of next-state column headers must be identical (square + consistent).
+            </para>
+            <para>
+            Two sampling modes are available:
+            </para>
+            <para>
+            <see cref="M:JCass_ModelCore.MonteCarlo.MarkovTransitionSimulator.GetNextState(System.String,System.Random)"/> — <b>homogeneous</b>. Every element in the same
+            current state draws from the identical row distribution.
+            </para>
+            <para>
+            <see cref="M:JCass_ModelCore.MonteCarlo.MarkovTransitionSimulator.GetNextState(System.String,System.Double,System.Random)"/> — <b>calibrated per-element</b>. The
+            caller supplies an already-computed per-element leave-probability
+            <c>p_leave_i ∈ [0, 1]</c> and the simulator uses it directly for the stay-vs-leave draw. On
+            "leave", the destination is sampled from the row's conditional-on-leaving distribution
+            (excludes the stay state, renormalised). The row's baseline leave-probability
+            <c>p_s = 1 - p(s → s)</c> is exposed via <see cref="M:JCass_ModelCore.MonteCarlo.MarkovTransitionSimulator.GetBaselineLeaveProbability(System.String)"/>
+            so the caller can construct <c>p_leave_i</c> (typically
+            <c>clamp(p_s × raw_p_i / mean_p_s, 0, 1)</c>). Provided the caller ensures the mean of
+            <c>p_leave_i</c> across the cohort in state s equals <c>p_s</c>, the aggregate row leave-rate
+            is preserved in expectation.
+            </para>
+            <para>
+            Both overloads are allocation-free in the hot path: a couple of dictionary lookups, a small
+            linear scan, and a returned reference to a cached column-header string.
+            </para>
+            </summary>
+        </member>
+        <member name="F:JCass_ModelCore.MonteCarlo.MarkovTransitionSimulator.BaselineLeaveEpsilon">
+            <summary>
+            States with a baseline leave-probability below this threshold are treated as absorbing
+            (fully self-transitioning). No conditional-on-leaving distribution is built for them and
+            <see cref="M:JCass_ModelCore.MonteCarlo.MarkovTransitionSimulator.GetNextState(System.String,System.Double,System.Random)"/> short-circuits to a stay outcome.
+            Uses a tolerant threshold rather than a strict zero to absorb floating-point drift from
+            the cumulative-probability build.
+            </summary>
+        </member>
+        <member name="F:JCass_ModelCore.MonteCarlo.MarkovTransitionSimulator._nextStates">
+            <summary>
+            Next-state labels in column order. Shared across every row to avoid per-row duplication
+            and to allow <see cref="M:JCass_ModelCore.MonteCarlo.MarkovTransitionSimulator.GetNextState(System.String,System.Random)"/> to return interned references
+            without allocation.
+            </summary>
+        </member>
+        <member name="F:JCass_ModelCore.MonteCarlo.MarkovTransitionSimulator._cumulative">
+            <summary>
+            Per-row inclusive cumulative distribution. Key is the current-state label; value is an
+            array of cumulative probabilities aligned to <see cref="F:JCass_ModelCore.MonteCarlo.MarkovTransitionSimulator._nextStates"/>. The final entry
+            of each array is forced to exactly 1.0 after the row-sum check passes, so the sampling
+            loop is guaranteed to find a hit for any u in [0, 1).
+            </summary>
+        </member>
+        <member name="F:JCass_ModelCore.MonteCarlo.MarkovTransitionSimulator._baselineLeaveProb">
+            <summary>
+            Per-state baseline leave-probability: <c>1 - p(s → s)</c>. Precomputed at setup so the
+            calibrated overload can scale the caller's tilt without a runtime search for the stay
+            column. Values below <see cref="F:JCass_ModelCore.MonteCarlo.MarkovTransitionSimulator.BaselineLeaveEpsilon"/> are absorbing (no leaving is
+            possible) and have no entry in <see cref="F:JCass_ModelCore.MonteCarlo.MarkovTransitionSimulator._conditionalCdf"/> / <see cref="F:JCass_ModelCore.MonteCarlo.MarkovTransitionSimulator._conditionalStates"/>.
+            </summary>
+        </member>
+        <member name="F:JCass_ModelCore.MonteCarlo.MarkovTransitionSimulator._conditionalCdf">
+            <summary>
+            Per-state conditional-on-leaving cumulative distribution. Excludes the stay state and is
+            renormalised so entries sum to 1.0. Aligned to <see cref="F:JCass_ModelCore.MonteCarlo.MarkovTransitionSimulator._conditionalStates"/> for the
+            same key. Absent for absorbing states — see <see cref="F:JCass_ModelCore.MonteCarlo.MarkovTransitionSimulator._baselineLeaveProb"/>.
+            </summary>
+        </member>
+        <member name="F:JCass_ModelCore.MonteCarlo.MarkovTransitionSimulator._conditionalStates">
+            <summary>
+            Per-state next-state labels for the conditional-on-leaving distribution (i.e.
+            <see cref="F:JCass_ModelCore.MonteCarlo.MarkovTransitionSimulator._nextStates"/> with the stay state removed). Aligned to
+            <see cref="F:JCass_ModelCore.MonteCarlo.MarkovTransitionSimulator._conditionalCdf"/> for the same key.
+            </summary>
+        </member>
+        <member name="M:JCass_ModelCore.MonteCarlo.MarkovTransitionSimulator.#ctor(System.String,JCass_Data.Objects.jcDataSet)">
+            <summary>
+            Constructs a Markov transition simulator from a setup dataset.
+            </summary>
+            <param name="parameterName">Logical name of the parameter being simulated. Used only in error messages.</param>
+            <param name="setupData">Square transition matrix; see class summary for the expected shape.</param>
+        </member>
+        <member name="M:JCass_ModelCore.MonteCarlo.MarkovTransitionSimulator.GetNextState(System.String,System.Random)">
+            <summary>
+            Samples the next state given the current state and a random source. Allocation-free.
+            </summary>
+            <param name="currentStateKey">Key of the current state. Must match one of the row keys defined in setup.</param>
+            <param name="randomizer">Random source. Caller is responsible for seeding/lifetime.</param>
+            <returns>The sampled next-state key (reference to the cached column header).</returns>
+        </member>
+        <member name="M:JCass_ModelCore.MonteCarlo.MarkovTransitionSimulator.GetNextState(System.String,System.Double,System.Random)">
+            <summary>
+            Samples the next state given the current state, a caller-supplied per-element leave-probability,
+            and a random source. Allocation-free.
+            <para>
+            A first uniform draw decides stay-vs-leave against <paramref name="elementLeaveProbability"/>;
+            on a "leave" outcome a second uniform draw samples the destination from the row's
+            conditional-on-leaving distribution (excludes the stay state, renormalised). Absorbing states
+            (<c>baseline_s ≈ 0</c>) always stay regardless of the passed probability — this is a defensive
+            short-circuit for callers that mistakenly pass a non-zero value for an absorbing state.
+            </para>
+            <para>
+            The caller is responsible for computing <paramref name="elementLeaveProbability"/> so that it
+            preserves the row's aggregate leave-rate in expectation. Typical construction:
+            <c>p_leave_i = clamp(p_s × raw_p_i / mean_p_s, 0, 1)</c> where <c>p_s</c> is fetched via
+            <see cref="M:JCass_ModelCore.MonteCarlo.MarkovTransitionSimulator.GetBaselineLeaveProbability(System.String)"/>, <c>raw_p_i</c> is an external per-element
+            risk score (e.g. a logistic prediction), and <c>mean_p_s</c> is the sample mean of those
+            scores across the current cohort in state <paramref name="currentStateKey"/>. Under that
+            construction the mean of <c>p_leave_i</c> is <c>p_s</c>, and the aggregate row transition
+            rate is preserved in expectation.
+            </para>
+            </summary>
+            <param name="currentStateKey">Key of the current state. Must match one of the row keys defined in setup.</param>
+            <param name="elementLeaveProbability">Per-element probability of transitioning out of <paramref name="currentStateKey"/> in this step. Must be in [0, 1] and finite; already-clamped by the caller.</param>
+            <param name="randomizer">Random source. Caller is responsible for seeding/lifetime.</param>
+            <returns>The sampled next-state key (reference to a cached column header).</returns>
+        </member>
+        <member name="M:JCass_ModelCore.MonteCarlo.MarkovTransitionSimulator.GetBaselineLeaveProbability(System.String)">
+            <summary>
+            Returns the row baseline leave-probability <c>p_s = 1 - p(s → s)</c> for the given state,
+            precomputed at setup. Callers of <see cref="M:JCass_ModelCore.MonteCarlo.MarkovTransitionSimulator.GetNextState(System.String,System.Double,System.Random)"/> use this
+            as the scaling factor when constructing a calibrated per-element leave-probability. Returns
+            0.0 (or a value below <see cref="F:JCass_ModelCore.MonteCarlo.MarkovTransitionSimulator.BaselineLeaveEpsilon"/>) for absorbing states.
+            </summary>
+            <param name="currentStateKey">Key of the current state. Must match one of the row keys defined in setup.</param>
+            <returns>The row baseline leave-probability in [0, 1].</returns>
+        </member>
+        <member name="F:JCass_ModelCore.Treatments.MCDASetup.TreatmentSuitabilityScoreWeight">
+            <summary>
+            Weight associated with the Treatment Suitability Score that reflects the suitability of the treatment.     
+            </summary>
+        </member>
+        <member name="F:JCass_ModelCore.Treatments.MCDASetup.TreatmentSuitabilityObjectiveType">
+            <summary>
+            Type of Objective for Treatment Suitability Score that reflects the suitability of the treatment. 1 means higher TSS will
+            be optimised, -1 means TSS will be minimised    
+            </summary>
+        </member>
+        <member name="F:JCass_ModelCore.Treatments.MCDASetup.TreatmentCostWeight">
+            <summary>
+            Weight associated with the Treatment Cost.     
+            </summary>
+        </member>
+        <member name="F:JCass_ModelCore.Treatments.MCDASetup.TreatmentCostObjectiveType">
+            <summary>
+            Type of Objective for Treatment Cost. Should be -1 in most instances to minimise cost!    
+            </summary>
+        </member>
+        <member name="F:JCass_ModelCore.Treatments.MCDASetup.TreatmentCostScaledWeight">
+            <summary>
+            Weight associated with the SCALED Treatment Cost.     
+            </summary>
+        </member>
+        <member name="F:JCass_ModelCore.Treatments.MCDASetup.TreatmentCostScaledObjectiveType">
+            <summary>
+            Type of Objective for SCALED Treatment Cost. Should be -1 in most instances to minimise cost!    
+            </summary>
+        </member>
+        <member name="F:JCass_ModelCore.Treatments.MCDASetup.Weights">
+            <summary>
+            Relative Weight for attributres/objectives: Values should add up to 1.0 and should be properly set and checked through
+            method 'SetWeightsAndObjectiveTypes'
+            </summary>
+        </member>
+        <member name="F:JCass_ModelCore.Treatments.MCDASetup.ObjTypeCodes">
+            <summary>
+            Type flag for attributes/objectives: +1 for objectives to maximise (e.g. Length) and -1 for objectives to minimise (e.g. Cost). These
+            codes should be properly set through method 'SetWeightsAndObjectiveTypes'
+            </summary>
+        </member>
+        <member name="M:JCass_ModelCore.Treatments.MCDASetup.GetTreatmentsSetAttributeData(System.Collections.Generic.List{JCass_ModelCore.Treatments.TreatmentInstance},System.Int32)">
+            <summary>
+            Use this for case where Treatments are evaluated using treatment suitability score in MOORA ranking
+            </summary>
+            <param name="treatments">List of candidate treatments</param>
+            <param name="iPeriod">Treatment Period</param>
+            <returns></returns>
+            <exception cref="T:System.Exception"></exception>
+        </member>
+        <member name="M:JCass_ModelCore.Treatments.MCDASetup.ValidateMcdaAttributeValue(System.Double,System.String,JCass_ModelCore.Treatments.TreatmentInstance,System.Int32,System.String)">
+             <summary>
+             Asserts that a value about to be written into the MOORA attribute matrix is a
+             finite number. Throws a support-friendly exception naming the element, treatment,
+             attribute, and underlying source if the value is NaN or Infinity.
+            
+             Why this matters: even ONE NaN or Infinity in a column causes
+             <see cref="T:JCass_Economics.Optimisers.MooraRanker"/>'s Euclidean column
+             normalisation to produce NaN for every row in that column (the existing
+             <c>Math.Max(1e-8, sqrt(sum))</c> guard does NOT handle NaN/Infinity — it only
+             guards against an all-zero column). All treatment ranks then collapse to NaN,
+             <c>OrderByDescending</c> degenerates to a stable no-op preserving insertion
+             order, and MCDA weights are silently ignored. Failing loud here pinpoints the
+             bad input cell before it can corrupt the ranking.
+             </summary>
+        </member>
+        <member name="M:JCass_ModelCore.Treatments.MCDASetup.FormatNumberForDiag(System.Double)">
+            <summary>
+            Formats a double for diagnostic messages so that NaN and Infinity are spelled
+            out explicitly rather than relying on culture-dependent ToString output.
+            </summary>
+        </member>
+        <member name="M:JCass_ModelCore.Treatments.MCDASetup.BuildMooraDiagnosticContext(System.Collections.Generic.List{JCass_ModelCore.Treatments.TreatmentInstance},System.Int32)">
+            <summary>
+            Builds a one-line description of the attribute-column layout used to feed MOORA,
+            plus the row→treatment mapping summary. Used to translate MOORA's "row=N
+            column=M" indices into actionable semantic context when the source-side guard
+            did not catch the bad value first. The column ordering MUST match
+            <see cref="M:JCass_ModelCore.Treatments.MCDASetup.GetTreatmentsSetAttributeData(System.Collections.Generic.List{JCass_ModelCore.Treatments.TreatmentInstance},System.Int32)"/>.
+            </summary>
+        </member>
+        <member name="T:JCass_ModelCore.Treatments.StrategySetupInfo">
+            <summary>
+            Class to hold information setup data for a treatment strategy
+            </summary>
+        </member>
+        <member name="F:JCass_ModelCore.Treatments.TreatmentInstance.CustomPropertiesNumber">
+            <summary>
+            Optional set of customisable Numeric properties that can be used by custom implementers to store additional information
+            related to this treatment. These values are only held in memory during model execution and are not persisted.
+            </summary>
+        </member>
+        <member name="F:JCass_ModelCore.Treatments.TreatmentInstance.CustomPropertiesText">
+            <summary>
+            Optional set of customisable Text/String properties that can be used by custom implementers to store additional information
+            related to this treatment. These values are only held in memory during model execution and are not persisted.
+            </summary>
+        </member>
+        <member name="F:JCass_ModelCore.Treatments.TreatmentInstance.RankParamSimple">
+            <summary>
+            Temporary simple ranking for maintenance. Higher parameter value means higher priority.
+            </summary>
+        </member>
+        <member name="F:JCass_ModelCore.Treatments.TreatmentInstance.TreatmentSuitabilityScore">
+            <summary>
+            Treatment suitability score. Used only in MCDA ranking type models.
+            </summary>
+        </member>
+        <member name="F:JCass_ModelCore.Treatments.TreatmentInstance.TreatmentRankParameter">
+            <summary>
+            Treatment rank score from MOORA analysis. Used only in MCDA ranking type models.
+            </summary>
+        </member>
+        <member name="F:JCass_ModelCore.Treatments.TreatmentInstance.BudgetCategoryFractions">
+            <summary>
+            (Optional) Budget category fractions for cost allocation for this treatment. If this is empty, the
+            treatment cost will be allocated to the budget category of the treatment type (default budget category for treatment type).
+            </summary>
+        </member>
+        <member name="P:JCass_ModelCore.Treatments.TreatmentInstance.UnitRate">
+            <summary>
+            Unit Rate inherited from the TreatmentType definition or optionally specified in the constructor.
+            </summary>
+        </member>
+        <member name="M:JCass_ModelCore.Treatments.TreatmentInstance.AssignBudgetCategoryFractions(System.Collections.Generic.Dictionary{System.String,System.Decimal})">
+            <summary>
+            Assigns the budget category fractions for this treatment instance if the treatment is related to multiple budget categories. The values must sum to 1 else an exception will be thrown. This 
+            method needs to be called explicitly by custom implementers to set the budget category fractions for a treatment instance based on domain logic - this will vary by treatment type and 
+            networkr/client rules.
+            </summary>
+            <param name="budgetCategoryFractions"></param>
+            <remarks>Do NOT remove this method if references shows Zero!!! This needs to be called explicitly by custom implementers, and since these are read only at runtime, the 
+            reference is not in the code base.</remarks>
+        </member>
+        <member name="M:JCass_ModelCore.Treatments.TreatmentInstance.GetBudgetCategoryInfoForExport(System.Collections.Generic.Dictionary{System.String,JCass_ModelCore.Treatments.TreatmentType})">
+            <summary>
+            Gets a string representation of the budget category for export purposes. If multiple budget categories are defined, the string will contain the budget category fractions as 
+            a delimited string with pipe-separated values showing the budget category and the fraction in that category, e.g. 'rehab: 0.7|seal:0.3'. 
+            If no budget category fractions are defined, the default budget category of the treatment type is returned.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_ModelCore.Treatments.TreatmentInstance.GetTreatmentExportRow(JCass_ModelCore.Models.ModelBase,System.Int32,System.Collections.Generic.Dictionary{System.String,System.Object})">
+            <summary>
+            Gets a dictionary row for exporting treatment data. The row contains the treatment instance data and is used for exporting to CSV or other formats.
+            </summary>    
+        </member>
+        <member name="M:JCass_ModelCore.Treatments.TreatmentInstance.GetTreatmentExportColums(System.String[],System.Boolean)">
+            <summary>
+            Gets all of the columns that are required for exporting Treatment data.
+            </summary>
+            <param name="identifiers"></param>
+            <param name="excludeIdentifiers">If true, identifier columns are omitted from the result.</param>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_ModelCore.Treatments.TreatmentInstance.GetSpendingExportRow(JCass_ModelCore.Models.ModelBase,System.Int32,System.Collections.Generic.Dictionary{System.String,System.Object})">
+            <summary>
+            Gets a dictionary row(s) for exporting spending data for each budget category to which the treatment applies.
+            </summary>    
+        </member>
+        <member name="M:JCass_ModelCore.Treatments.TreatmentInstance.GetSpendingExportColums(System.String[],System.Boolean)">
+            <summary>
+            Gets all of the columns that are required for exporting Spending data.
+            </summary>
+            <param name="identifiers"></param>
+            <param name="excludeIdentifiers">If true, identifier columns are omitted from the result.</param>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_ModelCore.Treatments.TreatmentInstance.IsRoutineMaintenance(JCass_ModelCore.ModelObjects.ModelConfiguration)">
+            <summary>
+            Wrapper to identify if this treatment is the specified Routine Maintenance treatment
+            </summary>
+            <param name="modelConfig">Model Configuration</param>
+            <returns>True if this treatment's name matches the name of the routine maintenance treatment specified in the Meta Setup file and
+            stored as property modelConfig.RoutineMaintenanceTreatmentName</returns>
+        </member>
+        <member name="F:JCass_ModelCore.Treatments.TreatmentSet._treatments">
+            <summary>
+            All treatments for this model (committed and triggered). First key is the model period, second key is the element index.
+            </summary>
+        </member>
+        <member name="M:JCass_ModelCore.Treatments.TreatmentSet.GetTreatmentExportTable(System.String[],System.Int32)">
+            <summary>
+            Creates a jcDataSet containing the Treatment export table. This is the treatments with one row for each treatment instance. It show 
+            the budget categories in concatenated form, but does not split the treatment by budget category like the Spending Export Table.
+            </summary>
+            <param name="identifiers">Element Identifying columns specified in model setup</param>
+            <param name="initialCalendarEpoch">Initial Calendar Epoch</param>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_ModelCore.Treatments.TreatmentSet.GetTreatmentExportTableWithoutIdentifiers(System.Int32)">
+            <summary>
+            Creates a jcDataSet containing the Treatment export table. This is the treatments with one row for each treatment instance. It show 
+            the budget categories in concatenated form, but does not split the treatment by budget category like the Spending Export Table. This version
+            does not include any element identifying columns - needed for Monte Carlo export where identifiers are not relevant.
+            </summary>    
+            <param name="initialCalendarEpoch">Initial Calendar Epoch</param>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_ModelCore.Treatments.TreatmentSet.GetSpendingExportTable(System.String[],System.Int32)">
+            <summary>
+            Creates a jcDataSet containing the Spending export table. This is spending in each Budget Category for each treatment. Because some treatments
+            may involve more than one Budget Category, this set may have more rows than the Treatments table, since one each treatment will be split into
+            a row for each Budget Category associated with that treatment.
+            </summary>
+            <param name="identifiers">Element Identifying columns specified in model setup</param>
+            <param name="initialCalendarEpoch">Initial Calendar Epoch</param>
+            <returns></returns>
+        </member>
+        <member name="T:JCass_ModelCore.Treatments.TreatmentStrategyGenerator">
+            <summary>
+            Class that generates all possible treatment strategies for a specific element over the BC&amp;A look-ahead period
+            </summary>
+        </member>
+        <member name="M:JCass_ModelCore.Treatments.TreatmentStrategyGenerator.#ctor(JCass_ModelCore.Models.ModelBase,System.Int32,System.Int32,System.Collections.Generic.Dictionary{System.String,System.Double},System.Collections.Generic.Dictionary{System.String,System.String},System.Collections.Generic.Dictionary{System.String,System.Double},System.Collections.Generic.Dictionary{System.String,System.String})">
+            <summary>
+            Constructor for Strategy Generator
+            </summary>
+            <param name="model">Owning model that supplies treatment definitions and configuration.</param>
+            <param name="iElemIndex">Zero-based index of the element on which the strategies will be generated</param>
+            <param name="iBasePeriod">Base Period - i.e. Period in which the First Treatment Occurs (values like 1,2,...n). Must be between 1 and number of modelling periods</param>
+            <param name="numInputs">Raw numeric input values for the element. Keys are input names, values are input values</param>
+            <param name="textInputs">Raw text input values for the element. Keys are input names, values are input values</param>
+            <param name="numModParamValues">Values for Numeric Model Parameters as they were in the previous epoch. Keys are parameter names</param>
+            <param name="textModParamValues">Values for Text Model Parameters as they were at the previous epoch. Keys are parameter names</param>
+        </member>
+        <member name="M:JCass_ModelCore.Treatments.TreatmentStrategyGenerator.GenerateAllStrategyRollouts(System.Collections.Generic.List{JCass_ModelCore.Treatments.TreatmentInstance},System.Boolean)">
+            <summary>
+            Controller for generating all possible treatment strategies for the element
+            </summary>
+            <param name="treatments">Number of First Treatments</param>
+            <param name="minimise">Flag to indicate if the Objective is to be minimised (if false, model will maximise Objective Function)</param>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_ModelCore.Treatments.TreatmentStrategyGenerator.Rollout(JCass_ModelCore.Treatments.TreatmentInstance,System.Int32,System.String,JCass_ModelCore.ModelObjects.StrategyParameterData)">
+            <summary>
+            Recursive method that rolls out a treatment strategy starting from a specific first treatment at a specific period. Calls itself recursively
+            when new treatments are triggered in future periods.
+            </summary>
+            <param name="treatment">First Treatment for this strategy</param>
+            <param name="firstTreatmentPeriodRelative">Relatve period in which the first treatment occurs. Should be 1 for very first treatment, or else the period
+            in which additional treatments are triggered</param>
+            <param name="baseKey">Base Key on which this strategy will build. 'none' for first call before triggering additional treatments</param>
+            <param name="parameterData">Parameter data from the preceding rollout before present treatment is triggered. Null for first call before triggering
+            additional treatment.</param>
+            <exception cref="T:System.Exception"></exception>
+        </member>
+        <member name="M:JCass_ModelCore.Treatments.TreatmentStrategyGenerator.CheckForAndApplyResetForCommittedTreatment(System.String,System.Int32,System.Int32,System.Collections.Generic.Dictionary{System.String,System.Double},System.Collections.Generic.Dictionary{System.String,System.String},System.Action{System.String,System.Double},System.Action{System.String,System.String})">
+            <summary>
+            Checks if there is a committed treatment for this period that requires a reset, and if so applies the reset
+            </summary>
+            <returns>True if there is a committed and a Reset was applied, False if there is no committed and thus no reset was applied</returns>
+        </member>
+        <member name="M:JCass_ModelCore.Treatments.TreatmentStrategyGenerator.CheckForAndApplyRoutineMaintenanceIfNeeded(System.String,System.Int32,System.Int32,System.Collections.Generic.Dictionary{System.String,System.Double},System.Collections.Generic.Dictionary{System.String,System.String},System.Action{System.String,System.Double},System.Action{System.String,System.String})">
+            <summary>
+            Checks if there is a Routine Maintenance treatment to apply, and if so applies it. If applied, also checks if Routine Maintenance should trigger a reset
+            and if so applies the reset. If no reset is triggered, does an increment instead. If no Routine Maintenance is triggered, does an increment only.
+            </summary>    
+            <returns>True if a Routine Maintenance was triggered (whether resetted or not), else false</returns>
+        </member>
+        <member name="M:JCass_ModelCore.Treatments.TreatmentStrategyGenerator.SetupStrategyTreatmentDictionaryForKey(System.String,System.Boolean,System.String)">
+            <summary>
+            Sets up a treatment dictionary for the specified strategy key.
+            </summary>
+            <remarks>If <paramref name="isForTreatmentTrigger"/> is <see langword="true"/> and <paramref
+            name="baseKey"/>  is not "none", the method copies treatments from the base key to the new strategy key. 
+            Otherwise, it creates an empty treatment dictionary for the strategy key.</remarks>
+            <param name="key">The unique identifier for the strategy key to set up.</param>
+            <param name="isForTreatmentTrigger">A value indicating whether the setup is for a treatment trigger.  If <see langword="true"/>, the method will
+            copy treatments from the base key.</param>
+            <param name="baseKey">The base key from which treatments will be copied, if applicable.  Specify "none" to create a new dictionary
+            without copying treatments.</param>
+        </member>
+        <member name="M:JCass_ModelCore.Treatments.TreatmentStrategyGenerator.EvaluateAllStrategies(System.Boolean)">
+            <summary>
+            Evaluates all rolled out strategies for the element by comparing them to the Do-Nothing strategy and 
+            calculating total objective value, total cost, benefit and benefit-cost ratio
+            </summary>
+            <param name="minimise">Flag to indicate if Objective Value should be minimised</param>
+        </member>
+        <member name="M:JCass_ModelCore.Treatments.TreatmentStrategyGenerator.CreateAndEvaluateStrategy(System.String,JCass_ModelCore.Treatments.TreatmentStrategy,System.Boolean)">
+            <summary>
+            Creates a Strategy object from the rolled out strategy data and evaluates it against the Do-Nothing strategy by 
+            calculating:
+            <para>Total Objective Value = sum of all objective values</para>
+            <para>Total Cost = sum of all treatment costs including Routine Maintenance where relevant</para>
+            <para>Benefit = Difference between Objective Sum of Do Nothing and Objective Sum for this strategy</para>
+            <para>Benefit Cost Ratio = Ratio of Benefit over Cost Difference with Do-Nothing Cost</para>
+            </summary>
+            <param name="strategyKey"></param>
+            <param name="baseStrategyForCostAndBenefitDelta">Base strategy against which to compare objective and cost. Should be either 
+            the Do-Nothing or Do-Maintenance only strategy</param>
+            <param name="minimise"></param>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_ModelCore.Treatments.TreatmentStrategyGenerator.SkipRolloutBranch(System.String,System.Int32,JCass_ModelCore.Treatments.TreatmentInstance)">
+            <summary>
+            Checks if a rollout branch should be skipped based on existing strategies and on Configuration.BCAStrategyPeriodsToSkip. It
+            does this by subtracting the BCAStrategy Periods to Skip from the first treatment period and then using this adjusted period
+            to build the key. It then checks if any existing strategy starts with this key. If so, the branch is skipped.
+            </summary>
+            <param name="baseKey"></param>
+            <param name="firstTreatmentPeriodRelative"></param>
+            <param name="treatment">Treatment instance whose branch is being evaluated.</param>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_ModelCore.Treatments.TreatmentStrategyGenerator.TreatmentSameAsLastForcedTreatment(JCass_ModelCore.Treatments.TreatmentInstance,System.String)">
+            <summary>
+            Checks if this treatment is the same as the last forced treatment in the base key. If so, returns true to indicate that this branch should be skipped
+            </summary>      
+        </member>
+        <member name="M:JCass_ModelCore.Treatments.TreatmentStrategyGenerator.CreateStrategyKeyDebugSetIfRequired">
+            <summary>
+            Creates the Strategy Key Debug Set on the model if this element is the one for which strategy keys need to be exported
+            </summary>
+        </member>
+        <member name="M:JCass_ModelCore.Treatments.TreatmentStrategyGenerator.CreateStrategyDetailDebugSetIfRequired">
+            <summary>
+            Creates the Strategy Key Debug Sets on the model if this element is the one for which strategy details
+            </summary>
+        </member>
+        <member name="M:JCass_ModelCore.Treatments.TreatmentType.#ctor(System.Collections.Generic.Dictionary{System.String,System.Object})">
+            <summary>
+            Construct a TreatmentType object from a dictionary row
+            </summary>
+            <param name="row"></param>
+        </member>
+        <member name="M:JCass_ModelCore.Treatments.TreatmentType.#ctor">
+            <summary>
+            Parameterless constructor needed to construct object from json
+            </summary>
+        </member>
+        <member name="T:JCass_ModelCore.Utilities.OutputStamper">
+             <summary>
+             Provides deterministic, cross-run stable fingerprints (“stamps”) for model outputs.
+            
+             Why this class exists:
+             - .NET’s <see cref="T:System.HashCode"/> and <c>string.GetHashCode()</c> are randomised per process,
+               meaning they produce different values across runs, rebuilds, and machines.
+             - Floating-point operations can differ slightly across CPUs/JIT runtimes, leading to false
+               “changes detected” when hashing raw double bits.
+            
+             What this class guarantees:
+             - Identical model outputs (within the chosen numeric quantisation tolerance) produce
+               identical stamps across runs, builds, and machines.
+             - Small floating-point noise smaller than the quantisation threshold does NOT trigger false changes.
+             - Parameter iteration order is deterministic (sorted by name).
+             - Strings are hashed as ordinal UTF-8 bytes (not using .NET’s randomised hash).
+             - Doubles are rounded to <see cref="F:JCass_ModelCore.Utilities.OutputStamper.DoubleDecimals"/> and then hashed using their IEEE-754 bit pattern.
+            
+             Suitable for:
+             - detecting ANY meaningful change in model output data
+             - caching
+             - regression detection
+             - reproducibility checks
+             </summary>
+        </member>
+        <member name="F:JCass_ModelCore.Utilities.OutputStamper.DoubleDecimals">
+            <summary>
+            Number of decimal places to retain when quantising numeric output values.
+            Adjust based on desired sensitivity.
+            </summary>
+        </member>
+        <member name="M:JCass_ModelCore.Utilities.OutputStamper.GetModelOutputStamp(JCass_ModelCore.Models.ModelBase)">
+             <summary>
+             Computes a stable deterministic fingerprint (“stamp”) for all outputs in the model.
+            
+             Stamp changes if:
+             - any output value changes beyond the quantisation tolerance,
+             - any string output changes (ordinal comparison),
+             - parameter names change,
+             - model dimensions change (NElements / NPeriods).
+            
+             Stamp does NOT change if:
+             - the only differences are within floating-point noise below the quantisation threshold,
+             - .NET runtime changes its per-process hashing behaviour.
+            
+             Returns a 64-bit FNV-1a hash encoded in uppercase hexadecimal.
+             </summary>
+        </member>
+        <member name="M:JCass_ModelCore.Utilities.UtilsSetupData.GetLookupsSetFromDataSet(System.String)">
+            <summary>
+            Utility version that does not require model object. For testing and UI callers.
+            </summary>
+            <param name="jsonData"></param>
+            <returns></returns>
+            <exception cref="T:System.Exception"></exception>
+        </member>
+        <member name="M:JCass_ModelCore.Utilities.UtilsSetupData.CheckRequiredColumns(JCass_Data.Objects.jcDataSet,System.Collections.Generic.List{System.String},System.String)">
+            <summary>
+            Utility version for use by external callers e.g. UI testing
+            </summary>    
+        </member>
+        <member name="M:JCass_ModelCore.Utilities.UtilsSetupData.GetSourceTypeForCode(JCass_ModelCore.Models.ModelBase,System.String)">
+            <summary>
+            Checks if a specified column or parameter name is either in the Input Data or in the Model Parameters and returns
+            either 'input_data' or 'model_parameter'. If the specified name is neither in the Input Data column set or in 
+            the list of Model Parameters, then 'unknown' is returned (should be used to throw downstream error if needed).
+            </summary>
+            <param name="model">Model to check on</param>
+            <param name="columnOrParameterName">Name of a column or parameter to check on the model</param>
+            <returns></returns>
+        </member>
+        <member name="M:ModelInputData.Setup(System.ValueTuple{System.String[],System.Collections.Generic.List{System.String[]}},System.Collections.Generic.Dictionary{System.String,JCass_ModelCore.ModelObjects.JCColumn},System.Collections.Generic.List{System.String}@)">
+            <summary>
+            headersAndRows.Item1 = headers[], Item2 = rows (each row is string[])
+            inputHeaders: column definitions (name -> JCColumn) with .IsNumeric and (filled) .Index
+            </summary>
+        </member>
+    </members>
+</doc>

@@ -1,0 +1,1499 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>JCass_Core</name>
+    </assembly>
+    <members>
+        <member name="T:JCass_Core.Engineering.BordaCountRanker">
+            <summary>
+            Implements the Borda Count decision-making method, which ranks alternatives
+            based on their positions across multiple criteria, taking into account whether
+            each criterion should be maximized or minimized.
+            </summary>
+        </member>
+        <member name="P:JCass_Core.Engineering.BordaCountRanker.DecisionMatrix">
+            <summary>
+            Decision matrix containing the performance values of alternatives across criteria.
+            Rows represent alternatives, and columns represent criteria.
+            </summary>
+        </member>
+        <member name="P:JCass_Core.Engineering.BordaCountRanker.MaximiseCriterion">
+            <summary>
+            Boolean array indicating whether each criterion should be maximized (true) or minimized (false).
+            </summary>
+        </member>
+        <member name="P:JCass_Core.Engineering.BordaCountRanker.Weights">
+            <summary>
+            Weights assigned to each criterion, representing their relative importance.
+            </summary>
+        </member>
+        <member name="M:JCass_Core.Engineering.BordaCountRanker.#ctor(System.Double[0:,0:],System.Boolean[],System.Double[])">
+            <summary>
+            Initializes a new instance of the BordaCount class with the given decision matrix, criteria types, and weights.
+            </summary>
+            <param name="decisionMatrix">The decision matrix.</param>
+            <param name="maximiseCriterion">Boolean array indicating whether each criterion should be maximized or minimized.</param>
+            <param name="weights">Weights for each criterion.</param>
+        </member>
+        <member name="M:JCass_Core.Engineering.BordaCountRanker.NormalizeWeights(System.Double[])">
+            <summary>
+            Normalizes the weights to ensure they sum to 1.
+            </summary>
+            <param name="weights">The weights to normalize.</param>
+            <returns>A normalized array of weights.</returns>
+        </member>
+        <member name="M:JCass_Core.Engineering.BordaCountRanker.PerformBordaCount">
+            <summary>
+            Performs the Borda Count analysis, calculating rankings for each alternative across all criteria
+            and aggregating the results to produce a final ranking.
+            </summary>
+            <returns>An array of final rankings for the alternatives.</returns>
+        </member>
+        <member name="M:JCass_Core.Engineering.BordaCountRanker.RankDescending(System.Double[])">
+            <summary>
+            Ranks values in descending order, with 1 representing the highest value.
+            Handles ties by assigning the same rank to equal values.
+            </summary>
+            <param name="values">Array of values to rank.</param>
+            <returns>An array of rankings for the values.</returns>
+        </member>
+        <member name="M:JCass_Core.Engineering.BordaCountRanker.RankAscending(System.Double[])">
+            <summary>
+            Ranks values in ascending order, with 1 representing the lowest value.
+            Handles ties by assigning the same rank to equal values.
+            </summary>
+            <param name="values">Array of values to rank.</param>
+            <returns>An array of rankings for the values.</returns>
+        </member>
+        <member name="M:JCass_Core.Engineering.GPSUtilities.CalculateOffset(System.Double,System.Double,System.Double,System.Double)">
+            <summary>
+            Calculates a new latitude and longitude based on an offset in meters and a bearing. NOT VERIFIED!!!
+            </summary>
+            <param name="latitude">Starting latitude in decimal degrees.</param>
+            <param name="longitude">Starting longitude in decimal degrees.</param>
+            <param name="offsetMeters">Offset distance in meters.</param>
+            <param name="bearingDegrees">Bearing in degrees (0 = North, 90 = East).</param>
+            <returns>A tuple containing the new latitude and longitude.</returns>
+        </member>
+        <member name="M:JCass_Core.Engineering.GPSUtilities.DegreesToRadians(System.Double)">
+            <summary>
+            Converts degrees to radians.
+            </summary>
+        </member>
+        <member name="M:JCass_Core.Engineering.GPSUtilities.RadiansToDegrees(System.Double)">
+            <summary>
+            Converts radians to degrees.
+            </summary>
+        </member>
+        <member name="M:JCass_Core.Engineering.KPICalculator.ValuePassesThresholdTest(System.Double,System.Double,System.String)">
+            <summary>
+            Generic check to see if a Value passes a Threshold Test
+            </summary>
+            <param name="value">Value to check</param>
+            <param name="threshold">Threshold to check against</param>
+            <param name="operatorCode">Operator code. Valid values are: 
+            <para>'lt' for 'Less than'</para>
+            <para>'lte' for 'Less than or Equals'</para>
+            <para>'gt' for 'Greater than'</para>
+            <para>'gte' for 'Greater than or Equals'</para>
+            <para>'equals' for 'Equals'</para>
+            </param>
+            <returns>True if value passes the threshold check</returns>
+            <exception cref="T:System.Exception">An error is thrown if the operator code is not one of the values listed.</exception>
+        </member>
+        <member name="M:JCass_Core.Engineering.KPICalculator.GetEqualityOperatorCode(System.String)">
+            <summary>
+            Gets an equality operator code that can be used in method 'ValuePassesThresholdTest' from a more 
+            verbose, user-friendly name
+            </summary>
+            <param name="rawOperatorCode">Valid values are (NOT case sensitive): 'less than', 'less than or equal to', 'greater than',
+            'greater than or equal to', 'equal to' or 'equals'</param>
+            <returns></returns>
+            <exception cref="T:System.Exception"></exception>
+        </member>
+        <member name="M:JCass_Core.Engineering.KPICalculator.GetKPIParameterListFromSetup(JCass_Data.Objects.jcDataSet)">
+            <summary>
+            Gets a list of KPIParameter objects from a setup table. 
+            </summary>
+            <param name="setupData">Table that should have columns: 'data_source', 'aggregator_code', 'weights_source' </param>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_Core.Engineering.KPICalculator.GetCountForThreshold(System.String)">
+            <summary>
+            Gets the count (i.e. number of occurences) where the data value matches an equality comparison with
+            a threshold. 
+            </summary>
+            <param name="kpiParameterName">KPI code such as 'count_gt_30'</param>    
+            <exception cref="T:System.Exception"></exception>
+        </member>
+        <member name="M:JCass_Core.Engineering.KPICalculator.GetPercentCountForThreshold(System.String)">
+            <summary>
+            Gets the percentage count (i.e. number of occurences divided by number of data points expressed as a percent) where the 
+            data value matches an equality comparison with a threshold. 
+            </summary>
+            <param name="kpiParameterName">KPI code such as 'perc_count_gt_30'</param>    
+            <exception cref="T:System.Exception"></exception>
+        </member>
+        <member name="M:JCass_Core.Engineering.KPICalculator.GetWeightSumForThreshold(System.String)">
+            <summary>
+            Gets the sum of the weights (e.g. lengths) where the data value matches an equality comparison with
+            a threshold. 
+            </summary>
+            <param name="kpiParameterName">KPI code such as 'weight_sum_gt_30'</param>
+            <returns></returns>
+            <exception cref="T:System.Exception"></exception>
+        </member>
+        <member name="M:JCass_Core.Engineering.KPICalculator.GetPercentWeightSumForThreshold(System.String)">
+            <summary>
+            Gets the Sum of the weights (e.g. lengths) where the data value matches an equality comparison with
+            a threshold, expressed as a percentage of the total Weight sum. Thus, 100 * (sum of weights that pass the condition
+            threshold divided by the sum of weights).
+            </summary>
+            <param name="kpiParameterName">KPI code such as 'perc_weight_sum_gt_30'</param>
+            <returns></returns>
+            <exception cref="T:System.Exception"></exception>
+        </member>
+        <member name="M:JCass_Core.Engineering.KPICalculator.GetOperatorAndThresholdFromKPICode(System.String)">
+            <summary>
+            Splits out the equality operator and threshold from a KPI parameter. We assume the KPI code is in 
+            a form such as 'count_gt_30' or 'perc_lte_1.5'
+            </summary>
+            <param name="kpiParameterCode">KPI code is in a form such as 'count_gt_30' or 'perc_lte_1.5'</param>
+            <returns>Tuple in which the first item is the equality operator (should be one of 'gt', 'lt', 'gte' or 'lte') and the second item
+            is the threshold to compare the value to (must be a numeric value)</returns>
+            <exception cref="T:System.Exception"></exception>
+        </member>
+        <member name="P:JCass_Core.Engineering.KPIParameter.WeightSourceType">
+            <summary>
+            Helper for implementers to set where the Weight data comes from (e.g. 'model parameter' or 'input data')
+            </summary>
+        </member>
+        <member name="P:JCass_Core.Engineering.KPIParameter.DataSourceType">
+            <summary>
+            Helper for implementers to set where the DataSource data comes from (e.g. 'model parameter' or 'input data')
+            </summary>
+        </member>
+        <member name="T:JCass_Core.Engineering.NelderMeadSolver">
+            <summary>
+            Base class for minimizer using the Nelder Mead Gradient Descent method
+            Checked out against Excel GRG method and works like a bomb for unconstrained case
+            To implement this class, simply create class that inherits from this one, then override the GetFunctionValue method
+            Then write a wrapper to set the initial estimates and call Solve().
+            SEE EXAMPLE CLASS BELOW for implementation example
+            </summary>
+        </member>
+        <member name="M:JCass_Core.Engineering.NelderMeadSolver.Solve(System.Double[0:,0:],System.Double,System.Double,System.Double[]@,System.Int32@,System.Double@)">
+            <summary>
+            Finds a local minimum for the function implemented by the overriden method "GetFunctionValue"
+            </summary>
+            <param name="InitialX">Initial estimates. Needs to have one pair more than the number of X-variables. Row is pair number, column is variable number</param>
+            <param name="tolerance">Tolerance for convergence. Suggest to use something like 0.00001</param>
+            <param name="maxIters">Maximum number of iterations before bailing out</param>
+            <param name="XMins">Output array of the X-variables (predictors) at which the local minimum was found</param>
+            <param name="NIters">Number of iterations to convergence</param>
+            <param name="YMinValue">Y-Value at the local minimum</param>
+        </member>
+        <member name="T:JCass_Core.Engineering.RuleEvalStatus">
+            <summary>
+            Outcome status of evaluating a rule set against a data row.
+            </summary>
+        </member>
+        <member name="F:JCass_Core.Engineering.RuleEvalStatus.Matched">
+            <summary>A rule fired; the matching rule label is returned.</summary>
+        </member>
+        <member name="F:JCass_Core.Engineering.RuleEvalStatus.NoMatch">
+            <summary>No rule fired and every rule could be evaluated cleanly.</summary>
+        </member>
+        <member name="F:JCass_Core.Engineering.RuleEvalStatus.Indeterminate">
+            <summary>No rule fired (so far) and at least one rule could not be decided
+            because of null cell values. The rule set result is therefore inconclusive.</summary>
+        </member>
+        <member name="T:JCass_Core.Engineering.NullHandlingMode">
+            <summary>
+            Controls how the rule parser reacts when a rule references a column whose value is null.
+            </summary>
+        </member>
+        <member name="F:JCass_Core.Engineering.NullHandlingMode.ThrowOnNull">
+            <summary>
+            Throw an <see cref="T:System.InvalidOperationException"/> as soon as a null cell value is encountered
+            during rule evaluation. Use this when null inputs indicate a data quality bug that should
+            surface loudly (legacy behaviour).
+            </summary>
+        </member>
+        <member name="F:JCass_Core.Engineering.NullHandlingMode.ReturnIndeterminate">
+            <summary>
+            Treat any comparison against a null cell as logically Unknown and let SQL-style three-valued
+            logic propagate. The overall rule set evaluation reports
+            <see cref="F:JCass_Core.Engineering.RuleEvalStatus.Indeterminate"/> if no rule could be definitively matched and at
+            least one rule had Unknown branches that prevented a verdict.
+            </summary>
+        </member>
+        <member name="T:JCass_Core.Engineering.RuleParser">
+            <summary>
+            Parses and evaluates conditional rule statements against data rows.
+            <para>
+            Supported grammar (recursive, one connector type per group):
+            </para>
+            <code>
+            expression  := group ( connector group )*    // all connectors at one level must be the same
+            group       := '[' expression ']' | comparison
+            comparison  := identifier op literal
+                         | identifier IN '(' string_list ')'
+            op          := &gt;= | &lt;= | &gt; | &lt; | == | = | != | &lt;&gt;
+            literal     := number | 'string'
+            connector   := AND | OR
+            </code>
+            <para>
+            Examples:
+            </para>
+            <code>
+            rut_mean &lt; 6 AND adt &lt; 5000
+            rut_mean &lt; 6 AND surf_class IN ('CS','SLURRY','OTHER','CONC')
+            [adt &gt; 5000] OR [rut_mean &lt; 6 AND age &lt; 15]
+            </code>
+            <para>
+            Mixed AND/OR at the same level without bracketing is rejected at parse time. Each rule is parsed
+            once at construction and evaluated through a small AST in the hot path, so the parser is suitable
+            for Monte Carlo simulations with many evaluations against the same rule set.
+            </para>
+            <para>
+            Each rule is identified by a caller-supplied string label (e.g. a cohort name). Rules are
+            evaluated in the order in which they are enumerated by the constructor argument, and the label
+            of the first matching rule is returned. Duplicate labels are rejected at construction time.
+            </para>
+            </summary>
+        </member>
+        <member name="M:JCass_Core.Engineering.RuleParser.#ctor(System.Collections.Generic.IEnumerable{System.Collections.Generic.KeyValuePair{System.String,System.String}},JCass_Core.Engineering.NullHandlingMode)">
+            <summary>
+            Build a rule parser by pre-parsing every rule statement in <paramref name="rules"/> into an
+            internal AST. Rules are evaluated at runtime in the exact order in which they are enumerated
+            here, so the caller controls priority. Pass an ordered collection (e.g.
+            <see cref="T:System.Collections.Generic.List`1"/> of <see cref="T:System.Collections.Generic.KeyValuePair`2"/>) when ordering matters.
+            </summary>
+            <param name="rules">Ordered sequence of (label, rule statement) pairs. Labels must be
+            unique and non-empty.</param>
+            <param name="nullMode">How to react to null cell values during evaluation.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown if <paramref name="rules"/> is null.</exception>
+            <exception cref="T:System.ArgumentException">Thrown if the collection is empty, contains a null/empty
+            or duplicate label, or any rule fails to parse.</exception>
+        </member>
+        <member name="M:JCass_Core.Engineering.RuleParser.EvaluateRules(System.Collections.Generic.IReadOnlyDictionary{System.String,System.Object})">
+            <summary>
+            Evaluate every rule in order and return the label of the first rule that matches.
+            Throws if no rule matches, or if evaluation was indeterminate due to null values
+            (only relevant when running with <see cref="F:JCass_Core.Engineering.NullHandlingMode.ReturnIndeterminate"/>).
+            </summary>
+        </member>
+        <member name="M:JCass_Core.Engineering.RuleParser.TryEvaluateRules(System.Collections.Generic.IReadOnlyDictionary{System.String,System.Object},System.String@,JCass_Core.Engineering.RuleEvalStatus@)">
+            <summary>
+            Evaluate every rule in order. Returns true if a rule matched, in which case
+            <paramref name="ruleLabel"/> is set to the matching label and <paramref name="status"/> is
+            <see cref="F:JCass_Core.Engineering.RuleEvalStatus.Matched"/>. Returns false otherwise (label is null); the status
+            distinguishes between "no rule matched" and "could not be decided".
+            </summary>
+        </member>
+        <member name="T:JCass_Core.Engineering.RuleParser.TriState">
+            <summary>Three-valued logic state used for null-aware evaluation.</summary>
+        </member>
+        <member name="T:JCass_Core.Engineering.RuleParser.ComparisonOp">
+            <summary>Comparison operators understood by numeric and string equality nodes.</summary>
+        </member>
+        <member name="T:JCass_Core.Engineering.RuleParser.EvalContext">
+            <summary>Per-evaluation context passed to every node.</summary>
+        </member>
+        <member name="M:JCass_Core.JFunctions.FunctionBase.GetDoubleValue(System.Collections.Generic.Dictionary{System.String,System.Object},System.String)">
+             <summary>
+             Provides a double value matching a key. First checks if key is one of the keys in 'parameterValues'. If so, then it returns
+             a double conversion of parameterValues[key]. If key is not in the keys of parameterValues, then it tries to convert key directly to a double.
+             </summary>
+             <param name="parameterValues">List of parameter values</param>
+             <param name="key">key representing either a key in parameterValues, or a number expressed as text</param>
+            <remarks>This utility function allows us to handle cases where function terms could be either numbers or variables.</remarks>
+        </member>
+        <member name="M:JCass_Core.JFunctions.FunctionBase.GetKeyOrParameterValue(System.Collections.Generic.Dictionary{System.String,System.Object},System.String)">
+             <summary>
+             Provides an object matching a key. First checks if key is one of the keys in 'parameterValues'. If so, then it returns
+             parameterValues[key]. If key is not in the keys of parameterValues, then it returns the key itself.
+             </summary>
+             <param name="parameterValues">List of parameter values</param>
+             <param name="key">key representing either a key in parameterValues, or a text value representing what needs to be returned</param>
+            <remarks>This utility function allows us to handle cases where function terms could be either fixed values or variables.</remarks>
+        </member>
+        <member name="P:JCass_Core.JFunctions.FunctionBase.DependantFunctions">
+            <summary>
+            List of Dependent Functions or parameter names. Not automatically populated. Must be built on request
+            and this will depend on the FunctionSet order etc.
+            </summary>
+            <seealso cref="!:FunctionSet.AddDependantsTree(IFunction, List&lt;IFunction&gt;, List&lt;object&gt;)"/>
+        </member>
+        <member name="P:JCass_Core.JFunctions.IFunction.DependantFunctions">
+            <summary>
+            List of Dependent Functions or parmeter names. Not automatically populated. Must be built on request
+            and this will depend on the FunctionSet order etc.
+            </summary>
+            <seealso cref="!:FunctionSet.AddDependantsTree(IFunction, List&lt;IFunction&gt;, List&lt;object&gt;)"/>
+        </member>
+        <member name="T:JCass_Core.JFunctions.PieceWiseLinearModelGeneric">
+            <summary>
+            General form of a simple piece-wise linear model. You provide the model with a set of (X,Y) points, and then you call GetValue(X) to get the
+            value of Y for any X. The model does linear interpolation between the closest (X,Y) points. If X is less than the minimim X it returns
+            the Y point associated with the minimum Y. If X is greater than the maximum X, it returns the Y point associated with the maximum X
+            </summary>
+        </member>
+        <member name="M:JCass_Core.JFunctions.PieceWiseLinearModelGeneric.#ctor(System.Collections.Generic.List{System.Double},System.Collections.Generic.List{System.Double},System.Boolean)">
+            <summary>
+            Constructor for PieceWiseLinear model. It is assumed that Xvalues are sorted in increasing values
+            </summary>
+            <param name="tXValues">XValues, assumed to be in increasing order</param>
+            <param name="tYValues">YValues corresponding to the XValues</param>
+            <param name="canExtrapolate">If true, allow extrapolation outside the supplied X-range</param>
+        </member>
+        <member name="M:JCass_Core.JFunctions.PieceWiseLinearModelGeneric.#ctor(System.String,System.Boolean)">
+             <summary>
+            
+             </summary>
+             <param name="setupString">Specifies X and Y points in format x1,y1|x2,y2|x3,y3|etc</param>
+             <param name="canExtrapolate">Flag to indicate if we can extrapolate outside the points or not</param>
+        </member>
+        <member name="M:JCass_Core.JFunctions.PieceWiseLinearModelGeneric.GetPairIndexForX(System.Double)">
+            <summary>
+            Returns the index of the Lower pair of X,Y coordinates that brackets the given X value
+            </summary>
+        </member>
+        <member name="M:JCass_Core.JFunctions.SShapedModelHelper.GetSCurveProgressionIncrement(System.Double,System.Double)">
+            <summary>
+            Gets an increment for distress progression following an S-curve such that an incremental model will reach 100% distress
+            when the years since initiation equals parameter 'periodsToReach100Percent'. This implementation is such that the inflection point
+            at which the increment reaches a maximum (after which it reduces) occurs at 30% of the 'periodsToReach100Percent'. This gives a
+            faster initial growth until about 30% of the time to reach 100% cracks, and then a longer taper down period to reach 100%
+            This method was calibrated using trial and error checking with R and gives a nice S-shape.
+            </summary>
+            <remarks>For this method to give a nice curve, the increments needs to be utilised in an INCREMENTAL model that
+            starts from zero up to values of periodsToReach100Percent or less. You must increment from zero and proceed in increments of 1 period
+            at a time. If you jump from period zero to 5 it means that you are not properly accumulating distress and this will then NOT give an S-curve</remarks>
+            <param name="periodsToReach100Percent">Number of periods (usually years) until 100% distress is reached</param>
+            <param name="periodsSinceInitiation">Number of periods since distress initiation</param>
+            <returns>The increment, in percent, at the specified 'periodsSinceInitiation' to give a cumulative S-curve that will reach 100 when
+            periodsSinceInitiation equals periodsToReach100Percent</returns>
+        </member>
+        <member name="M:JCass_Core.JFunctions.SShapedModelHelper.GetValueAtPeriod(System.Double,System.Double,System.Double,System.Double)">
+            <summary>
+            Rolls out the distress values from period zero up to the value specified in parameter 'period' and returns the absolute
+            value for the distress at time/age = period. NOTE: this method increments from initialisation period up to the specified period
+            and can therefore be computationally expensive. If you already know the current distress value, it is better to use the
+            method GetSCurveProgressionIncrement() to just get the increment. Note, however, that you need then to pass the periods since
+            initialisation and not the absolute period value.
+            </summary>
+            <param name="periodsToReach100Percent">The number of periods to reach 100 percent distress (T100)</param>
+            <param name="periodAtInitialisation">The period at which initialiation takes place</param>
+            <param name="period">The period for which to get the distress</param>
+            <param name="valueAtInitialisation">The value to assign when the distress initialises</param>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_Core.JFunctions.SShapedModelHelper.CalibrateFactors(System.Double,System.Double,System.Double,System.Double,System.Double,System.Double,System.Double,System.Double,System.Double@,System.Double@,System.Double@,System.Double)">
+            <summary>
+            Calibrates an S-Shaped Distress progression curve to match an observation of distress at a given period.
+            See the documentation for details on how this is done. All cases are handled including cases where the distress is
+            not yet initialised, or distress is over-or-under-predicted.
+            </summary>
+            <param name="observedPeriod">Period/age at which distress is observed</param>
+            <param name="observedValue">Distress value/quantity/percent at the observed time/age</param>
+            <param name="T100_min">Minimum allowed value for the T100 (periods to reach 100 percent distress)</param>
+            <param name="T100_max">Maximum allowed value for the T100 (periods to reach 100 percent distress)</param>
+            <param name="periodAtInitialisation_min">Minimum allowed value for Period/Age at which initialisation takes place</param>
+            <param name="periodAtInitialisation_max">Maximum allowed value for Period/Age at which initialisation takes place</param>
+            <param name="valueAtInitialisation_min">Minimum allowed value to assign when initialisation takes place</param>
+            <param name="valueAtInitialisation_max">Maximum allowed value to assign when initialisation takes place</param>
+            <param name="T100">Initial value for T100. When method is completed, this value will be calibrated.</param>
+            <param name="periodAtInitialisation">Period/Age at which initialisation takes place. When method is completed, this value will be calibrated.</param>
+            <param name="valueAtInitialisation">Value to assign (percent or whatever) when initialisation takes place. When method is completed, this value will be calibrated.</param>
+            <param name="errTolerance">Error tolerance to use during calibration. If distress is in percent, a value of 1.0 is suggested.</param>
+            <exception cref="T:System.Exception"></exception>
+        </member>
+        <member name="M:JCass_Core.JFunctions.Utilities.GetSkewedDistribModel_A(System.Double)">
+            <summary>
+            Piecewise linear model for typical right skewed distribution ranking from 0 to 10 with
+            central tendency at 1.0 if centralY is 1.0. Suitable for Rutting if properly adjusted using an appropriate central Y.
+            This distribution has zero frequency at X = 0.
+            </summary>
+            <param name="centralY">Central tendency point. Default is 1. For example, to simulate a rut increment
+            distribution with central tendency at 0.25 mm/year, pass centralY = 0.25. Note that this will adjust the maximim
+            value also to be 10 times 0.25 thus 2.5 mm/year maximum</param>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_Core.JFunctions.Utilities.GetSkewedDistribModel_B(System.Double)">
+            <summary>
+            Piecewise linear model for typical right skewed distribution ranking from 0 to 10 with
+            central tendency at 1.0 if centralY is 1.0. Suitable for Rutting if properly adjusted using an appropriate central Y.
+            This distribution does NOT have zero frequency at X = 0.
+            </summary>
+            <param name="centralY">Central tendency point. Default is 1. For example, to simulate a rut increment
+            distribution with central tendency at 0.25 mm/year, pass centralY = 0.25. Note that this will adjust the maximim
+            value also to be 10 times 0.25 thus 2.5 mm/year maximum</param>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_Core.JFunctions.Utilities.GetSkewedDistribModel_C(System.Double)">
+            <summary>
+            Piecewise linear model for severely right skewed distribution ranking from 0 to 10 with
+            central tendency at 1.0 if centralY is 0.5. Suitable for Naasra increment if properly adjusted using an appropriate central Y.
+            This distribution does NOT have zero frequency at X = 0.
+            </summary>
+            <param name="centralY">Central tendency point. Default is 1. For example, to simulate a rut increment
+            distribution with central tendency at 0.25 mm/year, pass centralY = 0.25. Note that this will adjust the maximim
+            value also to be 10 times 0.25 thus 2.5 mm/year maximum</param>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_Core.JFunctions.Utilities.GetSkewedDistribModel_D(System.Double)">
+            <summary>
+            Piecewise linear model for near-Exponential distribution ranking from 0 to 10 with
+            central tendency at zero. Suitable for Naasra increment if properly adjusted using an appropriate central Y.
+            This distribution does NOT have zero frequency at X = 0.
+            </summary>
+            <param name="scaleY">Scale factor to scale X range. For example, to simulate a Naasra increment
+            distribution with central tendency at zero and ranging from zero to 25, pass scaleY = 2.5. This will adjust the maximim
+            value to be 10 times 2.5 thus 25 naasra counts/year maximum</param>
+            <returns></returns>
+        </member>
+        <member name="T:JCass_Core.MachineLearning.ConfusionMatrixMetrics">
+            <summary>
+            Helper to calculate common Confusion Matrix Metrics from the number of True Positives, False Positives, True Negatives and False Negatives.
+            Formulas are from Geron's book: 'Hands-On Machine Learning with Sci-Kit Learn &amp; TensorFlow'. Specifically pages 85 and 86
+            </summary>
+        </member>
+        <member name="P:JCass_Core.MachineLearning.ConfusionMatrixMetrics.Sensitivity">
+            <summary>
+            Sensitivity - AKA 'Recall'
+            </summary>
+        </member>
+        <member name="P:JCass_Core.MachineLearning.ConfusionMatrixMetrics.Recall">
+            <summary>
+            Recall AKA 'Sensitivity'
+            </summary>
+        </member>
+        <member name="P:JCass_Core.MachineLearning.ConfusionMatrixMetrics.Precision">
+            <summary>
+            Precision AKA Positive Precision = TP / (TP + FP)
+            </summary>
+        </member>
+        <member name="P:JCass_Core.MachineLearning.ConfusionMatrixMetrics.PositivePrecision">
+            <summary>
+            Positive Precision, AKA 'Precision' = TP / (TP + FP)
+            </summary>
+        </member>
+        <member name="P:JCass_Core.MachineLearning.ConfusionMatrixMetrics.NegativePrecision">
+            <summary>
+            Negative Precision = TN / (TN + FN)
+            </summary>
+        </member>
+        <member name="M:JCass_Core.MachineLearning.ConfusionMatrixMetrics.#ctor(System.Double,System.Double,System.Double,System.Double)">
+            <summary>
+            Constructor for Confusion Matrix Metrics. Formulas are from Geron's book 'Hands on Machine Learning...' on 
+            pages85 to 86
+            </summary>
+            <param name="truePositives">Number of true positives</param>
+            <param name="falsePositives">Number of false positives</param>
+            <param name="trueNegatives">Number of true negatives</param>
+            <param name="falseNegatives">Number of false negatives</param>
+        </member>
+        <member name="T:JCass_Core.Statistics.DescriptiveStats">
+            <summary>
+            Provides descriptive statistics on a set of data
+            </summary>
+        </member>
+        <member name="F:JCass_Core.Statistics.DescriptiveStats.weights">
+            <summary>
+            Weights added with numeric data. Used for Weighted Average Calculation. Length must match numData list. Use 
+            the AddObservation() overload that takes a value and a weight.
+            </summary>
+        </member>
+        <member name="F:JCass_Core.Statistics.DescriptiveStats.ValuesAndWeights">
+            <summary>
+            List of values (key) and their related weights (value); Only valid if weights are
+            supplied with the AddObservation() method
+            </summary>
+        </member>
+        <member name="F:JCass_Core.Statistics.DescriptiveStats.WeightsCumulativeSortedAndScaled">
+            <summary>
+            Cumulative weights based on sorted and scaled weights. Needed for fast calculation of Weighted Percentiles
+            </summary>
+        </member>
+        <member name="F:JCass_Core.Statistics.DescriptiveStats.ValuesAndWeights_SortedAndScaled">
+            <summary>
+            List of values (key) and their related weights (value) sorted by values (keys) and with Weights scaled to add up to 1.0. This is
+            needed for weighted percentile calculations
+            </summary>
+        </member>
+        <member name="F:JCass_Core.Statistics.DescriptiveStats.numData_Array">
+            <summary>
+            Numeric data in array form. Set up only after FinalizeKeyVariables is called!
+            </summary>
+        </member>
+        <member name="M:JCass_Core.Statistics.DescriptiveStats.#ctor(System.Collections.ArrayList,System.Boolean,System.Boolean)">
+            <summary>
+            Constructor to use if data is already in a list. With this constructor, there is no need to call the public methods to initialize and add data, but it 
+            does require an extra loop over the data set, so may be a bit slower
+            </summary>
+            <param name="data">List of data points. Can contain null and non-numeric values</param>
+            <param name="dataIsAlreadySorted">Flag to indicate if data is already sorted. If not, then data list is sorted before processing starts (slower!!)</param>
+            <param name="keepRawData">Flag to indicate if raw data should be kept in memory for later use after statistics have been set up</param>
+        </member>
+        <member name="M:JCass_Core.Statistics.DescriptiveStats.#ctor(System.Boolean)">
+            <summary>
+            Constructor to use if data is being added one by one. With this constructor, you need to call AddObservation() to add all observations, then 
+            FinilizeKeyVariables(). This approach requires one less loop over the data and can be used to for example populate data directly while looping over a datareader        
+            </summary>        
+            <param name="dataIsAlreadySorted">Flag to indicate if data is already sorted. If not, then data list is sorted before processing starts (slower!!)</param>        
+        </member>
+        <member name="M:JCass_Core.Statistics.DescriptiveStats.InitializeKeyVariables">
+            <summary>
+            Initializes key variables.
+            </summary>
+        </member>
+        <member name="M:JCass_Core.Statistics.DescriptiveStats.CalculateStatistics(System.Collections.ArrayList,System.Boolean)">
+            <summary>
+            Calculates all statistics upfront and disposes of data array (used only with constructor that takes data as an arraylist)
+            </summary>
+        </member>
+        <member name="P:JCass_Core.Statistics.DescriptiveStats.DateForStats">
+            <summary>
+            (Optional) value for the Date Represented by this Statistics Info. E.g. The date on which the stats was measured. This is useful for feedback.
+            </summary>
+        </member>
+        <member name="P:JCass_Core.Statistics.DescriptiveStats.NonNumerics">
+            <summary>
+            List holding any non-numeric data/observations added, which were not taken into account in the calculation
+            </summary>
+        </member>
+        <member name="P:JCass_Core.Statistics.DescriptiveStats.Mean">
+            <summary>
+            Mean of the data set
+            </summary>
+        </member>
+        <member name="P:JCass_Core.Statistics.DescriptiveStats.WeightedMean">
+            <summary>
+            Weighted Mean of the data set - calculated only if weights are provided with values in the AddObservation() method
+            </summary>
+        </member>
+        <member name="P:JCass_Core.Statistics.DescriptiveStats.SumOfAllValues">
+            <summary>
+            Sum of All Values
+            </summary>
+        </member>
+        <member name="P:JCass_Core.Statistics.DescriptiveStats.Median">
+            <summary>
+            Median of the data set
+            </summary>
+        </member>
+        <member name="P:JCass_Core.Statistics.DescriptiveStats.SumDevia">
+            <summary>
+            Sum of all deviations
+            </summary>
+        </member>
+        <member name="P:JCass_Core.Statistics.DescriptiveStats.Variance">
+            <summary>
+            Variance
+            </summary>
+        </member>
+        <member name="P:JCass_Core.Statistics.DescriptiveStats.StandardDeviation">
+            <summary>
+            Standard Deviation of Sample. Corresponds to Excel function STDEV.S()
+            </summary>
+        </member>
+        <member name="P:JCass_Core.Statistics.DescriptiveStats.COV">
+            <summary>
+            Coefficient of Variation (as fraction)
+            </summary>
+        </member>
+        <member name="P:JCass_Core.Statistics.DescriptiveStats.COVasPercent">
+            <summary>
+            Coefficient of Variation (as percent)
+            </summary>
+        </member>
+        <member name="P:JCass_Core.Statistics.DescriptiveStats.Maximum">
+            <summary>
+            Maximum Value
+            </summary>
+        </member>
+        <member name="P:JCass_Core.Statistics.DescriptiveStats.Minimum">
+            <summary>
+            Minimum
+            </summary>
+        </member>
+        <member name="P:JCass_Core.Statistics.DescriptiveStats.Minimum_WeightedValues">
+            <summary>
+            Returns the Minimum of the array of weighted values (product of values times weights), if there are valid weights.
+            </summary>
+        </member>
+        <member name="P:JCass_Core.Statistics.DescriptiveStats.Maximum_WeightedValues">
+            <summary>
+            Returns the Maximum of the array of weighted values (product of values times weights), if there are valid weights.
+            </summary>
+        </member>
+        <member name="P:JCass_Core.Statistics.DescriptiveStats.StandardDeviation_WeightedValues">
+            <summary>
+            Returns the Standard Deviation of the array of weighted values (product of values times weights), if there are valid weights.
+            </summary>
+        </member>
+        <member name="P:JCass_Core.Statistics.DescriptiveStats.COV_WeightedValues">
+            <summary>
+            Returns the Coefficient of Variation (as a Fraction) for the array of weighted values (product of values times weights), if there are valid weights.
+            </summary>
+        </member>
+        <member name="P:JCass_Core.Statistics.DescriptiveStats.Range">
+            <summary>
+            Sample Range
+            </summary>
+        </member>
+        <member name="P:JCass_Core.Statistics.DescriptiveStats.NObservations">
+            <summary>
+            Number of observations in the data set
+            </summary>
+        </member>
+        <member name="M:JCass_Core.Statistics.DescriptiveStats.GetWeightedPercentile(System.Double)">
+            <summary>
+            Gets the Weighted percentile using the weights added with values, if applicable. See remarks for details on the methodolgy 
+            adopted here. 
+            </summary>
+            <param name="pValue">P value as a fraction, e.g. 0.9 for 90th percentile</param>
+            <returns></returns>
+            <remarks>Uses the approach explained here: https://blogs.sas.com/content/iml/2016/08/29/weighted-percentiles.html</remarks>
+        </member>
+        <member name="M:JCass_Core.Statistics.DescriptiveStats.GetWeightedPercentile_Fast(System.Double)">
+            <summary>
+            Gets the Weighted percentile using the weights added with values, if applicable. See remarks for details on the methodolgy
+            adopted here.
+            </summary>
+            <param name="pValue">P value as a fraction, e.g. 0.9 for 90th percentile</param>
+            <returns></returns>
+            <remarks>Uses the approach explained here: https://blogs.sas.com/content/iml/2016/08/29/weighted-percentiles.html</remarks>
+        </member>
+        <member name="M:JCass_Core.Statistics.DescriptiveStats.HasValidNumericData">
+            <summary>
+            Does a SAFE check to see if there is valid numeric data for statistics. This is safer/better than using NObservations. It also covers the case 
+            there the statistics has been calculated with valid data and numData subsequently discarded
+            </summary>
+        </member>
+        <member name="M:JCass_Core.Statistics.DescriptiveStats.Percentile(System.Double)">
+            <summary>
+            Gets a percentile for a given pValue, with pValue a value such as 0.2 for 20th percentile, 0.9 for 90th percentile, etc
+            </summary>
+            <param name="pValue">a value such as 0.2 for 20th percentile, 0.9 for 90th percentile, etc</param>        
+        </member>
+        <member name="M:JCass_Core.Statistics.DescriptiveStats.AddObservation(System.Object,System.Double)">
+            <summary>
+            Adds a single observation to the data collection and updates the Sum of Values, the max and min values. Call this only if you explicitly 
+            called InitializeKeyVariables()
+            </summary>        
+        </member>
+        <member name="M:JCass_Core.Statistics.DescriptiveStats.FinalizeKeyVariables(System.Boolean)">
+            <summary>
+            Finalizers key variables and sets up percentiles and Statistics key value collection. Only call this if adding data one by one using AddObservation()        
+            </summary>        
+            <param name="keepRawData">Flag to indicate if raw data should be kept in memory for later use after statistics have been set up</param>        
+        </member>
+        <member name="M:JCass_Core.Statistics.DescriptiveStats.PercentRank_Approx(System.Double)">
+            <summary>
+            Returns the Percentage Rank (value between 0 and 100) of a value compared to the Values in the array of numerical values. Assumes that 
+            the statistics key values have been calculated and that the RAW data values were retained. This method uses Binary Search so it is significantly
+            FASTER than the other method by a factor of about 100 but when there are many repeat values it does not match Excel exactly
+            </summary>
+            <param name="value">Value to check. If it lies at or below minimum, zero is returned. If it lies at or above maximum, 100 is returned</param>
+            <returns>A value between zero and 100</returns>
+            <remarks>When the list has many repeated values, the percent rank does not always match Excel 100%. This is something to be improved</remarks>
+        </member>
+        <member name="M:JCass_Core.Statistics.DescriptiveStats.PercentRank(System.Double)">
+            <summary>
+            Returns the Percentage Rank (value between 0 and 100) of a value compared to the Values in the array of numerical values. Assumes that 
+            the statistics key values have been calculated and that the RAW data values were retained. This method uses a lazy lookup so it is SLOWER than
+            the approximate method (by a factor of more than 100) but this method gives an exact match with Excel
+            </summary>
+            <param name="value">Value to check. If it lies at or below minimum, zero is returned. If it lies at or above maximum, 100 is returned</param>
+            <returns>A value between zero and 100</returns>
+            <remarks>When the list has many repeated values, the percent rank does not always match Excel 100%. This is something to be improved</remarks>
+        </member>
+        <member name="M:JCass_Core.Statistics.DescriptiveStats.GetStatisticsCollectionKeys">
+            <summary>
+            Returns a list of the valid keys to use when calling statistics from this.Statistics. Keys should mirror those that
+            are added in this.SetupStatisticsCollection
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_Core.Statistics.DescriptiveStats.GetStatisticsKeysWithOpposites">
+            <summary>
+            Returns a collection in which KEYS are statistics parameters, as returned by GetStatisticsCollectionKeys, and VALUES are 
+            the opposite statistic. So for example, if key = 'Maximum Value', then value would be 'Minimum Value'. Another example: Key = '98th Percentile', 
+            Value = "02th Percentile". Note for some statistics, like Mean, Median and Number of Observations, the opposite value is the SAME.
+            </summary>
+        </member>
+        <member name="M:JCass_Core.Statistics.DescriptiveStats.GetPercentile_Custom(System.Double)">
+            <summary>
+            Method to calculate a custom percentile. IMPORTANT! Only call this method AFTER calling FinalizeKeyVariables(TRUE). You MUST call
+            FinalizeKeyVariables with parameter TRUE so that the data is kept for this method.
+            </summary>
+            <param name="pValue">a value such as 0.2 for 20th percentile, 0.9 for 90th percentile, etc</param>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_Core.Statistics.DescriptiveStats.GetStatisticValue_Generic(System.String)">
+            <summary>
+            Method to fetch given statistic value using intelligent detection of the statistic parameter supplied. If the given statistic is already contains in the list of statistic, then 
+            it will fetch from that list. Else it calculate by using custom percentile or weighted mean or weighted percentile by detecting 'weighted' etc. 
+            (IMPORTANT! If it is custom percentile, Only call this method AFTER calling FinalizeKeyVariables(TRUE). You MUST call FinalizeKeyVariables with parameter TRUE so 
+            that the data is kept for this method.)
+            </summary>
+            <param name="statistic">20th percentile, 90th percentile, etc (Apart from this we can also call any other custom percentile. See the method GetStatisticsCollectionKeys for all Available stats)</param>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_Core.Statistics.DescriptiveStats.IsWeightedMeanParameter(System.String)">
+            <summary>
+            Does a thorough/general check to detect if a statistic parameter refers to a Weighted Mean.
+            This is needed to handle different variations e.g. "weighted mean", "weighed_mean", "weighted_av" etc.
+            Flexible handles case where there are underscores or spaces
+            </summary>
+            <param name="statisticParameterName">Name of the statistics parameter</param>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_Core.Statistics.DescriptiveStats.GetStandardizedStatisticCode(System.String)">
+            <summary>
+            Gets a standardized format for statistic parameter code, which is always lowercase, with underscores instead of 
+            spaces and no empty spaces at begining or end
+            </summary>
+            <param name="statisticCode">Raw statistic code, e.g. "90th Percentile"</param>
+            <returns>Standardized statistic code, e.g. from "90th Percentile" to "90th_percentile"</returns>        
+        </member>
+        <member name="M:JCass_Core.Statistics.DescriptiveStats.SetupStatisticsCollection(System.Collections.Generic.List{System.Double})">
+            <summary>
+            Sets up the Statistics key-value collection for quick access to all stats and percentiles by key. 
+            IMPORTANT!! Call only after all observations have been added and initialize statistics has been done!
+            </summary>        
+            <param name="numData">List of non-null, numeric data that make up this population or sample</param>
+        </member>
+        <member name="M:JCass_Core.Statistics.DescriptiveStats.GetPercentile(System.Double,System.Collections.Generic.List{System.Double})">
+            <summary>
+            Calculates the percentile, using the same method as MS Excel. pValue is a fraction, NOT a percentage. IMPORTANT. Do NOT make this a public method, as it relies on Data being same as 
+            the one used in constructor.
+            </summary>
+            <param name="pValue">pValue is a fraction, NOT a percentage.</param>
+            <param name="data">Data on which to calculate percentile. Assumed to contain only numbers, and MUST be sorted!!!</param>
+        </member>
+        <member name="T:JCass_Core.Statistics.LinearRegressionModel">
+            <summary>
+            Provides functionality to represent a linear regression model with specified coefficients, and an optional piecewise linear model to calculate the 
+            standard deviation of the residuals as a function of a predictor variable. The Predict method calculates the predicted value based on the input 
+            variables and the coefficients, while the PredictResidualStdDev method calculates the standard deviation of the residuals based on the predictor
+            variable using the piecewise linear model if it is defined.
+            </summary>
+        </member>
+        <member name="M:JCass_Core.Statistics.LinearRegressionModel.#ctor(System.Collections.Generic.Dictionary{System.String,System.Double},System.String,System.Boolean,System.Random)">
+            <summary>
+            Initializes a new instance of the LinearRegressionModel with the specified coefficients and optional residual standard deviation model.
+            </summary>
+            <param name="coefficients">Dictionary containing regression coefficients. Must include an "(Intercept)" key.</param>
+            <param name="residualStdDevPLMsetup">Optional setup string for piecewise linear model to predict residual standard deviation (format: "x1,y1|x2,y2|..."). Empty string means no residual model.</param>
+            <param name="canExtrapolatePLM">Flag indicating whether the residual standard deviation model can extrapolate beyond defined points</param>
+            <param name="random">Optional random source for residual sampling. If null, a default instance is used</param>
+            <exception cref="T:System.ArgumentNullException">Thrown when coefficients dictionary is null</exception>
+            <exception cref="T:System.ArgumentException">Thrown when coefficients dictionary does not contain '(Intercept)' key</exception>
+        </member>
+        <member name="M:JCass_Core.Statistics.LinearRegressionModel.Predict(System.Collections.Generic.Dictionary{System.String,System.Double})">
+            <summary>
+            Gets a prediction from the linear regression model based on the provided input variables. The inputVariables dictionary should contain values 
+            for all the predictor variables used in the model, with keys matching the variable names in the coefficients dictionary (excluding the '(Intercept)' term). 
+            The method calculates the predicted value by summing the intercept and the products of each coefficient with its corresponding input variable value. If any 
+            required input variable is missing, an exception is thrown.
+            </summary>
+            <param name="inputVariables">Input variables for the prediction. Keys must match the coefficient names in the model (excluding the '(Intercept)' term).</param>
+            <returns>The predicted value based on the input variables and model coefficients.</returns>
+            <exception cref="T:System.ArgumentNullException">Thrown if the inputVariables dictionary is null.</exception>
+            <exception cref="T:System.ArgumentException">Thrown if any required input variable is missing.</exception>
+            <remarks>Performance: O(n) where n is the number of coefficients in the model.</remarks>
+        </member>
+        <member name="M:JCass_Core.Statistics.LinearRegressionModel.PredictResidualStdDev(System.Double)">
+            <summary>
+            Predicts the standard deviation of the residuals for a given predictor value using the piecewise linear model. This allows
+            the model to account for heteroscedasticity by providing different residual standard deviation estimates based on the level 
+            of the predictor variable. If the piecewise linear model is not defined, an exception is thrown.
+            </summary>
+            <param name="predictorValue">The predictor value for which to estimate the residual standard deviation.</param>
+            <returns>The predicted standard deviation of the residuals corresponding to the specified predictor value.</returns>
+            <exception cref="T:System.InvalidOperationException">Thrown if the model does not have a piecewise linear model defined for residual standard deviation.</exception>
+            <remarks>Uses the PieceWiseLinearModel.GetValue() method which has O(log n) performance with binary search.</remarks>
+        </member>
+        <member name="M:JCass_Core.Statistics.LinearRegressionModel.PredictWithRandomError(System.Collections.Generic.Dictionary{System.String,System.Double},System.Double)">
+            <summary>
+            Gets a prediction from the linear regression model with an added random error term to simulate the variability in predictions. The random 
+            error is drawn from a normal distribution with mean 0 and standard deviation equal to the predicted residual standard deviation for the 
+            given predictor value. This method allows for generating more realistic predictions that reflect the uncertainty inherent in the model, 
+            especially when used in simulations or Monte Carlo analyses. Uses the Random instance provided in the constructor.
+            </summary>
+            <param name="inputVariables">Input variables for the prediction. Keys must match the coefficient names in the model (excluding the '(Intercept)' term).</param>
+            <param name="predictorValueForResiduals">The predictor value for which to generate a random residual. For example, if residual spread is dependent on rut depth, this should 
+            be the rut depth value.</param>
+            <returns>The predicted value with added random error based on the residual standard deviation model.</returns>
+        </member>
+        <member name="M:JCass_Core.Statistics.LinearRegressionModel.PredictWithRandomError(System.Collections.Generic.Dictionary{System.String,System.Double},System.Double,System.Random)">
+            <summary>
+            Gets a prediction from the linear regression model with an added random error term to simulate the variability in predictions. The random 
+            error is drawn from a normal distribution with mean 0 and standard deviation equal to the predicted residual standard deviation for the 
+            given predictor value. This method allows for generating more realistic predictions that reflect the uncertainty inherent in the model, 
+            especially when used in simulations or Monte Carlo analyses. Uses the provided Random instance.
+            </summary>
+            <param name="inputVariables">Input variables for the prediction. Keys must match the coefficient names in the model (excluding the '(Intercept)' term).</param>
+            <param name="predictorValueForResiduals">The predictor value for which to generate a random residual. For example, if residual spread is dependent on rut depth, this should 
+            be the rut depth value.</param>
+            <param name="random">Random number generator to use for generating the random error term</param>
+            <returns>The predicted value with added random error based on the residual standard deviation model.</returns>
+        </member>
+        <member name="M:JCass_Core.Statistics.LinearRegressionModel.GetRandomResidual(System.Double)">
+            <summary>
+            Gets a random residual value based on the predicted standard deviation of the residuals for a given predictor value. This method is useful for
+            Monte Carlo simulations where we want to generate random residuals that reflect the heteroscedasticity captured by the piecewise linear model.
+            Uses the Random instance provided in the constructor.
+            </summary>
+            <param name="predictorValue">The predictor value for which to generate a random residual. For example, if residual spread is dependent on rut depth, this should 
+            be the rut depth value.</param>
+            <returns>A random residual value corresponding to the specified predictor value.</returns>
+        </member>
+        <member name="M:JCass_Core.Statistics.LinearRegressionModel.GetRandomResidual(System.Double,System.Random)">
+            <summary>
+            Gets a random residual value based on the predicted standard deviation of the residuals for a given predictor value. This method is useful for
+            Monte Carlo simulations where we want to generate random residuals that reflect the heteroscedasticity captured by the piecewise linear model.
+            Uses the provided Random instance.
+            </summary>
+            <param name="predictorValue">The predictor value for which to generate a random residual. For example, if residual spread is dependent on rut depth, this should 
+            be the rut depth value.</param>
+            <param name="random">Random number generator to use for generating the random residual</param>
+            <returns>A random residual value corresponding to the specified predictor value.</returns>
+        </member>
+        <member name="T:JCass_Core.Statistics.LogisticModel">
+            <summary>
+            Represents a logistic regression model using coefficients exported from an R
+            <c>glm(..., family = binomial(link = "logit"))</c> fit.
+            </summary>
+            <remarks>
+            <para>
+            This class implements the standard logistic regression prediction equations:
+            </para>
+            <para>
+            <c>η = β0 + β1x1 + β2x2 + ... + βkxk</c>
+            </para>
+            <para>
+            <c>p = 1 / (1 + exp(-η))</c>
+            </para>
+            <para>
+            where:
+            </para>
+            <list type="bullet">
+            <item><description><c>η</c> is the linear predictor (logit)</description></item>
+            <item><description><c>p</c> is the predicted probability</description></item>
+            <item><description><c>β0</c> is the intercept</description></item>
+            <item><description><c>βi</c> are the predictor coefficients</description></item>
+            </list>
+            <para>
+            Constraints and assumptions:
+            </para>
+            <list type="bullet">
+            <item><description>The coefficient dictionary must contain an intercept term named exactly <c>(Intercept)</c>.</description></item>
+            <item><description>This class assumes there are no interaction terms such as <c>a:b</c>.</description></item>
+            <item><description>This class assumes there are no transformed terms such as <c>log(x)</c>, <c>poly(...)</c>, splines, factor expansions, or offsets.</description></item>
+            <item><description>Each non-intercept coefficient name must exactly match a key in the predictor-value dictionary passed to prediction methods.</description></item>
+            <item><description>If any required predictor is missing during prediction, an exception is thrown.</description></item>
+            <item><description>Extra entries in the predictor-value dictionary are ignored.</description></item>
+            <item><description>This class is intended for models fitted with the logit link. It is not suitable for probit, cloglog, multinomial, ordinal, or other model forms.</description></item>
+            </list>
+            <para>
+            The probability calculation uses a numerically stable implementation to reduce
+            overflow risk for large positive or negative logits.
+            </para>
+            </remarks>
+        </member>
+        <member name="M:JCass_Core.Statistics.LogisticModel.#ctor(System.Collections.Generic.Dictionary{System.String,System.Double})">
+            <summary>
+            Initializes a new instance of the <see cref="T:JCass_Core.Statistics.LogisticModel"/> class.
+            </summary>
+            <param name="coefficients">
+            Dictionary of model coefficients keyed by term name.
+            Must include an entry with key <c>(Intercept)</c>.
+            </param>
+            <exception cref="T:System.ArgumentNullException">
+            Thrown when <paramref name="coefficients"/> is <see langword="null"/>.
+            </exception>
+            <exception cref="T:System.ArgumentException">
+            Thrown when <paramref name="coefficients"/> does not contain the required
+            <c>(Intercept)</c> term.
+            </exception>
+        </member>
+        <member name="P:JCass_Core.Statistics.LogisticModel.Coefficients">
+            <summary>
+            Gets a copy of the model coefficients.
+            </summary>
+            <remarks>
+            The returned dictionary is a copy and can be safely inspected by callers
+            without modifying the model's internal state.
+            </remarks>
+        </member>
+        <member name="M:JCass_Core.Statistics.LogisticModel.PredictLogit(System.Collections.Generic.Dictionary{System.String,System.Double})">
+            <summary>
+            Calculates the linear predictor (logit) for the supplied predictor values.
+            </summary>
+            <param name="values">
+            Dictionary of predictor values keyed by predictor name.
+            Each key must exactly match the corresponding non-intercept coefficient name.
+            </param>
+            <returns>
+            The linear predictor value <c>η</c>.
+            </returns>
+            <exception cref="T:System.ArgumentNullException">
+            Thrown when <paramref name="values"/> is <see langword="null"/>.
+            </exception>
+            <exception cref="T:System.ArgumentException">
+            Thrown when a required predictor term is missing from <paramref name="values"/>.
+            </exception>
+        </member>
+        <member name="M:JCass_Core.Statistics.LogisticModel.PredictProbability(System.Collections.Generic.Dictionary{System.String,System.Double})">
+            <summary>
+            Calculates the predicted probability for the supplied predictor values.
+            </summary>
+            <param name="values">
+            Dictionary of predictor values keyed by predictor name.
+            Each key must exactly match the corresponding non-intercept coefficient name.
+            </param>
+            <returns>
+            Predicted probability in the range [0, 1].
+            </returns>
+            <remarks>
+            This method first computes the linear predictor using <see cref="M:JCass_Core.Statistics.LogisticModel.PredictLogit(System.Collections.Generic.Dictionary{System.String,System.Double})"/>,
+            then applies the inverse-logit transformation:
+            <code>
+            p = 1 / (1 + exp(-η))
+            </code>
+            </remarks>
+            <exception cref="T:System.ArgumentNullException">
+            Thrown when <paramref name="values"/> is <see langword="null"/>.
+            </exception>
+            <exception cref="T:System.ArgumentException">
+            Thrown when a required predictor term is missing from <paramref name="values"/>.
+            </exception>
+        </member>
+        <member name="T:JCass_Core.Statistics.NormalGenerator">
+             <summary>
+             Generates normally distributed random numbers using the
+             Marsaglia polar method (a variant of the Box–Muller transform).
+             </summary>
+             <remarks>
+             This class produces:
+             - Standard normal variates Z ~ N(0,1)
+             - General normal variates X ~ N(mean, sd^2)
+            
+             Implementation details:
+             - Uses Marsaglia polar method (no trigonometric functions required).
+             - Generates two independent normals per iteration and caches one
+               for efficiency.
+             - Suitable for Monte Carlo simulation.
+            
+             For reproducible simulations, provide a fixed seed.
+             </remarks>
+        </member>
+        <member name="M:JCass_Core.Statistics.NormalGenerator.#ctor(System.Nullable{System.Int32})">
+            <summary>
+            Initializes a new instance of the <see cref="T:JCass_Core.Statistics.NormalGenerator"/> class.
+            </summary>
+            <param name="seed">
+            Optional seed for reproducibility. If null, system time is used.
+            </param>
+        </member>
+        <member name="M:JCass_Core.Statistics.NormalGenerator.#ctor(System.Random)">
+            <summary>
+            Initializes a new instance of the <see cref="T:JCass_Core.Statistics.NormalGenerator"/> class.
+            </summary>
+            <param name="random">Random source to draw from. If null, a default <see cref="T:System.Random"/> is used.</param>
+        </member>
+        <member name="M:JCass_Core.Statistics.NormalGenerator.NextStandardNormal">
+            <summary>
+            Returns a standard normal random variate Z ~ N(0,1).
+            </summary>
+            <returns>
+            A double drawn from a standard normal distribution
+            with mean 0 and standard deviation 1.
+            </returns>
+            <remarks>
+            Uses the Marsaglia polar method.
+            One of each generated pair is cached to improve performance.
+            </remarks>
+        </member>
+        <member name="M:JCass_Core.Statistics.NormalGenerator.NextNormal(System.Double,System.Double)">
+            <summary>
+            Returns a normally distributed random variate X ~ N(mean, sd²).
+            </summary>
+            <param name="mean">The desired mean of the distribution.</param>
+            <param name="sd">
+            The desired standard deviation. Must be non-negative.
+            </param>
+            <returns>
+            A double drawn from N(mean, sd²).
+            </returns>
+            <exception cref="T:System.ArgumentOutOfRangeException">
+            Thrown if <paramref name="sd"/> is negative.
+            </exception>
+        </member>
+        <member name="T:JCass_Core.Statistics.PieceWiseLinearModel">
+            <summary>
+            General form of a simple piece-wise linear model. You provide the model with a set of (X,Y) points, and then you call GetValue(X) to get the
+            value of Y for any X. The model does linear interpolation between the closest (X,Y) points. If X is less than the minimim X it returns
+            the Y point associated with the minimum Y. If X is greater than the maximum X, it returns the Y point associated with the maximum X
+            </summary>
+            <remarks>This is a refactored, near-duplicate of class 'PieceWiseLinearModelGeneric' in namespace JCass_Core.JFunctions
+            (which was cloned from the now-removed JCass_Functions project so domain models that load the framework DLL still work).
+            New code should use this class. 'PieceWiseLinearModelGeneric' in namespace JCass_Core.JFunctions will be deprecated
+            over time as domain models are migrated to use PieceWiseLinearModel.</remarks>
+        </member>
+        <member name="M:JCass_Core.Statistics.PieceWiseLinearModel.#ctor(System.Collections.Generic.List{System.Double},System.Collections.Generic.List{System.Double},System.Boolean)">
+            <summary>
+            Constructs a PieceWiseLinear model from separate lists of X and Y values.
+            X values must be sorted in strictly increasing order with no duplicates.
+            </summary>
+            <param name="tXValues">X values, must be sorted in increasing order with no duplicates</param>
+            <param name="tYValues">Y values corresponding to each X value</param>
+            <param name="canExtrapolate">Flag to indicate if the model can extrapolate values outside the defined points</param>
+            <exception cref="T:System.Exception">Thrown when X values contain duplicates or are not properly sorted</exception>
+        </member>
+        <member name="M:JCass_Core.Statistics.PieceWiseLinearModel.#ctor(System.String,System.Boolean)">
+            <summary>
+            Constructs a PieceWiseLinear model from a formatted string containing X,Y coordinate pairs.
+            </summary>
+            <param name="setupString">Specifies X and Y points in format x1,y1|x2,y2|x3,y3|etc (e.g., "0,10|5,20|10,15")</param>
+            <param name="canExtrapolate">Flag to indicate if the model can extrapolate values outside the defined points</param>
+        </member>
+        <member name="M:JCass_Core.Statistics.PieceWiseLinearModel.GetMaximumValue">
+            <summary>
+            Returns the maximum Y value in the model (Y value corresponding to the maximum X).
+            </summary>
+            <returns>The maximum Y value</returns>
+        </member>
+        <member name="M:JCass_Core.Statistics.PieceWiseLinearModel.GetMaximumX">
+            <summary>
+            Returns the maximum X value defined in the model.
+            </summary>
+            <returns>The maximum X value</returns>
+        </member>
+        <member name="M:JCass_Core.Statistics.PieceWiseLinearModel.GetMinimumValue">
+            <summary>
+            Returns the minimum Y value in the model (Y value corresponding to the minimum X).
+            </summary>
+            <returns>The minimum Y value</returns>
+        </member>
+        <member name="M:JCass_Core.Statistics.PieceWiseLinearModel.GetMinimumX">
+            <summary>
+            Returns the minimum X value defined in the model.
+            </summary>
+            <returns>The minimum X value</returns>
+        </member>
+        <member name="M:JCass_Core.Statistics.PieceWiseLinearModel.GetValue(System.Double)">
+            <summary>
+            Gets the interpolated Y value for a given X value using piecewise linear interpolation.
+            If X is outside the defined range, behavior depends on the CanExtrapolate flag.
+            </summary>
+            <param name="X">The X value to interpolate at</param>
+            <returns>The interpolated or extrapolated Y value</returns>
+            <remarks>
+            When CanExtrapolate is false: returns min/max Y for out-of-range X values.
+            When CanExtrapolate is true: extends the line segments beyond the defined range.
+            </remarks>
+        </member>
+        <member name="M:JCass_Core.Statistics.PieceWiseLinearModel.GetPairIndexForX(System.Double)">
+            <summary>
+            Returns the index of the lower pair of X,Y coordinates that brackets the given X value.
+            Uses binary search algorithm for O(log n) performance.
+            </summary>
+            <param name="X">The X value to find the bracketing index for</param>
+            <returns>
+            The index i where xValues[i] &lt; X &lt;= xValues[i+1], or:
+            -1 if X is less than or equal to the minimum X value,
+            -2 if X is greater than or equal to the maximum X value
+            </returns>
+        </member>
+        <member name="M:JCass_Core.Statistics.PieceWiseLinearModel.SetupFromXYPairs(System.String,System.Boolean)">
+            <summary>
+            Initializes the model from a formatted string containing pipe-delimited X,Y coordinate pairs.
+            </summary>
+            <param name="setupString">String in format "x1,y1|x2,y2|x3,y3" where each pair is separated by '|' and coordinates by ','</param>
+            <param name="canExtrapolate">Flag to indicate if the model can extrapolate values outside the defined points</param>
+            <exception cref="T:System.Exception">Thrown when setupString is malformed, contains fewer than 2 points, or X values are not properly sorted/unique</exception>
+        </member>
+        <member name="M:JCass_Core.Statistics.PieceWiseLinearModel.IsSortedAndUniqueXValues(System.Collections.Generic.List{System.Double})">
+            <summary>
+            Validates that X values are in strictly increasing order with no duplicates.
+            </summary>
+            <param name="list">List of X values to validate</param>
+            <returns>True if the list is sorted in strictly increasing order, false otherwise</returns>
+        </member>
+        <member name="M:JCass_Core.Statistics.PieceWiseLinearModel.CheckXandYValues(System.Collections.Generic.List{System.Double},System.Collections.Generic.List{System.Double})">
+            <summary>
+            Validates that X and Y value collections meet all requirements for the piecewise linear model.
+            </summary>
+            <param name="tXValues">X values to validate</param>
+            <param name="tYValues">Y values to validate</param>
+            <exception cref="T:System.Exception">Thrown when validation fails due to null/empty collections, mismatched counts, or unsorted/duplicate X values</exception>
+        </member>
+        <member name="M:JCass_Core.Statistics.PieceWiseLinearModel.SplitStringToList(System.String,System.String)">
+            <summary>
+            Splits a string into a list of trimmed strings using the specified delimiter.
+            Uses StringSplitOptions.TrimEntries for efficient trimming in .NET 9.
+            </summary>
+            <param name="stringToSplit">The string to split</param>
+            <param name="delimiter">The delimiter to split on</param>
+            <returns>A list of trimmed string segments</returns>
+        </member>
+        <member name="M:JCass_Core.Utils.ColourUtilities.GetColorFromValue(System.Double,System.Double,System.Double)">
+            <summary>
+            Maps a value to a gradient color ranging from green to red.
+            </summary>
+            <param name="value">The current value to map.</param>
+            <param name="min">The minimum value in the range.</param>
+            <param name="max">The maximum value in the range.</param>
+            <returns>A hex color string representing the gradient color.</returns>
+        </member>
+        <member name="P:JCass_Core.Utils.DateDataSummary.ValueCounts">
+            <summary>
+            Counts of the number of occurences on all unique dates. Each item is a key-value pair, in which
+            the Key is the string/text value, and the Value is the number of occurrences encountered        
+            </summary>
+        </member>
+        <member name="M:JCass_Core.Utils.DesktopUtilities.GetMachineUUID">
+            <summary>
+            Gets an UUID for the user's computer
+            </summary>
+            <remarks>
+            A UUID (Universally Unique Identifier) is a 128-bit identifier used to uniquely identify information in systems.
+            For machines, UUIDs are typically used to uniquely identify a particular device, such as a computer or a virtual machine.
+            For example, on Windows systems, the UUID for a machine can be retrieved from the BIOS or hardware configuration, 
+            and it's often referred to as the system's UUID or System GUID.
+            </remarks>
+        </member>
+        <member name="M:JCass_Core.Utils.HelperMethods.GetFinancialYear(System.DateTime,System.Int32)">
+            <summary>
+            Gets the calendar year for the financial year start in which a date falls. A very simple helper function. If the date
+            has a month later than the financial year start, then the financial year is the same as 
+            the year's date. But if the month is earlier or the same as the month in which the financial
+            year ends, then the financial year is the year before that of the date. 
+            </summary>
+            <param name="date">Date to evaluate</param>
+            <param name="finYearEndMonth">Month in which the financial year ends (at the end of this month). E.g. if financial year ends 30 June, then enter 6</param>
+            <returns>Integer representing the financial year's starting calendar year</returns>
+            <example>If date is 20-Feb-2023, then the date falls in the financial year that started in July 2022 and ends at 30 June 2023. Thus return value is 2022</example>
+            <example>If date is 20-Dec-2023, then the date falls in the financial year that started in July 2023 and ends at 30 June 2024. Thus return value is 2023</example>
+            <example>If date is 1-July-2023, then the date falls in the financial year that started in July 2023 and ends at 30 June 2024. Thus return value is 2023</example>
+            <example>If date is 30-Jun-2023, then the date falls in the financial year that started in July 2022 and ends at 30 June 2023. Thus return value is 2022</example>
+        </member>
+        <member name="M:JCass_Core.Utils.HelperMethods.NormaliseWeights(System.Double[])">
+            <summary>
+            Normalises the weights in an array to ensure they add up to 1.0. Makes a proportional adjustment 
+            </summary>
+            <param name="weights">Weights to normalise such that they add up to 1.0</param>
+            <returns>Array with weights adjusted proportionally so that they add up to 1.0</returns>
+            <exception cref="T:System.Exception"></exception>
+        </member>
+        <member name="M:JCass_Core.Utils.HelperMethods.GetDistanceBetweenPoints(System.Double,System.Double,System.Double,System.Double)">
+            <summary>
+            Get distance between two points in two-dimensional space. Uses Pythagras Theorem to get the Euclidian distance between two Cartesian Points
+            </summary>
+            <param name="x1">X coordinate of first point</param>
+            <param name="y1">y coordinate of first point</param>
+            <param name="x2">x coordinate of second point</param>
+            <param name="y2">y coordinate of second point</param>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_Core.Utils.HelperMethods.ParseISODateNoTime(System.String)">
+            <summary>
+            Parses an ISO date string presumed in format 'yyyymmdd' to a DateTime object
+            </summary>
+            <param name="isoDate">ISO Date string in format 'yyyymm'dd' e.g. '19661204</param>
+            <returns></returns>
+            <exception cref="T:System.Exception">Exception is thrown if provided string is not valid</exception>
+        </member>
+        <member name="M:JCass_Core.Utils.HelperMethods.IsNoneOrEmptyString(System.String)">
+            <summary>
+            Returns true if value passed is one of (a) empty or null; or (b) 'none' (not case sensitive). If none of 
+            these two conditions are met, returns false;
+            </summary>
+            <param name="value">String value to check</param>
+            <returns>Returns true if value passed is one of (a) empty or null; or (b) 'none' (not case sensitive). If none of 
+            these two conditions are met, returns false;</returns>
+        </member>
+        <member name="M:JCass_Core.Utils.HelperMethods.GetStatistics">
+            <summary>
+            Get all the statistics which are available to calculate the strip data
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_Core.Utils.HelperMethods.IsNumeric(System.String)">
+            <summary>
+            Checks a string to see if it is a valid numeric value
+            </summary>
+            <param name="testValue"></param>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_Core.Utils.HelperMethods.IsInteger(System.String)">
+            <summary>
+            Checks a string to see if it is a valid integer value
+            </summary>
+            <param name="testValue"></param>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_Core.Utils.HelperMethods.GetMonthNumbers">
+            <summary>
+            Returns a key-value collection to look up the month numbers using the month as a LOWERCASE string, either in short format ('apr') or long format ('april')
+            </summary>        
+        </member>
+        <member name="M:JCass_Core.Utils.HelperMethods.ConvertListToDelimitedString(System.Collections.Generic.List{System.String},System.String)">
+            <summary>
+            Converts a list of strings to a single delimited string. Default delimited is pipe (|)
+            </summary>        
+        </member>
+        <member name="M:JCass_Core.Utils.HelperMethods.SplitString(System.String,System.String)">
+            <summary>
+            Wrapper for .Split method of string class
+            </summary>        
+        </member>
+        <member name="M:JCass_Core.Utils.HelperMethods.SplitStringToList(System.String,System.String,System.Boolean)">
+            <summary>
+            Wrapper for .Split method of string class
+            </summary>        
+        </member>
+        <member name="M:JCass_Core.Utils.HelperMethods.SplitStringToListWithoutNulls(System.String,System.String,System.Boolean)">
+            <summary>
+            Wrapper for .Split method of string class, but with automatic removal of all empty values
+            </summary>        
+        </member>
+        <member name="M:JCass_Core.Utils.HelperMethods.GetDateFromString(System.String)">
+            <summary>
+            Converts the DateString to Specified Date formats, returns the value in DateTime format
+            </summary>
+            <param name="dateAsString">Date value as string, Datevalue should be any of the dateFormats used in the method</param>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_Core.Utils.HelperMethods.GetDateFromString(System.String,System.String,System.Collections.Generic.Dictionary{System.String,System.Int32})">
+            <summary>
+            Tries to do an exact parse of a date value (excluding time), as string, using an expected format
+            </summary>
+            <param name="dateAsString">Date value as string, e.g. '10/12/2013'</param>
+            <param name="expectedFormat">A valid custom date specification such as 'dd/MMM/yyyy' ; 'yyyy/MM/dd' ; 'MM/dd/yyyy'</param>
+            <param name="monthNumbers">Lookup for months, with months as keys in lowercase, and month number as integer as values. Get using HelperMethods.GetMonthNumbers()</param>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_Core.Utils.HelperMethods.GetDateTimeStringFormat(System.DateTime,System.String,System.Boolean)">
+            <summary>
+            Tries to do an exact parse of a date time string, using an expected format
+            </summary>
+            <param name="dateTimeToConvert">Date value as valid DateTime type</param>
+            <param name="expectedFormat">A valid custom date specification such as 'dd/MMM/yyyy' ; 'yyyy/MM/dd' ; 'MM/dd/yyyy'</param>
+            <param name="includeTime">If its true then we will always convert into one foramt of time ie., hh:mm tt</param>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_Core.Utils.HelperMethods.GetStringBindLength(System.Collections.Generic.Dictionary{System.String,System.String},System.String)">
+            <summary>
+            get string column length by column name from a table
+            </summary>  
+        </member>
+        <member name="M:JCass_Core.Utils.HelperMethods.isMaxiumSegmentsCountExceeded(System.Int32)">
+            <summary>
+            This helper method is to ensure that query engine does not look for unlimited segments. 
+            </summary>
+            <param name="segmentsCount"></param>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_Core.Utils.HelperMethods.MaxiumAllowedSegmentsCount">
+            <summary>
+            This helper method is to ensure that query engine does not look for unlimited segments. 
+            </summary>
+        </member>
+        <member name="M:JCass_Core.Utils.HelperMethods.IsOdd(System.Int32)">
+            <summary>
+            Returns true is a number is ODD
+            </summary>
+            <param name="value"></param>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_Core.Utils.HelperMethods.GetScaleFactorFromLabel(System.String)">
+            <summary>
+            Returns a numeric scale factor based on a UI friendly scale label like 'million'
+            </summary>
+            <param name="scaleFactorLabel">Handles 'none' = 1, 'thousand' = 1000, 'million', 'billion'. Not case sensitive and will handle plurals as well. If label is null or empty, 
+            or if no match is found, 1 is returned.</param>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_Core.Utils.HelperMethods.GetCostScaleFactor(System.Double)">
+            <summary>
+            Returns an appropriate scaling factor for cost. For example, if cost is over a million but less than a billion, will return 1,000,000
+            </summary>
+            <param name="value">Value for cost scaling</param>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_Core.Utils.HelperMethods.GetCostScaleFactorText(System.Double)">
+            <summary>
+            Returns an appropriate scaling factor for cost. For example, if cost is over a million but less than a billion, will return 1,000,000
+            </summary>
+            <param name="value">Value for cost scaling</param>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_Core.Utils.HelperMethods.GetHighLowParamNamesFromShortCode(System.String)">
+            <summary>
+            Gets the names of the statistics parameters to use for a HighLow Graph based on an abbreviated code. Returns parameter names to use IN THE ORDER  
+            High-Medium-Low. For example, returns a list containing '95th Percentile', 'Median Value' and '5th Percentile' for code '95th%-Median-5th%'
+            </summary>
+            <param name="shortCode"></param>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_Core.Utils.HelperMethods.StringContainsSpecialChars(System.String)">
+            <summary>
+            Returns true if stringToCheck contains any characters apart from a-z and 0-9 and '_';
+            </summary>
+        </member>
+        <member name="M:JCass_Core.Utils.HelperMethods.ReplaceSpecialCharactersWithUnderScore(System.String)">
+            <summary>
+            Returns the stringToCheck after replacing all the special chars in a string with '_'
+            </summary>
+        </member>
+        <member name="M:JCass_Core.Utils.HelperMethods.GetOverlapLength(System.Single,System.Single,System.Single,System.Single,System.Boolean)">
+            <summary>
+            Computes the overlap length between two 1-D segments.
+            </summary>
+            <param name="a1">Start value of segment A (order does not matter).</param>
+            <param name="a2">End value of segment A (order does not matter).</param>
+            <param name="b1">Start value of segment B (order does not matter).</param>
+            <param name="b2">End value of segment B (order does not matter).</param>
+            <param name="includeTouching">
+            If true, segments that only touch at a single point are treated as overlapping
+            (overlap length will still be zero). If false, only positive-length overlaps are returned.
+            </param>
+            <returns>
+            The length of the overlapping portion of the two segments. Returns 0 if there is no overlap.
+            </returns>
+            <remarks>
+            This method is order-independent: the start and end values of each segment
+            may be provided in any order (e.g. a1 &gt; a2 is allowed).
+            
+            Examples:
+            [0,10] and [5,15]  → 5  
+            [0,10] and [10,20] → 0 (touching)  
+            [0,10] and [20,30] → 0 (no overlap)
+            </remarks>
+        </member>
+        <member name="M:JCass_Core.Utils.HelperMethods.GetConvertedDecimalValue(System.String,System.Int32)">
+            <summary>
+            Gets the decimal value as a string and decimal places will be depend on the number of decimals we will pass 
+            </summary>
+        </member>
+        <member name="M:JCass_Core.Utils.HelperMethods.GetDecimalValueWithThousandSeperator(System.Decimal,System.Int32)">
+            <summary>
+            Gets the decimal value as a string (Thousand Separator) and decimal places will be depend on the number of decimals we will pass 
+            </summary>
+        </member>
+        <member name="M:JCass_Core.Utils.HelperMethods.NumberIsWhole(System.Double)">
+            <summary>
+            Checks if a number is a whole (integer) number or not
+            </summary>
+            <param name="numberToCheck"></param>        
+        </member>
+        <member name="M:JCass_Core.Utils.HelperMethods.GetSmartNumberFormatted(System.Double)">
+            <summary>
+            Gets a best guess for how a number is to be displayed as text
+            </summary>
+        </member>
+        <member name="M:JCass_Core.Utils.HelperMethods.GetRandomNumberOnDate">
+            <summary>
+            To get a random number based on datetime stamp.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_Core.Utils.HelperMethods.ConvertGenericListToDataTable``1(System.Collections.Generic.IList{``0})">
+            <summary>
+            To convert a strongly typed list to datatable
+            </summary>
+            <typeparam name="T">Represents Typed list type</typeparam>
+            <param name="data">List containing List</param>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_Core.Utils.HelperMethods.GetRandomStatistics(System.Double,System.Double,System.Int32)">
+            <summary>
+            Helper to generate a statistics object based on a set of random numbers within a given range, with uniform distribution
+            </summary>        
+        </member>
+        <member name="M:JCass_Core.Utils.HelperMethods.GetRandomNumbers(System.Double,System.Double,System.Int32)">
+            <summary>
+            Helper to generate set of random numbers within a given range, with uniform distribution
+            </summary>        
+        </member>
+        <member name="M:JCass_Core.Utils.HelperMethods.GetColourForSeries(System.Int32,System.Int32)">
+            <summary>
+            Returns a colour based on series number. For series 0 to 7, we return Salmon, SteelBlue, DarkRed, Navy, DarkGreen, DeepPink, Orange
+            </summary>
+        </member>
+        <member name="M:JCass_Core.Utils.HelperMethods.GetLaneCodesInPlotOrder(System.String)">
+            <summary>
+            Lanes order to display in strip map.
+            Type is to declare which country road type the lanes are to be plotted
+            </summary>
+        </member>
+        <member name="M:JCass_Core.Utils.HelperMethods.GetTreatmentYearBasedOnSpecificFormat(System.Int32,System.String)">
+            <summary>
+            Treatment year format which displying treatment, the user will decide whether to show Year (e.g. 2015), Previous/Year (e.g.14/15), or Year/Next (e.g. 15/16)
+            </summary>
+            <param name="year">Treatment year to format</param>
+            <param name="treatmentDisplayYrFormat">Format string (Show Year (e.g. 2015), Previous/Year (e.g.14/15), or Year/Next (e.g. 15/16))</param>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_Core.Utils.HelperMethods.GetExcelDataTypeFormat(System.String,System.String)">
+            <summary>
+            Get the excel cell data type foramt based on data column data type
+            </summary>
+        </member>
+        <member name="M:JCass_Core.Utils.HelperMethods.GetValuesWithSingleQoute(System.String,System.String)">
+            <summary>
+            Prepare the ids with single qoutes
+            </summary>
+        </member>
+        <member name="M:JCass_Core.Utils.HelperMethods.GetBoolean(System.String)">
+            <summary>
+            Gets a type safe boolean conversion. Handles numeric values e.g. 0 or 1 but also case-insensitive 'true' or 'false'
+            </summary>
+            <param name="rawValue">Raw value for the value to convert</param>
+            <returns></returns>
+        </member>
+        <member name="T:JCass_Core.Utils.IgnorePropertiesResolver">
+            <summary>
+            short helper class to ignore some properties from serialization
+            From:  https://stackoverflow.com/questions/10169648/how-to-exclude-property-from-json-serialization
+            </summary>
+        </member>
+        <member name="T:JCass_Core.Utils.TextDataSummary">
+            <summary>
+            Summary information (mainly counts on values and mode) on a set of Text Data, but can also handle numeric values.
+            </summary>
+        </member>
+        <member name="P:JCass_Core.Utils.TextDataSummary.ValueCounts">
+            <summary>
+            Counts of the number of occurences on all unique values. The Key is the string/text value, 
+            and the Value is the number of occurrences encountered        
+            </summary>
+        </member>
+        <member name="P:JCass_Core.Utils.TextDataSummary.MostFrequentValue">
+            <summary>
+            Most frequently occurring value (i.e. Mode)
+            </summary>
+        </member>
+        <member name="P:JCass_Core.Utils.TextDataSummary.Mode">
+            <summary>
+            The Mode, i.e. the most frequently occurring value
+            </summary>
+        </member>
+        <member name="M:JCass_Core.Utils.TextDataSummary.#ctor(System.Collections.Generic.List{System.String},System.Boolean,System.Int32)">
+            <summary>
+            Constructor that can handle numeric values.
+            </summary>
+            <param name="values">List of values</param>
+            <param name="roundNumbers">If true, then any numeric values are rounded to the specified decimals before getting counts. Non-numeric
+            values are simply handled as text (no error thrown)</param>
+            <param name="roundingDecimals">Number of decimals to round numeric values to before adding them into the count list</param>
+        </member>
+    </members>
+</doc>

@@ -1,0 +1,192 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>JCass_Economics</name>
+    </assembly>
+    <members>
+        <member name="P:JCass_Economics.BaseClasses.ProjectBase.IsDoNothing">
+            <summary>
+            Flag to denote if this is regarded as a do-nothing. This can be set by the caller and will depend on
+            the context. It is not necessarily the same as the Absolute Do-Nothing which always has 
+            Cost = 0 AND Benefit = 0. In some cases, the effective Do-Nothing is actually a 'Do-Something'.
+            </summary>
+            <seealso cref="P:JCass_Economics.BaseClasses.ProjectBase.IsAbsoluteDoNothing"/>
+        </member>
+        <member name="P:JCass_Economics.BaseClasses.ProjectBase.IsAbsoluteDoNothing">
+            <summary>
+            Flag to denote if this is an ABSOLUTE Do-Nothing for which both Cost and Benefit is zero
+            </summary>
+            <seealso cref="P:JCass_Economics.BaseClasses.ProjectBase.IsDoNothing"/>
+        </member>
+        <member name="T:JCass_Economics.BCAKnapSackSorter">
+            <summary>
+            This is the main class 
+            </summary>
+        </member>
+        <member name="M:JCass_Economics.BCAKnapSackSorter.#ctor(System.Collections.Generic.List{JCass_Economics.BaseClasses.ProjectBase})">
+            <summary>
+            The constructor class for the knapsack 
+            </summary>
+        </member>
+        <member name="M:JCass_Economics.BCAKnapSackSorter.RemapProjectIDs(System.Collections.Generic.List{JCass_Economics.BaseClasses.ProjectBase})">
+            <summary>
+             a method that remaps the project IDs so they are continous 
+            </summary>
+            <param name="projects"></param>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_Economics.BCAKnapSackSorter.CalculateShrinkageFactor(System.Collections.Generic.List{JCass_Economics.Utilities.Treatment})">
+            <summary>
+             A Method that calculates the best factor to reduce costs and budgets by 
+            </summary>
+            <param name="treatments"></param>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_Economics.BCAKnapSackSorter.AdjustBudgets(System.Int32)">
+            <summary>
+            A method to adjust the budgets by the shrink factor (make each budget smaller?)
+            </summary>
+            <param name="shrinkF"></param>
+        </member>
+        <member name="M:JCass_Economics.BCAKnapSackSorter.InitializeArrays(System.Int32,System.Int32,System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Method to set up the arrays for processing
+            </summary>
+            <param name="sectionCount"></param>
+            <param name="treatmentCount"></param>
+            <param name="totalBudget"></param>
+            <param name="categoryCount"></param>
+            <param name="shrinkfactor"></param>
+        </member>
+        <member name="M:JCass_Economics.BCAKnapSackSorter.CalculateBudgetOffsets">
+            <summary>
+            Calculate the budget offsets
+            </summary>
+        </member>
+        <member name="M:JCass_Economics.BCAKnapSackSorter.FindSelectedProjects">
+            <summary>
+            A method that returns the select Jcass Projects 
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_Economics.BCAKnapSackSorter.Allocate(System.Int32)">
+            <summary>
+            Allocate ??
+            </summary>
+            <param name="len"></param>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_Economics.BCAKnapSackSorter.RunDp(System.Int32)">
+            <summary>
+            Run the knapsack sorting 
+            </summary>
+            <param name="len"></param>
+        </member>
+        <member name="M:JCass_Economics.BCAKnapSackSorter.Knapsack(System.Int32,System.Int32)">
+            <summary>
+            Knapsack 
+            </summary>
+            <param name="bId">b_id is 1 indexed budget id</param>
+            <param name="len">len is the number of sections to consider in knapsack,sections are 1 indexed</param>
+        </member>
+        <member name="M:JCass_Economics.BCAKnapSackSorter.RunKnapSack">
+            <summary>
+            Entry Point to run KnapSack Sorting Method 
+            </summary>
+        </member>
+        <member name="M:JCass_Economics.BCAKnapSackSorter.GetOptimalCandidates(System.Collections.Generic.Dictionary{System.String,System.Double},System.Boolean,System.String)">
+            <summary>
+            The Entry point from Jcass to run the KnapSackSorting 
+            </summary>
+            <param name="budget"></param>
+            <param name="isMonolithicBudget"></param>
+            <param name="monolithicBudgetCatKey"></param>
+            <returns></returns>
+        </member>
+        <member name="T:JCass_Economics.Optimisers.BCAOptimiseGreedy">
+            <summary>
+            Optimisation of Benefit-Cost for projects on network elements. The approach implemented in this class is explained
+            in this video: https://youtu.be/xLgGgbRXbsc
+            </summary>
+        </member>
+        <member name="M:JCass_Economics.Optimisers.BCAOptimiseGreedy.GetBestNextCandidate(System.Collections.Generic.List{System.Int32})">
+            <summary>
+            Scan the next possible candidate projects for each element and picks the ONE that has the highest IBCR
+            </summary>
+            <param name="elemeKeysToExclude">List of element keys (indexes) that cannot be considered</param>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_Economics.Optimisers.MooraRanker.GetMooraRanking(System.Double[0:,0:],System.Double[],System.Double[])">
+            <summary>
+            Gets Ranking based on Multi-Objective Optimisation on the basis of Ratio Analysis (MOORA).
+            Rankings returned are such that HIGHEST value is the BEST. So you should sort in Descending order
+            </summary>
+            <param name="data">Matrix of options (in rows) and decision attributes (in columns)</param>
+            <param name="weights">Weights for each attribute</param>
+            <param name="obj_types">Types of Objectives (-1 to minimise and +1 to maximise)</param>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_Economics.Optimisers.MooraRanker.ValidateMooraInputsFiniteOrThrow(System.Double[0:,0:],System.Double[],System.Double[],System.Int32,System.Int32)">
+            <summary>
+            Scans the MOORA input arrays for NaN or Infinity values and throws a
+            support-actionable exception identifying the first offending cell. Without
+            this guard the column-wise Euclidean normalisation silently produces all-NaN
+            ranks and the caller's descending sort becomes a stable no-op, bypassing
+            the consumer's weighting entirely.
+            </summary>
+        </member>
+        <member name="M:JCass_Economics.Utilities.BCA_Helper.GetParetoFront(System.Collections.Generic.List{JCass_Economics.BaseClasses.ProjectBase},System.Double)">
+            <summary>
+            Scans a list of candidate projects based on their Benefits and Costs and returns a list that contains only those 
+            projects that are on the Pareto Frontier. Use the BenefitCostItem Index or Key values to determine which items in your 
+            generic list the Pareto elements refer to.
+            Solid Code. Unit Tested.
+            </summary>
+            <param name="candidates">List of candidates to consider, with the Benefit and Cost for each specified</param>
+            <param name="minimumAcceptableBCRatio">Minimum Acceptable Benefit Cost Ratio. Default is zero</param>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_Economics.Utilities.BCA_Helper.GetSortedParetoSet(System.Collections.Generic.List{JCass_Economics.BaseClasses.ProjectBase},System.String)">
+            <summary>
+            Gets a sorted (best to worst) Pareto Front based on either Maximum Benefit Cost Ratio, or Maximum Benefit. 
+            Best project will be at index = 0
+            </summary>
+            <param name="unsortedParetoSet">Unsorted Pareto Front</param>
+            <param name="sortMethod">Method to sort Pareto Front on. Either 'max-bcr' or max-benefit'. Not case sensitive.</param>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_Economics.Utilities.BCA_Helper.GetOptimalProject(System.Collections.Generic.List{JCass_Economics.BaseClasses.ProjectBase},System.String,System.Double)">
+            <summary>
+            Gets the optimal project based on a specified criteria (either max-bcr or max-benefit) using Incremental-Benefit-Cost-Ratio principles. 
+            If there is no valid project based on parameter 'minimumAcceptableBCRatio', then Null is returned. Solid Code. Unit Tested.
+            <para>First the list of candidate projects is reduced to only those on the Pareto Frontier using the IBCR technique</para>
+            <para>Next, the list of projects on the Pareto frontier is sorted based on the criteria specified in sortMethod and 
+            the best one is returned</para>
+            </summary>
+            <param name="candidates">List of candidates to consider, with the Benefit and Cost for each specified</param>
+            /// <param name="sortMethod">Method to sort Pareto Front on. Either 'max-bcr' or max-benefit'. Not case sensitive.</param>
+            <param name="minimumAcceptableBCRatio">Minimum Acceptable Benefit Cost Ratio. Default is zero</param>
+            <returns></returns>
+            <exception cref="T:System.Exception"></exception>
+        </member>
+        <member name="M:JCass_Economics.Utilities.BCA_Helper.GetDecreasingIBCRFront(System.Collections.Generic.List{JCass_Economics.BaseClasses.ProjectBase})">
+            <summary>
+            Scans a list of candidate projects based on their Benefits and Costs and returns a list that contains only those 
+            projects for which the Incremental Benefit Cost Ratio (IBCR) decreases relative to the previously selected point. This is not
+            the same as the Pareto Front and will always select fewer projects.
+            </summary>
+            <param name="candidates">List of candidates to consider, with the Benefit and Cost for each specified</param>   
+            <returns></returns>
+        </member>
+        <member name="T:JCass_Economics.Utilities.Item">
+            <summary>
+            Item class, I think that this repesents a section as far as I can tell.
+            </summary>
+        </member>
+        <member name="T:JCass_Economics.Utilities.Treatment">
+            <summary>
+            The treatment class 
+            </summary>
+        </member>
+    </members>
+</doc>

@@ -8,28 +8,20 @@ obj/
 # zip after the last-selected item, so these turn up under surprising names.
 *.zip
 
-# Symbols are never worth carrying.
+# Symbols are never worth carrying. This also covers refs/*.pdb — the framework
+# reference assemblies ship without symbols, and there would be nothing to step
+# into if they had them.
 *.pdb
 
 # ---------------------------------------------------------------------------
-# refs\ — NOTHING IN IT IS COMMITTED YET. This is temporary, and S2 removes it.
+# refs/ IS COMMITTED, deliberately — the .dll and .xml files both.
 #
-# This repository is PUBLIC. The reference model arrived from its own private
-# repo carrying REAL framework assemblies, which are the commercial product and
-# must not be published. They are still on disk locally, so the project builds
-# on this machine, but they are kept out of every commit until S2 replaces them
-# with .NET REFERENCE assemblies — same public API, no method bodies, safe to
-# publish and enough for IntelliSense and compilation.
+# They are .NET REFERENCE assemblies: the framework's public API with no method
+# bodies. They compile and they give full IntelliSense, and the runtime refuses
+# to load them, so publishing them in this public repository does not publish the
+# implementation. A kit that opens to a screen of red squiggles has failed before
+# anyone has read a line of it, which is why they are here rather than fetched.
 #
-# Consequence, and it is expected rather than a bug: a fresh clone of this repo
-# cannot build the reference model until S2 lands. See reference-model/README.md.
-#
-# S2: delete this whole block, commit refs/ contents, and narrow the ignore to
-# refs/*.pdb.
-#
-# refs/README.md is documentation, not a framework file, so it is kept.
-# refs/FRAMEWORK-VERSION.txt is not: it records the maintainer's local source
-# path, which has no business in a public repository. S2 regenerates it.
+# The .xml documentation files matter most of all: they are how an AI coding
+# assistant learns the framework API. Never ignore them.
 # ---------------------------------------------------------------------------
-**/refs/*
-!**/refs/README.md

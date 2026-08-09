@@ -1,0 +1,259 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>JCass_DataAccess</name>
+    </assembly>
+    <members>
+        <member name="M:JCass_DataAccess.Data.BetaAppData.GetBetaAppId(System.String)">
+            <summary>
+            Gets the Id for a specific Beta app using a case-insensitive search.
+            </summary>
+            <param name="appName">App Name</param>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_DataAccess.Data.CommandData.MarkAsSuperceded(JCass_DataAccess.Models.CommandModel)">
+            <summary>
+            Marks all command as superceded where the UserID, CommandKey and SetupCode matches those of command
+            </summary>
+            <param name="command"></param>
+            <returns></returns>
+        </member>
+        <member name="T:JCass_DataAccess.Data.LogItemData">
+            <summary>
+            Log Item Data Model
+            </summary>
+            <remarks>Code based on: https://www.youtube.com/watch?v=dwMFg6uxQ0I&amp;list=RDCMUC-ptWR16ITQyYOglXyQmpzw&amp;index=1
+            HOWEVER: With Azure SQL DB, the stored procedure approach in Tim Corey's video did not work. I got an error that
+            said: 'Reference to database and/or server name in '' is not supported in this version of SQL Server'. So I modified this class
+            to use SQL Query statements directly and it worked. The commented out code below is for the Stored Procedure approach</remarks>
+        </member>
+        <member name="T:JCass_DataAccess.Data.NetworkData">
+            <summary>
+            Data access class for Network data (Roads, Bridges, etc.)
+            </summary>
+        </member>
+        <member name="M:JCass_DataAccess.Data.NetworkData.GetNetworksForUserID(System.Int32)">
+            <summary>
+            Get all networks that the user has access to
+            </summary>
+            <param name="userID">User ID</param>
+            <returns></returns>
+        </member>
+        <member name="T:JCass_DataAccess.Data.QueueService">
+             <summary>
+            
+             Based on: https://www.youtube.com/watch?v=v52yC9kq0Yg&amp;t=3900s&amp;ab_channel=IAmTimCorey
+             </summary>
+        </member>
+        <member name="T:JCass_DataAccess.Data.UserData">
+            <summary>
+            User Data Model
+            </summary>
+            <remarks>Code based on: https://www.youtube.com/watch?v=dwMFg6uxQ0I&amp;list=RDCMUC-ptWR16ITQyYOglXyQmpzw&amp;index=1
+            HOWEVER: With Azure SQL DB, the stored procedure approach in Tim Corey's video did not work. I got an error that
+            said: 'Reference to database and/or server name in '' is not supported in this version of SQL Server'. So I modified this class
+            to use SQL Query statements directly and it worked. The commented out code below is for the Stored Procedure approach</remarks>
+        </member>
+        <member name="M:JCass_DataAccess.Data.UserData.GetUserByFirstAndLastName(System.String,System.String)">
+            <summary>
+            Temporary only until Juno API returns email from login request
+            </summary>
+            <param name="firstName"></param>
+            <param name="lastName"></param>
+            <returns></returns>
+        </member>
+        <member name="T:JCass_DataAccess.DbAccess.SqlDataAccess">
+            <summary>
+            SQL Access Class
+            </summary>
+            <remarks>Code based on: https://www.youtube.com/watch?v=dwMFg6uxQ0I&amp;list=RDCMUC-ptWR16ITQyYOglXyQmpzw&amp;index=1</remarks>
+        </member>
+        <member name="T:JCass_DataAccess.Files.AzureBlobService">
+            <summary>
+            Class to provide access to files stored as blobs on Azure.
+            </summary>
+            <remarks>Based on:
+            https://www.youtube.com/watch?v=DzQ7CNnb9yM&amp;list=PL94ZpBZlW2KECuHNuEO26jfd_4MM_gXrT&amp;index=30&amp;ab_channel=Codewrinkles</remarks>
+        </member>
+        <member name="F:JCass_DataAccess.Files.AzureBlobService._storageAccount">
+            <summary>
+            Name of the Azure Storage account
+            </summary>
+        </member>
+        <member name="F:JCass_DataAccess.Files.AzureBlobService._key">
+            <summary>
+            Key for the azure storage account
+            </summary>
+        </member>
+        <member name="M:JCass_DataAccess.Files.AzureBlobService.ListBlobInfosAsync(System.String)">
+            <summary>
+            Gets a list of BlobDTO objects with information about all files/blobs in a container
+            </summary>
+            <param name="containerName"></param>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_DataAccess.Files.AzureBlobService.ListFileNamesAsync(System.String,System.String,System.String)">
+            <summary>
+            Gets a list of just the filenames in a container
+            </summary>
+            <param name="containerName">GUID representing the Azure container</param>
+            <param name="subFolderName">Optional sub-folder name. If not empty, return list will be filtered to contain only those blobs with prefix matching this (case in-sensitive).
+            Pass 'root_only' to get only the file names that do NOT have a sub-folder prefix</param>
+            <param name="fileExtension">Optional filter to only return files with specific extension (not case sensitive)</param>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_DataAccess.Files.AzureBlobService.ListSubFolderNamesAsync(System.String)">
+            <summary>
+            Gets a list of just the sub-folder names in a container
+            </summary>
+            <param name="containerName">Code for the container</param>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_DataAccess.Files.AzureBlobService.DownloadFileAsync(System.String,System.String)">
+            <summary>
+            Downloads a file/blob in an azure container
+            </summary>
+            <param name="blobFileName">Name for the file/blob. If the file was stored/inserted using a sub-folder name (virtual folder), then
+            the name provided here must include the subfolder. E.g. if the file was stored with sub-folder name 'temp', then you must pass
+            into this function 'temp/[filename]</param>
+            <param name="containerName"></param>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_DataAccess.Files.AzureBlobService.IncludeFileInResult(System.String,System.String,System.String)">
+            <summary>
+            Checks if a file/blob should be included in the return list based on the subfoldername and the extension. All matches
+            are case-INsensitive
+            </summary>
+            <param name="fileName">Blob name including the </param>
+            <param name="subFolderName">name of the subfolder, or empty string for nothing, or 'root_folder' for root folder</param>
+            <param name="extension">file extension to filter for. </param>
+            <returns></returns>
+        </member>
+        <member name="T:JCass_DataAccess.Models.CommandModel">
+            <summary>
+            Meta-data about a command. Also maps to the commands table for LRP commands
+            </summary>
+        </member>
+        <member name="P:JCass_DataAccess.Models.CommandModel.Id">
+            <summary>
+            Unique ID for this command in the queue
+            </summary>
+        </member>
+        <member name="P:JCass_DataAccess.Models.CommandModel.UserId">
+            <summary>
+            ID of the user that owns this command
+            </summary>
+        </member>
+        <member name="P:JCass_DataAccess.Models.CommandModel.CommandKey">
+            <summary>
+            Unique key for the command. This key/name is used to direct the listener app to load and run the correct
+            JCass process.
+            </summary>
+        </member>
+        <member name="P:JCass_DataAccess.Models.CommandModel.FolderCode">
+            <summary>
+            GUID identifyer for the working folder for this user and this command
+            </summary>
+        </member>
+        <member name="P:JCass_DataAccess.Models.CommandModel.Status">
+            <summary>
+            Status for the command. Only allows certain values.
+            </summary>
+        </member>
+        <member name="P:JCass_DataAccess.Models.CommandModel.InsertTime">
+            <summary>
+            Date/Time when this command record was added to the LRPCommands table
+            </summary>
+        </member>
+        <member name="P:JCass_DataAccess.Models.CommandModel.StartTime">
+            <summary>
+            Date/Time when the message queue listener app started processing this command
+            </summary>
+        </member>
+        <member name="P:JCass_DataAccess.Models.CommandModel.EndTime">
+            <summary>
+            Date/Time when the message queue listener app finished processing this command
+            </summary>
+        </member>
+        <member name="P:JCass_DataAccess.Models.CommandModel.ExitStatus">
+            <summary>
+            Status when existing. 'ok' or 'error'
+            </summary>
+        </member>
+        <member name="P:JCass_DataAccess.Models.CommandModel.Description">
+            <summary>
+            Optional, user-friendly description for this command
+            </summary>
+        </member>
+        <member name="P:JCass_DataAccess.Models.CommandModel.IsSuperceded">
+            <summary>
+            Flag to indicate if this command has been superceded. A command is superceded if another command was run later with 
+            the same userID, CommandKey and SetupCode
+            </summary>
+        </member>
+        <member name="M:JCass_DataAccess.Models.CommandModel.GetUniqueKey">
+            <summary>
+            Gets a unique descriptor of this command that can be used as a key for objects to be held in memory. Returns a value:
+            this.CommandKey + "-" + this.UserID + "-" + this.SetupCode;
+            </summary>
+            <returns>Key consisting of: this.CommandKey + "-" + this.UserID + "-" + this.SetupCode</returns>
+        </member>
+        <member name="P:JCass_DataAccess.Models.ICommandModel.CommandKey">
+            <summary>
+            Unique key for the command. Only loosely maps to the command.Name property of the underlying command(s). This is 
+            because the CommandModel encaptulates a batch of commands that run in a context, and not a single Command.
+            </summary>
+        </member>
+        <member name="P:JCass_DataAccess.Models.ICommandModel.Description">
+            <summary>
+            Optional, user-friendly description for this command
+            </summary>
+        </member>
+        <member name="P:JCass_DataAccess.Models.ICommandModel.ExitStatus">
+            <summary>
+            Status when existing. 'ok' or 'error'
+            </summary>
+        </member>
+        <member name="P:JCass_DataAccess.Models.ICommandModel.Id">
+            <summary>
+            Unique ID for this command in the queue
+            </summary>
+        </member>
+        <member name="P:JCass_DataAccess.Models.ICommandModel.FolderCode">
+            <summary>
+            GUID identifyer for the working folder for this user and this command
+            </summary>
+        </member>
+        <member name="P:JCass_DataAccess.Models.ICommandModel.Status">
+            <summary>
+            Status for the command. Only allows certain values.
+            </summary>
+        </member>
+        <member name="P:JCass_DataAccess.Models.ICommandModel.UserId">
+            <summary>
+            ID of the user that owns this command
+            </summary>
+        </member>
+        <member name="P:JCass_DataAccess.Models.ICommandModel.IsSuperceded">
+            <summary>
+            Flag to indicate if this command has been superceded. A command is superceded if another command was run later with 
+            the same userID, CommandKey and SetupCode
+            </summary>
+        </member>
+        <member name="T:JCass_DataAccess.Models.NetworkModel">
+            <summary>
+            Class representing a Network (that is, a specific Road or Bridge network)
+            </summary>
+        </member>
+        <member name="P:JCass_DataAccess.Models.TokenModel.Token">
+            <summary>
+            GUID token for Juno Betas (this is a GUID)
+            </summary>
+        </member>
+        <member name="P:JCass_DataAccess.Models.TokenModel.JunoToken">
+            <summary>
+            Token for the Juno API, if available. This is longer than a GUID.
+            </summary>
+        </member>
+    </members>
+</doc>

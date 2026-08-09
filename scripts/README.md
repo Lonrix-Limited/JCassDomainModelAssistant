@@ -6,8 +6,7 @@ engineer never needs to run them.
 | Script | What it does |
 |---|---|
 | [`leak-scan.ps1`](leak-scan.ps1) | Fails if anything committed here names Juno Cassandra server or admin internals. Runs in CI on every push. |
-
-Session S2 adds `check-framework-version.ps1`.
+| [`check-framework-version.ps1`](check-framework-version.ps1) | Reports which framework build the assemblies in `refs/` came from. The one script here an engineer might actually want. |
 
 ## leak-scan.ps1
 
@@ -33,3 +32,19 @@ happens to match a pattern. Put the marker on the same line as the match, with a
 
 Suppressions are printed on every run rather than applied silently, because a suppression nobody
 can see is indistinguishable from a leak nobody noticed.
+
+## check-framework-version.ps1
+
+```powershell
+.\scripts\check-framework-version.ps1
+```
+
+Prints every assembly in `refs/`, whether its `.xml` documentation file is beside it, and the
+framework git commit SHA each was built from — read off the assemblies themselves rather than out
+of a note, so it cannot report a version the folder does not hold.
+
+Exit `0` clean, `1` if the folder holds assemblies from more than one framework build (which the
+`refs/*.dll` wildcard would compile against all at once), `2` if there is nothing to report on.
+
+Nobody refreshes `refs/` by hand. It ships with the Assistant, so a newer framework arrives with a
+newer download — which is also why there is no `populate-refs.ps1` here any more.

@@ -25,29 +25,39 @@ jobs:
           dotnet-version: '9.0.x'
 
       # ---------------------------------------------------------------------
-      # The reference model compiles against assemblies in its refs/ folder.
-      # Until S2 commits reference assemblies, refs/ is deliberately absent from
-      # the repository (it currently holds real framework DLLs, which must not be
-      # published), so there is nothing here to build against.
+      # Every refs/ folder must hold reference assemblies AND their .xml
+      # documentation files. This is asserted rather than detected: an empty or
+      # half-populated refs/ is a defect now, and the build step below would
+      # otherwise be the only thing to notice - and it notices only the missing
+      # .dll files, because a model compiles perfectly well with no docs at all.
       #
-      # This step detects that rather than asserting it, so it turns into a real
-      # gate by itself the moment S2 lands - no one has to remember to enable it.
+      # The .xml files are what an AI coding assistant reads to learn the
+      # framework API. Losing them costs the repository its whole purpose while
+      # leaving every build green, which is exactly the kind of silent failure
+      # worth spending a CI step on.
       # ---------------------------------------------------------------------
-      - name: Check for framework reference assemblies
-        id: refs
+      - name: Check refs folders
         shell: pwsh
         run: |
-          $refs = 'reference-model/DomainModelSample/refs'
-          $present = (Test-Path $refs) -and (@(Get-ChildItem $refs -Filter *.dll -ErrorAction SilentlyContinue).Count -gt 0)
-          if ($present) {
-            Write-Host 'Reference assemblies present - the reference model will be built.'
-          } else {
-            Write-Host '::notice::refs/ holds no assemblies, so the reference-model build is skipped. Expected until session S2 lands.'
+          $failed = $false
+          foreach ($refs in @('refs', 'reference-model/DomainModelSample/refs')) {
+            $dlls = @(Get-ChildItem $refs -Filter *.dll -ErrorAction SilentlyContinue)
+            if ($dlls.Count -eq 0) {
+              Write-Host "::error::$refs holds no assemblies."
+              $failed = $true
+              continue
+            }
+            $noDocs = @($dlls | Where-Object { -not (Test-Path (Join-Path $refs ($_.BaseName + '.xml'))) })
+            if ($noDocs.Count -gt 0) {
+              Write-Host "::error::$refs is missing XML documentation for: $($noDocs.BaseName -join ', ')"
+              $failed = $true
+              continue
+            }
+            Write-Host "$refs - $($dlls.Count) assemblies, all documented."
           }
-          "present=$($present.ToString().ToLower())" >> $env:GITHUB_OUTPUT
+          if ($failed) { exit 1 }
 
       - name: Build reference model
-        if: steps.refs.outputs.present == 'true'
         run: >
           dotnet build reference-model/DomainModelSample/DomainModelSample.csproj
           -c Debug --no-incremental -warnaserror

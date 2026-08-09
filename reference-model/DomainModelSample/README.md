@@ -121,15 +121,27 @@ dotnet build DomainModelSample.csproj -c Debug --no-incremental
 Expected: `Build succeeded. 0 Warning(s) 0 Error(s)`, and `bin\Debug\net9.0\DomainModelSample.dll`.
 Open the folder in VS Code and you get IntelliSense on the framework types straight away.
 
-The committed DLLs are a snapshot. `refs\FRAMEWORK-VERSION.txt` records which framework build they
-came from, down to its git commit SHA. Refresh when the framework moves:
+### You can build it here; you cannot run it here
 
-```powershell
-.\scripts\populate-refs.ps1 -Source "<folder-with-the-dlls-or-refs.zip>"
+The assemblies in `refs\` are **reference assemblies** — the framework's full public API with no
+method bodies. That is enough for the compiler and enough for IntelliSense, and it is deliberately
+not enough for the runtime. Anything that tries to execute the framework on your machine compiles
+cleanly and then fails at load with:
+
+```
+System.BadImageFormatException: ... Reference assemblies cannot be loaded for execution.
 ```
 
-If a model behaves differently on your machine than in the web app, that SHA is the first thing to
-check — see [`refs\README.md`](refs/README.md).
+That is expected. You **author** here and you **run and debug** on the web app's Debug Model page —
+see §9, and [`refs\README.md`](refs/README.md) for the detail.
+
+`refs\FRAMEWORK-VERSION.txt` records which framework build these came from, down to its git commit
+SHA. You do not refresh them yourself: a newer framework arrives with a newer release of the
+Assistant. From the Assistant's root:
+
+```powershell
+.\scripts\check-framework-version.ps1
+```
 
 **Build Debug while you work; ship Release.** The DLL that goes into the domain-model registry is
 what *regular* model runs load, so it should be optimised:
@@ -152,14 +164,17 @@ These get confused, and getting it wrong wastes an afternoon:
 | **Sending the kit to someone**, for local development | Everything, **including `refs\`** | They need the DLLs to compile and to get IntelliSense |
 | **Uploading to the web Debug Model page** | Source only, **no `refs\`** | That workspace stages its own larger set; overwriting part of it is how local and server drift apart |
 
-For the upload zip, select the items **inside** the project folder — `Objects`, `scripts`,
+For the upload zip, select the items **inside** the project folder — `Objects`,
 `DomainModelSample.csproj`, `domain_model_setup.xlsx`, `README.md` — right-click, **Send to →
 Compressed (zipped) folder**. Do not zip the folder itself: if the zip opens to a
 `DomainModelSample\` folder rather than straight to `Objects` and the `.csproj`, everything lands
 one level too deep and F5 fails with *"No .csproj file found at workspace root"*.
 
-`bin` and `obj` are filtered out by the upload, so they do no harm if they slip in. `refs\` is not
-filtered — leave it out yourself.
+`bin` and `obj` are filtered out by the upload, so they do no harm if they slip in. **`refs\` is
+not — leave it out yourself.** It matters more than it used to: the assemblies here cannot be
+executed, so overwriting part of the workspace's staged set with them replaces working framework
+assemblies with ones that will not load, and the failure arrives at F5 looking like nothing to do
+with a zip.
 
 ### Why `refs\` and not a project reference
 
@@ -173,14 +188,9 @@ The project references framework assemblies out of `refs\` with a wildcard, not 
   builds unchanged on your machine and on the debug sidecar. A hard-coded list would need editing
   every time you moved between the two.
 
-The contents of `refs\` **are committed** — the DLLs and their `.xml` documentation files both,
-so that the project compiles and gives IntelliSense the moment it is cloned or unzipped. Only
-`refs\*.pdb` is ignored. See [`refs\README.md`](refs/README.md).
-
-> **Not yet, in this repository.** The Domain Model Assistant is public, and the assemblies this
-> kit arrived with are the commercial framework itself, so `refs\` is excluded from it until
-> session S2 replaces them with *reference* assemblies that are safe to publish. See
-> [`../README.md`](../README.md).
+The contents of `refs\` **are committed** — the assemblies and their `.xml` documentation files
+both, so that the project compiles and gives IntelliSense the moment it is cloned or unzipped.
+Symbols are the one thing not carried. See [`refs\README.md`](refs/README.md).
 
 ---
 
@@ -189,8 +199,7 @@ so that the project compiles and gives IntelliSense the moment it is cloned or u
 ```
 DomainModelSample.csproj        Build config. The filename is load-bearing — see §3.
 domain_model_setup.xlsx         The bundle: what the framework needs to know before it loads you.
-refs\                           Framework DLLs. Git-ignored, populated locally. See refs\README.md.
-scripts\populate-refs.ps1       Fills refs\ from a folder or a refs.zip you supply.
+refs\                           Framework reference assemblies + their docs. See refs\README.md.
 Objects\
   DomainModelSample.cs          Entry class. A switchboard — keep it thin.
   Constants.cs                  Tunable numbers, read from lookups.xlsx. See §7 — copy this shape.
@@ -355,8 +364,10 @@ deterioration rates are exactly what gets recalibrated against observed conditio
   finding your class.
 - **The five sheet names in `domain_model_setup.xlsx`.** All five must exist, spelled exactly, even
   `network_functions` with no rows in it.
-- **The `refs\` folder contents.** Copy framework DLLs in; never edit them, never commit them, and
-  never mix DLLs from two different framework releases.
+- **The `refs\` folder contents.** They arrive with the Assistant and are replaced wholesale when
+  you download a newer one. Never edit them, and never mix assemblies from two framework releases
+  in one folder — the reference is a wildcard, so a leftover gets compiled against rather than
+  ignored.
 - **`Private=false` on the `<Reference>` item in the csproj.** It stops framework DLLs being copied
   next to your own. At run time the host has already loaded its own copies, and a duplicate beside
   yours only creates version confusion. Your `bin\` should hold your DLL and its PDB, nothing else.

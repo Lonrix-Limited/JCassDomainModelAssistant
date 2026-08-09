@@ -1,0 +1,240 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>JCass_MonteCarloModel</name>
+    </assembly>
+    <members>
+        <member name="P:JCass_MonteCarloModel.Core.MonteCarloModel.CancellationCheck">
+            <summary>
+            Delegate that returns whether cancellation is requested. Used to cancel model run while busy
+            </summary>
+        </member>
+        <member name="M:JCass_MonteCarloModel.Core.MonteCarloModel.ChooseChunkSize(System.Int32)">
+            <summary>
+            Chooses an appropriate chunk size for batching rows during SQLite bulk inserts.
+            </summary>
+            <param name="totalRows">
+            Total number of rows that will be inserted for a single parameter.
+            </param>
+            <returns>
+            A chunk size (number of rows per batch) optimised for SQLite bulk insert performance,
+            clamped to a safe range to avoid excessive memory usage or transaction overhead.
+            </returns>
+            <remarks>
+            <para>
+            The strategy aims to divide the total workload into roughly a fixed number of chunks
+            (currently 12), which provides a good balance between:
+            </para>
+            <list type="bullet">
+              <item><description>Minimising transaction overhead (too many small batches).</description></item>
+              <item><description>Limiting memory pressure from very large batches.</description></item>
+              <item><description>Reducing long-running write locks in SQLite.</description></item>
+            </list>
+            <para>
+            The result is clamped to a conservative range (2,000–20,000 rows) which has proven
+            effective for wide Monte Carlo parameter tables (typically 10–30 modelling periods
+            per row).
+            </para>
+            </remarks>
+        </member>
+        <member name="M:JCass_MonteCarloModel.Core.MonteCarloModel.ChooseTrancheSize(System.Int32,System.Nullable{System.Int32})">
+            <summary>
+            Chooses an appropriate tranche size (degree of parallelism) for running Monte Carlo
+            simulations concurrently.
+            </summary>
+            <param name="numberOfSimulations">
+            Total number of simulations to run.
+            </param>
+            <param name="hardMax">
+            Optional hard upper limit on the tranche size. This is useful to cap resource usage
+            such as the number of concurrent SQLite databases or file handles.
+            </param>
+            <returns>
+            The number of simulations that should be executed in parallel for a single tranche.
+            </returns>
+            <remarks>
+            <para>
+            The tranche size is primarily CPU-bound and is therefore derived from the number of
+            logical processors available on the machine. One core is intentionally left free
+            where possible to maintain OS and UI responsiveness.
+            </para>
+            <para>
+            The final tranche size is the minimum of:
+            </para>
+            <list type="bullet">
+              <item><description>The total number of simulations remaining.</description></item>
+              <item><description>The effective CPU parallelism (processor count minus one).</description></item>
+              <item><description>The optional <paramref name="hardMax"/> cap, if supplied.</description></item>
+            </list>
+            <para>
+            This approach provides stable, predictable performance for CPU-heavy Monte Carlo
+            workloads while avoiding excessive context switching or resource contention.
+            </para>
+            </remarks>
+        </member>
+        <member name="M:JCass_MonteCarloModel.Exporting.MCDataExporter.GetParameterColumns(JCass_ModelCore.Models.ModelBase)">
+            <summary>
+            Builds and returns the column list used when inserting a parameter’s
+            Monte Carlo results into the database.
+            </summary>
+            <remarks>
+            The returned column list is consistent with the row structure produced by
+            <see cref="M:JCass_MonteCarloModel.Exporting.MCDataExporter.EnumerateParameterRowsForDBInsert(System.Int32,JCass_ModelCore.Models.ModelBase,System.String,System.Int32)"/>:
+            <list type="bullet">
+            <item>4 metadata columns:
+            <c>ConfigurationTag</c>, <c>ParameterName</c>, <c>ElementRowIndex</c>, <c>SimulationIndex</c></item>
+            <item>One column per modelling period: <c>Per_0</c> … <c>Per_N</c></item>
+            </list>
+            The number of period columns is derived from
+            <see cref="P:JCass_ModelCore.ModelObjects.ModelConfiguration.NumberOfModellingPeriods"/> and is inclusive.
+            </remarks>
+            <param name="model">
+            The model instance containing the configuration that defines
+            the number of modelling periods.
+            </param>
+            <returns>
+            A list of column names in the correct order for bulk insertion.
+            </returns>
+        </member>
+        <member name="M:JCass_MonteCarloModel.Exporting.MCDataExporter.EnumerateParameterRowsForDBInsert(System.Int32,JCass_ModelCore.Models.ModelBase,System.String,System.Int32)">
+            <summary>
+            Enumerates rows for a single parameter as fixed-size chunks suitable for
+            bounded-memory bulk insertion into a database.
+            </summary>
+            <remarks>
+            <para>
+            Rows are generated incrementally and yielded in chunks of at most
+            <paramref name="chunkSize"/> rows. This prevents materialising all rows
+            in memory at once, which is critical when exporting large Monte Carlo
+            simulations.
+            </para>
+            <para>
+            Each yielded chunk represents a complete set of rows that can be passed
+            directly to a bulk insert routine. The final chunk may contain fewer than
+            <paramref name="chunkSize"/> rows.
+            </para>
+            <para>
+            The row layout exactly matches the column list returned by
+            <see cref="M:JCass_MonteCarloModel.Exporting.MCDataExporter.GetParameterColumns(JCass_ModelCore.Models.ModelBase)"/>.
+            </para>
+            </remarks>
+            <param name="iSimulationNumber">
+            The global simulation index to be written into the
+            <c>SimulationIndex</c> column.
+            </param>
+            <param name="model">
+            The model instance containing the simulation results to export.
+            </param>
+            <param name="parameterName">
+            The name of the parameter to export.
+            </param>
+            <param name="chunkSize">
+            The maximum number of rows per yielded chunk. Must be greater than zero.
+            </param>
+            <returns>
+            An enumerable sequence of row chunks, where each chunk is a list of rows
+            and each row is represented as a <see cref="T:System.Collections.Generic.List`1"/>.
+            </returns>
+            <exception cref="T:System.ArgumentOutOfRangeException">
+            Thrown if <paramref name="chunkSize"/> is less than or equal to zero.
+            </exception>
+        </member>
+        <member name="T:JCass_MonteCarloModel.Exporting.SqliteDbMerger">
+            <summary>
+            Utility for merging multiple SQLite database files (with identical table schemas) into a single master database.
+            </summary>
+            <remarks>
+            Strategy:
+            1) Choose a master database path (<c>masterDbPath</c>).
+            2) If the master DB does not exist, seed it by COPYING the first source DB in <c>sourceDbPaths</c>:
+               - The first DB becomes the base "master" file (schema, indexes, pragmas, etc. are preserved).
+               - That seed DB is then removed from the merge list so its rows are not inserted twice.
+               - After the merge completes successfully, the original seed DB file is deleted (optional).
+            3) For each remaining source DB:
+               - ATTACH it to the master connection (autocommit mode).
+               - INSERT rows into each table (inside a transaction for atomicity).
+               - DETACH (must be outside the transaction).
+               - Optionally delete the source DB file and its sidecar files (-wal/-shm/-journal).
+            </remarks>
+        </member>
+        <member name="M:JCass_MonteCarloModel.Exporting.SqliteDbMerger.MergeAsync(System.String,System.Collections.Generic.IReadOnlyList{System.String},System.Collections.Generic.IReadOnlyList{System.String},System.Collections.Generic.IReadOnlyDictionary{System.String,System.String},System.Boolean,System.Threading.CancellationToken)">
+            <summary>
+            Merge multiple SQLite databases into a single master database using ATTACH + INSERT INTO ... SELECT ...,
+            then optionally deletes the temporary source databases (including WAL/SHM sidecar files).
+            </summary>
+            <param name="masterDbPath">
+            The destination SQLite file path. If it does not exist, the first source DB is copied to this path to seed the master.
+            </param>
+            <param name="sourceDbPaths">
+            Source database file paths to merge. These are expected to have identical table structures.
+            </param>
+            <param name="tables">
+            Table names to merge. Each table must exist in both master and source databases.
+            </param>
+            <param name="idColumnNames">
+            Optional map of table name to identity/autoincrement column name to exclude from insert (e.g., { "MyTable" : "Id" }).
+            If a table is not present in this dictionary, all columns are inserted for that table.
+            </param>
+            <param name="deleteSources">
+            If true, deletes each source DB after it is merged, including sidecar files (-wal/-shm/-journal). Also deletes the seed DB
+            used to create the master (if master was created by copying the first source).
+            </param>
+            <param name="ct">Cancellation token.</param>
+            <returns>A task representing the asynchronous merge operation.</returns>
+            <exception cref="T:System.ArgumentException">Thrown when <paramref name="tables"/> is null or empty.</exception>
+            <exception cref="T:System.InvalidOperationException">Thrown if insertable columns cannot be resolved for a table.</exception>
+        </member>
+        <member name="M:JCass_MonteCarloModel.Exporting.SqliteDbMerger.AttachWithRetryAsync(Microsoft.Data.Sqlite.SqliteConnection,System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            ATTACH a source database with retry logic for transient SQLITE_BUSY/SQLITE_LOCKED conditions.
+            Must be executed in autocommit mode (i.e., not inside an active transaction).
+            </summary>
+        </member>
+        <member name="M:JCass_MonteCarloModel.Exporting.SqliteDbMerger.DetachWithRetryAsync(Microsoft.Data.Sqlite.SqliteConnection,System.String,System.Threading.CancellationToken)">
+            <summary>
+            DETACH an attached database with retry logic for transient SQLITE_BUSY/SQLITE_LOCKED conditions.
+            Must be executed in autocommit mode (i.e., not inside an active transaction).
+            </summary>
+        </member>
+        <member name="M:JCass_MonteCarloModel.Exporting.SqliteDbMerger.ExecWithRetryAsync(Microsoft.Data.Sqlite.SqliteConnection,Microsoft.Data.Sqlite.SqliteTransaction,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Execute a SQL command inside a transaction with retry logic for transient SQLITE_BUSY/SQLITE_LOCKED conditions.
+            </summary>
+        </member>
+        <member name="M:JCass_MonteCarloModel.Exporting.SqliteDbMerger.ExecAsync(Microsoft.Data.Sqlite.SqliteConnection,System.String,System.Threading.CancellationToken,Microsoft.Data.Sqlite.SqliteTransaction)">
+            <summary>
+            Execute a single non-query SQL command, optionally within a transaction.
+            </summary>
+        </member>
+        <member name="M:JCass_MonteCarloModel.Exporting.SqliteDbMerger.GetInsertableColumnsAsync(Microsoft.Data.Sqlite.SqliteConnection,Microsoft.Data.Sqlite.SqliteTransaction,System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Reads the table column list via PRAGMA table_info so we can build an INSERT statement without hardcoding schema.
+            </summary>
+            <param name="con">Open connection to the database whose schema is being inspected.</param>
+            <param name="tx">Active transaction to associate with the PRAGMA query.</param>
+            <param name="table">Name of the table whose columns should be enumerated.</param>
+            <param name="excludeColumn">Optional column name to exclude (e.g., an autoincrement identity column like "Id").</param>
+            <param name="ct">Cancellation token.</param>
+        </member>
+        <member name="M:JCass_MonteCarloModel.Exporting.SqliteDbMerger.IsBusyOrLocked(Microsoft.Data.Sqlite.SqliteException)">
+            <summary>
+            Returns true if the exception indicates a transient SQLITE_BUSY or SQLITE_LOCKED condition.
+            </summary>
+        </member>
+        <member name="M:JCass_MonteCarloModel.Exporting.SqliteDbMerger.EscapeIdent(System.String)">
+            <summary>
+            Escapes an identifier (table name, column name, attach name) using SQLite double-quote rules.
+            </summary>
+        </member>
+        <member name="M:JCass_MonteCarloModel.Exporting.SqliteDbMerger.TryDeleteFileWithSidecars(System.String)">
+            <summary>
+            Deletes a SQLite DB file and its common sidecar files created by WAL mode (-wal/-shm) and rollback-journal mode (-journal).
+            </summary>
+        </member>
+        <member name="M:JCass_MonteCarloModel.Exporting.SqliteDbMerger.TryDelete(System.String)">
+            <summary>
+            Best-effort file delete. Swallows exceptions (use your own logger if you want visibility).
+            </summary>
+        </member>
+    </members>
+</doc>

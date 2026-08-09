@@ -50,7 +50,7 @@ not a requirement. A Custom Domain Model can still be written entirely by hand, 
 | [`reference-model/`](reference-model/) | `DomainModelSample`, a small working model, plus a snapshot of sample inputs | **Present** |
 | [`examples/`](examples/) | Focused examples of individual patterns | Session S10 |
 | [`tools/`](tools/) | `jcass-dm` — scaffolds, reads and writes the bundle, checks, packages | Sessions S5–S6 |
-| [`refs/`](refs/) | Framework reference assemblies to compile against | Session S2 |
+| [`refs/`](refs/) | Framework reference assemblies to compile against, and their API documentation | **Present** |
 | [`scripts/`](scripts/) | Maintenance scripts, including the leak scanner | **Present** |
 | [`.claude/`](.claude/) | Claude skills — a convenience layer, never a holder of unique knowledge | Session S11 |
 

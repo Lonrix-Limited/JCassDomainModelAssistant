@@ -1,0 +1,414 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>JCass_Excel</name>
+    </assembly>
+    <members>
+        <member name="T:JCass_Excel.ExcelColor">
+            <summary>
+            Thin RGB colour wrapper used to decouple callers from any specific underlying
+            Excel library's colour type. Use <see cref="M:JCass_Excel.ExcelColor.FromArgb(System.Byte,System.Byte,System.Byte)"/> or
+            <see cref="M:JCass_Excel.ExcelColor.FromHtml(System.String)"/> to construct, or pick one of the named constants.
+            </summary>
+        </member>
+        <member name="P:JCass_Excel.ExcelColor.R">
+            <summary>Red component (0-255).</summary>
+        </member>
+        <member name="P:JCass_Excel.ExcelColor.G">
+            <summary>Green component (0-255).</summary>
+        </member>
+        <member name="P:JCass_Excel.ExcelColor.B">
+            <summary>Blue component (0-255).</summary>
+        </member>
+        <member name="M:JCass_Excel.ExcelColor.FromArgb(System.Byte,System.Byte,System.Byte)">
+            <summary>Creates an <see cref="T:JCass_Excel.ExcelColor"/> from red, green and blue components.</summary>
+        </member>
+        <member name="M:JCass_Excel.ExcelColor.FromHtml(System.String)">
+            <summary>Parses an HTML hex colour string. Accepts "#RRGGBB" or "RRGGBB".</summary>
+            <exception cref="T:System.ArgumentException">Thrown when the value is not a 6-digit hex string.</exception>
+        </member>
+        <member name="M:JCass_Excel.ExcelColor.ToHtml">
+            <summary>Returns the colour as an uppercase "#RRGGBB" string.</summary>
+        </member>
+        <member name="F:JCass_Excel.ExcelColor.LightSteelBlue">
+            <summary>Pre-baked LightSteelBlue used for header rows by the facade.</summary>
+        </member>
+        <member name="F:JCass_Excel.ExcelColor.LightCoral">
+            <summary>Pre-baked LightCoral.</summary>
+        </member>
+        <member name="F:JCass_Excel.ExcelColor.White">
+            <summary>Pure white.</summary>
+        </member>
+        <member name="T:JCass_Excel.ExcelFactory">
+            <summary>
+            Entry point for creating and opening Excel workbooks. All returned workbooks
+            implement <see cref="T:System.IDisposable"/> and should be wrapped in a <c>using</c> statement.
+            </summary>
+        </member>
+        <member name="M:JCass_Excel.ExcelFactory.Create">
+            <summary>Creates a new workbook with one default worksheet named "Sheet1".</summary>
+        </member>
+        <member name="M:JCass_Excel.ExcelFactory.Open(System.String)">
+            <summary>
+            Opens an existing workbook from the given file path. Reads the bytes via a
+            <see cref="T:System.IO.FileStream"/> with <see cref="F:System.IO.FileShare.ReadWrite"/> so the file can be
+            opened even while Excel (or another process) currently holds it open. The bytes
+            are buffered into a <see cref="T:System.IO.MemoryStream"/> and handed to ClosedXML, so the
+            underlying file handle is released as soon as the read completes.
+            </summary>
+        </member>
+        <member name="M:JCass_Excel.ExcelFactory.Open(System.IO.Stream)">
+            <summary>Opens an existing workbook from a stream. The stream must remain readable for the lifetime of the workbook.</summary>
+        </member>
+        <member name="T:JCass_Excel.ExcelFileFormat">
+            <summary>Supported Excel file formats for saving workbooks.</summary>
+        </member>
+        <member name="F:JCass_Excel.ExcelFileFormat.OpenXml">
+            <summary>Office Open XML (.xlsx).</summary>
+        </member>
+        <member name="T:JCass_Excel.ExcelHAlign">
+            <summary>Horizontal alignment options for Excel cell content.</summary>
+        </member>
+        <member name="T:JCass_Excel.ExcelHelperOXML">
+             <summary>
+             Canonical Excel read/write facade for the Cassandra framework, backed by ClosedXML via
+             the <see cref="T:JCass_Excel.IExcelWorkbook"/> / <see cref="T:JCass_Excel.IExcelWorksheet"/> / <see cref="T:JCass_Excel.IExcelRange"/>
+             abstractions in this project.
+            
+             <para>Exposes 17 public methods covering workbook lifecycle, bulk read (including a
+             colour side-channel for UI), bulk write with optional auto-fit, sheet validation, and
+             culture-aware parsing.</para>
+             </summary>
+        </member>
+        <member name="M:JCass_Excel.ExcelHelperOXML.GetWorkbook(System.String)">
+            <summary>Opens an existing workbook at <paramref name="filePath"/>. Dispose when done.</summary>
+        </member>
+        <member name="M:JCass_Excel.ExcelHelperOXML.GetNewWorkbook">
+            <summary>Creates a new empty workbook (with one default sheet). Dispose when done.</summary>
+        </member>
+        <member name="M:JCass_Excel.ExcelHelperOXML.GetOrCreateWorksheet(JCass_Excel.IExcelWorkbook,System.String)">
+            <summary>
+            Returns the worksheet with the given name, or creates it if it does not exist.
+            </summary>
+        </member>
+        <member name="M:JCass_Excel.ExcelHelperOXML.SaveWorkbook(JCass_Excel.IExcelWorkbook,System.String)">
+            <summary>
+            Saves the workbook to <paramref name="filePath"/>, replacing any existing file.
+            </summary>
+            <exception cref="T:System.ArgumentNullException">Thrown when the workbook or path is null/empty.</exception>
+        </member>
+        <member name="M:JCass_Excel.ExcelHelperOXML.GetDataFromSheets(System.String,System.Collections.Generic.List{System.String},System.Boolean,System.String)">
+            <summary>
+            Reads several named sheets into a dictionary of <see cref="T:JCass_Data.Objects.jcDataSet"/>, WITH a
+            per-row "colour" column populated from the first cell's fill colour. Sheet names that
+            are not found map to a null value in the returned dictionary.
+            </summary>
+        </member>
+        <member name="M:JCass_Excel.ExcelHelperOXML.GetDataFromSheetsWithColours(System.String,System.Collections.Generic.List{System.String},System.Boolean,System.String)">
+            <summary>
+            Reads several named sheets into a dictionary of <see cref="T:JCass_Data.Objects.jcDataSet"/>, WITHOUT the
+            per-row colour column. Paired with <see cref="M:JCass_Excel.ExcelHelperOXML.GetDataFromSheets(System.String,System.Collections.Generic.List{System.String},System.Boolean,System.String)"/> so callers can opt
+            in or out of the colour side channel.
+            </summary>
+        </member>
+        <member name="M:JCass_Excel.ExcelHelperOXML.GetSheets(System.String,System.String,System.String)">
+            <summary>
+            Lists worksheet names in the file, optionally filtered to those starting with
+            <paramref name="prefix"/> (case-insensitive). Pass "none" (the default) to skip filtering.
+            </summary>
+        </member>
+        <member name="M:JCass_Excel.ExcelHelperOXML.GetSheets(JCass_Excel.IExcelWorkbook,System.String)">
+            <summary>
+            Lists worksheet names in an already-open workbook, optionally filtered by prefix
+            (case-insensitive). Pass "none" to skip filtering.
+            </summary>
+        </member>
+        <member name="M:JCass_Excel.ExcelHelperOXML.ExportData(System.String,System.String,JCass_Data.Objects.jcDataSet,System.String,System.Boolean)">
+            <summary>
+            Writes a <see cref="T:JCass_Data.Objects.jcDataSet"/> to a brand new file. Any existing file at
+            <paramref name="filepath"/> is deleted and replaced.
+            </summary>
+        </member>
+        <member name="M:JCass_Excel.ExcelHelperOXML.ExportDataToExcelSheet(JCass_Excel.IExcelWorksheet,JCass_Data.Objects.jcDataSet)">
+            <summary>
+            Writes a <see cref="T:JCass_Data.Objects.jcDataSet"/> (header row + rows) to the given worksheet. Does NOT
+            save — caller is responsible for saving the owning workbook.
+            </summary>
+        </member>
+        <member name="M:JCass_Excel.ExcelHelperOXML.ExportDataToMultipleSheets(System.String,System.Collections.Generic.Dictionary{System.String,JCass_Data.Objects.jcDataSet},System.String,System.Boolean)">
+            <summary>
+            Writes multiple <see cref="T:JCass_Data.Objects.jcDataSet"/>s to a brand new file, one per sheet. Keys in
+            <paramref name="data"/> become sheet names. Any existing file at <paramref name="filepath"/>
+            is deleted and replaced.
+            </summary>
+        </member>
+        <member name="M:JCass_Excel.ExcelHelperOXML.ExportDataToExistingFile(System.String,System.String,JCass_Data.Objects.jcDataSet,System.String)">
+            <summary>
+            Writes a <see cref="T:JCass_Data.Objects.jcDataSet"/> to a named sheet in an existing file. Creates the file
+            if it does not exist, or adds/clears the sheet if it does. The previously-mutated
+            workbook is saved back to <paramref name="filePath"/> in-place.
+            </summary>
+        </member>
+        <member name="M:JCass_Excel.ExcelHelperOXML.FileAndSheetOK(System.String,System.String,System.String)">
+            <summary>
+            Returns true when the file exists AND contains a worksheet named
+            <paramref name="sheetName"/>. Silent about everything else.
+            </summary>
+        </member>
+        <member name="M:JCass_Excel.ExcelHelperOXML.GetDataSetWithColours(System.String,System.String,System.Boolean,System.String)">
+            <summary>
+            Reads a single sheet into a <see cref="T:JCass_Data.Objects.jcDataSet"/> including a "colour" column that
+            records the fill colour of the first cell on each data row as an HTML hex string.
+            When <paramref name="checkForDates"/> is true, cells in columns whose header looks
+            date-like are parsed via <see cref="T:JCass_Data.Utils.DateParser"/>; slower because the parser throws
+            on non-matches, so leave false when no date columns are expected.
+            </summary>
+        </member>
+        <member name="M:JCass_Excel.ExcelHelperOXML.GetDataSet(System.String,System.String,System.Boolean,System.String)">
+            <summary>Reads a single sheet into a <see cref="T:JCass_Data.Objects.jcDataSet"/> (no colour column).</summary>
+        </member>
+        <member name="M:JCass_Excel.ExcelHelperOXML.GetDataSet(JCass_Excel.IExcelWorkbook,System.String,System.Boolean)">
+            <summary>
+            Reads a single sheet from an already-open workbook into a <see cref="T:JCass_Data.Objects.jcDataSet"/>
+            (no colour column).
+            </summary>
+        </member>
+        <member name="M:JCass_Excel.ExcelHelperOXML.GetDataSetWithColours(JCass_Excel.IExcelWorkbook,System.String,System.Boolean)">
+            <summary>
+            Reads a single sheet from an already-open workbook into a <see cref="T:JCass_Data.Objects.jcDataSet"/> with
+            a "colour" column capturing the fill colour of each row's first cell.
+            </summary>
+        </member>
+        <member name="M:JCass_Excel.ExcelHelperOXML.ReadCellForDataSet(JCass_Excel.IExcelRange,System.String,JCass_Data.Utils.DateParser,System.Boolean,System.Boolean)">
+            <summary>
+            Reads a single cell for the dataset. When <paramref name="checkForDates"/> is true and
+            the header looks date-like, prefer the cell's native <see cref="T:System.DateTime"/> value
+            (ClosedXML returns DateTime directly for date-typed cells). Fall back to parsing the
+            formatted text via <see cref="T:JCass_Data.Utils.DateParser"/> for sheets where dates were stored as
+            strings rather than dates. Native-first avoids a locale-round-trip hazard:
+            <c>GetFormattedString</c> in ClosedXML is not guaranteed to use a stable format, so
+            text-parse-first can flip day/month on round-trip.
+            </summary>
+        </member>
+        <member name="T:JCass_Excel.ExcelLineStyle">
+            <summary>Border line styles for Excel cell ranges.</summary>
+        </member>
+        <member name="T:JCass_Excel.ExcelVAlign">
+            <summary>Vertical alignment options for Excel cell content.</summary>
+        </member>
+        <member name="T:JCass_Excel.IExcelRange">
+            <summary>
+            Represents a cell or rectangular range within an Excel worksheet. Provides value
+            access and formatting operations independent of the underlying library.
+            </summary>
+        </member>
+        <member name="P:JCass_Excel.IExcelRange.Value">
+            <summary>Gets or sets the underlying typed value of the first cell in the range.</summary>
+        </member>
+        <member name="P:JCass_Excel.IExcelRange.Text">
+            <summary>Gets the formatted display text of the first cell (as it would appear in Excel).</summary>
+        </member>
+        <member name="M:JCass_Excel.IExcelRange.GetDouble">
+            <summary>Returns the first cell's value parsed to <see cref="T:System.Double"/>, or null when empty or non-numeric.</summary>
+        </member>
+        <member name="M:JCass_Excel.IExcelRange.GetString">
+            <summary>Returns the first cell's value as a string, or null when empty.</summary>
+        </member>
+        <member name="P:JCass_Excel.IExcelRange.IsEmpty">
+            <summary>True when the first cell has no value set.</summary>
+        </member>
+        <member name="P:JCass_Excel.IExcelRange.FillColor">
+            <summary>
+            Gets the first cell's fill (background) colour, or null when no explicit fill has been applied.
+            </summary>
+        </member>
+        <member name="M:JCass_Excel.IExcelRange.SetColumnWidth(System.Double)">
+            <summary>Sets the column width (in character units) for the first column of the range.</summary>
+        </member>
+        <member name="M:JCass_Excel.IExcelRange.Merge">
+            <summary>Merges all cells in the range into a single cell.</summary>
+        </member>
+        <member name="M:JCass_Excel.IExcelRange.CopyTo(JCass_Excel.IExcelRange)">
+            <summary>
+            Copies the first cell of this range (value + formatting) to the first cell of
+            <paramref name="destination"/>. Intended for template-cloning scenarios where
+            formatting from a reference cell should be duplicated before overwriting the value.
+            </summary>
+        </member>
+        <member name="T:JCass_Excel.IExcelWorkbook">
+            <summary>
+            Represents an Excel workbook. Dispose when done to release the underlying file handles.
+            </summary>
+        </member>
+        <member name="P:JCass_Excel.IExcelWorkbook.SheetNames">
+            <summary>Names of all worksheets in the workbook, in order.</summary>
+        </member>
+        <member name="M:JCass_Excel.IExcelWorkbook.GetSheet(System.Int32)">
+            <summary>Returns the worksheet at the given 0-based index.</summary>
+        </member>
+        <member name="M:JCass_Excel.IExcelWorkbook.GetSheet(System.String)">
+            <summary>Returns the worksheet with the given name, or null when no such sheet exists.</summary>
+        </member>
+        <member name="M:JCass_Excel.IExcelWorkbook.AddSheet(System.String)">
+            <summary>Adds a new worksheet with the given name and returns it.</summary>
+        </member>
+        <member name="M:JCass_Excel.IExcelWorkbook.RemoveSheet(System.Int32)">
+            <summary>Removes the worksheet at the given 0-based index.</summary>
+        </member>
+        <member name="M:JCass_Excel.IExcelWorkbook.Save(System.String,JCass_Excel.ExcelFileFormat)">
+            <summary>Saves the workbook to the given path. Any existing file is replaced.</summary>
+        </member>
+        <member name="M:JCass_Excel.IExcelWorkbook.Save">
+            <summary>Saves changes back to the path the workbook was opened from.</summary>
+        </member>
+        <member name="T:JCass_Excel.IExcelWorksheet">
+            <summary>
+            Represents a single worksheet within an Excel workbook. All row and column
+            indices are 0-based.
+            </summary>
+        </member>
+        <member name="P:JCass_Excel.IExcelWorksheet.Name">
+            <summary>Worksheet name.</summary>
+        </member>
+        <member name="M:JCass_Excel.IExcelWorksheet.Cell(System.Int32,System.Int32)">
+            <summary>Returns a single-cell range at the given 0-based row and column.</summary>
+        </member>
+        <member name="M:JCass_Excel.IExcelWorksheet.Range(System.Int32,System.Int32,System.Int32,System.Int32)">
+            <summary>Returns a rectangular range. All indices are 0-based and inclusive.</summary>
+        </member>
+        <member name="M:JCass_Excel.IExcelWorksheet.Clear">
+            <summary>Clears all cell contents and formatting from the worksheet.</summary>
+        </member>
+        <member name="M:JCass_Excel.IExcelWorksheet.AutoFitColumns(System.Int32,System.Int32)">
+            <summary>
+            Adjusts the width of every column from <paramref name="firstCol"/> to
+            <paramref name="lastCol"/> (inclusive, 0-based) so content fits. This can be slow
+            on large sheets.
+            </summary>
+        </member>
+        <member name="T:JCass_Excel.Internal.ClosedXmlRange">
+            <summary>
+            Wraps an <see cref="T:ClosedXML.Excel.IXLRange"/> (ClosedXML, 1-based). Caller indices are translated to
+            1-based inside <see cref="T:JCass_Excel.Internal.ClosedXmlWorksheet"/> before the range is constructed.
+            </summary>
+        </member>
+        <member name="T:JCass_Excel.Internal.ClosedXmlWorkbook">
+            <summary>
+            Wraps an <see cref="T:ClosedXML.Excel.XLWorkbook"/> (ClosedXML). Implements <see cref="T:JCass_Excel.IExcelWorkbook"/>.
+            </summary>
+        </member>
+        <member name="P:JCass_Excel.Internal.ClosedXmlWorkbook.Inner">
+            <summary>Exposes the underlying ClosedXML workbook to other internal wrappers.</summary>
+        </member>
+        <member name="T:JCass_Excel.Internal.ClosedXmlWorksheet">
+            <summary>
+            Wraps an <see cref="T:ClosedXML.Excel.IXLWorksheet"/>. Translates 0-based caller indices to ClosedXML's 1-based indices.
+            </summary>
+        </member>
+        <member name="T:JCass_Excel.LookupSheetEditor">
+             <summary>
+             Surgical editor for the value cell of <c>(lookup_set_name, setting_key)</c> rows
+             in a Cassandra <c>lookups.xlsx</c> file. Patches column 3 of each matching row
+             in-place and preserves any user content or formatting in adjacent columns
+             (e.g. a "derivation" note in column D), which the bulk export-and-rewrite path
+             in <see cref="T:JCass_Excel.ExcelHelperOXML"/> does not.
+            
+             <para>Sheets considered are those whose name begins with <c>"lkp_"</c>
+             (case-insensitive). Header row is row 1 and is skipped during scanning.</para>
+            
+             <para>The framework lookup loader reads cell values via <c>Convert.ToString</c>,
+             so on the read path numeric and string cells are interchangeable. On the write
+             path this editor parses each incoming value with
+             <see cref="P:System.Globalization.CultureInfo.InvariantCulture"/>: values that parse as a finite
+             <see cref="T:System.Double"/> are written as numeric cells (so Excel does not flag
+             "Number stored as text"), and values that don't parse are written verbatim as
+             strings (e.g. enum keys, free-form notes).</para>
+            
+             <para>Semantics: all-or-nothing. If any update's <c>(set, key)</c> is not found
+             or is ambiguous (matches more than one row across all <c>lkp_*</c> sheets), no
+             updates are applied and the file is not saved. The returned
+             <see cref="T:JCass_Excel.UpdateResult"/> reports those problem keys for the caller to surface.</para>
+             </summary>
+        </member>
+        <member name="M:JCass_Excel.LookupSheetEditor.UpdateLookupValues(System.String,System.Collections.Generic.IEnumerable{JCass_Excel.LookupUpdate})">
+             <summary>
+             Applies the given <paramref name="updates"/> to the <c>lookups.xlsx</c>
+             workbook at <paramref name="filePath"/>. Each update is keyed by composite
+             <c>(SetName, Key)</c>; column 3 of the matching row is overwritten with
+             <c>Value</c>.
+            
+             <para>Returns an <see cref="T:JCass_Excel.UpdateResult"/> reporting the number of rows
+             patched, plus any keys that were not found or were ambiguous. The file is
+             saved only when every update resolves cleanly to exactly one row.</para>
+             </summary>
+        </member>
+        <member name="T:JCass_Excel.LookupKey">
+            <summary>
+            Composite key identifying a lookup row: <c>(SetName, Key)</c>. Equality is
+            case-sensitive ordinal — matching the framework's <c>Dictionary&lt;string, ...&gt;</c>
+            keying behaviour in <c>UtilsSetupData.SetModelLookupsForDomainModelLevel</c>.
+            </summary>
+        </member>
+        <member name="M:JCass_Excel.LookupKey.#ctor(System.String,System.String)">
+            <summary>
+            Composite key identifying a lookup row: <c>(SetName, Key)</c>. Equality is
+            case-sensitive ordinal — matching the framework's <c>Dictionary&lt;string, ...&gt;</c>
+            keying behaviour in <c>UtilsSetupData.SetModelLookupsForDomainModelLevel</c>.
+            </summary>
+        </member>
+        <member name="T:JCass_Excel.LookupUpdate">
+            <summary>
+            One requested update: set column 3 of the row keyed by
+            <c>(SetName, Key)</c> to <see cref="P:JCass_Excel.LookupUpdate.Value"/>. <see cref="P:JCass_Excel.LookupUpdate.Value"/> is always a
+            string. Numeric strings are detected at the editor and stored as native
+            numeric cells; format them with invariant culture (e.g. <c>"1.25"</c>, never
+            <c>"1,25"</c>) so the parse succeeds regardless of the host machine's locale.
+            Non-numeric strings (enum keys, free-form notes) are stored verbatim.
+            </summary>
+        </member>
+        <member name="M:JCass_Excel.LookupUpdate.#ctor(System.String,System.String,System.String)">
+            <summary>
+            One requested update: set column 3 of the row keyed by
+            <c>(SetName, Key)</c> to <see cref="P:JCass_Excel.LookupUpdate.Value"/>. <see cref="P:JCass_Excel.LookupUpdate.Value"/> is always a
+            string. Numeric strings are detected at the editor and stored as native
+            numeric cells; format them with invariant culture (e.g. <c>"1.25"</c>, never
+            <c>"1,25"</c>) so the parse succeeds regardless of the host machine's locale.
+            Non-numeric strings (enum keys, free-form notes) are stored verbatim.
+            </summary>
+        </member>
+        <member name="T:JCass_Excel.UpdateResult">
+            <summary>
+            Outcome of a call to <see cref="M:JCass_Excel.LookupSheetEditor.UpdateLookupValues(System.String,System.Collections.Generic.IEnumerable{JCass_Excel.LookupUpdate})"/>.
+            </summary>
+            <param name="UpdatedCount">Number of rows patched and saved. Zero when any update was
+            unresolved (all-or-nothing semantics).</param>
+            <param name="NotFound">Updates whose <c>(set, key)</c> tuple was not located in any
+            <c>lkp_*</c> sheet.</param>
+            <param name="Ambiguous">Updates whose <c>(set, key)</c> tuple matched more than one row
+            across the <c>lkp_*</c> sheets.</param>
+        </member>
+        <member name="M:JCass_Excel.UpdateResult.#ctor(System.Int32,System.Collections.Generic.IReadOnlyList{JCass_Excel.LookupKey},System.Collections.Generic.IReadOnlyList{JCass_Excel.LookupKey})">
+            <summary>
+            Outcome of a call to <see cref="M:JCass_Excel.LookupSheetEditor.UpdateLookupValues(System.String,System.Collections.Generic.IEnumerable{JCass_Excel.LookupUpdate})"/>.
+            </summary>
+            <param name="UpdatedCount">Number of rows patched and saved. Zero when any update was
+            unresolved (all-or-nothing semantics).</param>
+            <param name="NotFound">Updates whose <c>(set, key)</c> tuple was not located in any
+            <c>lkp_*</c> sheet.</param>
+            <param name="Ambiguous">Updates whose <c>(set, key)</c> tuple matched more than one row
+            across the <c>lkp_*</c> sheets.</param>
+        </member>
+        <member name="P:JCass_Excel.UpdateResult.UpdatedCount">
+            <summary>Number of rows patched and saved. Zero when any update was
+            unresolved (all-or-nothing semantics).</summary>
+        </member>
+        <member name="P:JCass_Excel.UpdateResult.NotFound">
+            <summary>Updates whose <c>(set, key)</c> tuple was not located in any
+            <c>lkp_*</c> sheet.</summary>
+        </member>
+        <member name="P:JCass_Excel.UpdateResult.Ambiguous">
+            <summary>Updates whose <c>(set, key)</c> tuple matched more than one row
+            across the <c>lkp_*</c> sheets.</summary>
+        </member>
+    </members>
+</doc>

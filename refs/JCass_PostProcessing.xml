@@ -1,0 +1,284 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>JCass_PostProcessing</name>
+    </assembly>
+    <members>
+        <member name="M:JCass_PostProcessing.Forecasting.ParamBreakdown.GetParameterBreakdownByCount(JCass_PostProcessing.Objects.OutputSet,System.String,System.Double[],System.Boolean)">
+            <summary>
+            Gets a breakdown of parameter values by element count
+            </summary>
+            <param name="outputSet">Output set containing the model configuration and results to analyse</param>
+            <param name="paramCode">Parameter Name</param>
+            <param name="breaks">Breaks to use for the breakdown</param>
+            <param name="asPercent">If true, breakdown values are returned as percentages of the total</param>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_PostProcessing.Forecasting.ParamBreakdown.GetParameterBreakdownByValue(JCass_PostProcessing.Objects.OutputSet,System.String,System.Double[],System.String,System.Boolean)">
+            <summary>
+            Gets a breakdown of parameter values using values in another column (e.g. length). So for example,
+            if you want to get the length breakdown, you should specify the column mapping to length as the 'valueColumn'
+            parameter
+            </summary>
+            <param name="outputSet">Output set containing the model configuration and results to analyse</param>
+            <param name="paramCode">Parameter Name</param>
+            <param name="breaks">Breaks to use for the breakdown</param>
+            <param name="valueColumn">Name of the column in the RAW input data to use for breakdown summing</param>
+            <param name="asPercent">If true, breakdown values are returned as percentages of the total</param>
+            <returns></returns>
+        </member>
+        <member name="T:JCass_PostProcessing.JunoInterfacing.JunoExportConfiguration">
+            <summary>
+            Class to hold properties that define how Cassandra model outputs should be processed to prepare files for
+            import into JunoViewer as a FWP with an associated dummy DMS
+            </summary>
+        </member>
+        <member name="F:JCass_PostProcessing.JunoInterfacing.JunoExportConfiguration.ImportMode">
+            <summary>
+            Code to specify import mode into Juno: should be 'update' or 'insert'. If 'update, then an existing FWP will be
+            updated based on the Row IDs presumed to be hed in CassandraIDColumn. If 'insert', then a new FWP will be created
+            and ID column is not required.
+            </summary>
+        </member>
+        <member name="F:JCass_PostProcessing.JunoInterfacing.JunoExportConfiguration.CassandraIDColumn">
+            <summary>
+            Column in the Cassandra input set mapping to the JunoViewer export set's ID column
+            </summary>
+        </member>
+        <member name="F:JCass_PostProcessing.JunoInterfacing.JunoExportConfiguration.CassandraLengthColumn">
+            <summary>
+            Column in the Cassandra input set that holds element Length for the DMS 'length' parameter
+            </summary>
+        </member>
+        <member name="F:JCass_PostProcessing.JunoInterfacing.JunoExportConfiguration.CassandraAreaColumn">
+            <summary>
+            Column in the Cassandra input set that holds element Area for the DMS 'AreaM2' parameter
+            </summary>
+        </member>
+        <member name="P:JCass_PostProcessing.JunoInterfacing.JunoExportConfiguration.ParameterMappingsReversed">
+            <summary>
+            Reverse of _paramMappings.Key is Cassandra model Parameter name, Value is JV model parameter code
+            </summary>
+        </member>
+        <member name="P:JCass_PostProcessing.JunoInterfacing.JunoExportConfiguration.ParameterMappings">
+            <summary>
+            Mapping of JunoViewer model parameter names to Cassandra model parameter names. Key
+            is JV model parameter name, Value is Cassandra model parameter code
+            </summary>
+        </member>
+        <member name="P:JCass_PostProcessing.JunoInterfacing.JunoExportConfiguration.BaseColumnMappings">
+            <summary>
+            Mappings from Cassandra input file to the Base FWP columns such as networkID, areaGroupName, areaName, sectionID, sectionName, lane, locFrom, locTo
+            This needs to be held on sheet 'base_fwp_column_mappings' of the setup file, with columns 'juno_column' and' input_column'.
+            Keys are the JunoViewer column names, values are the matching Cassandra model column names
+            </summary>
+        </member>
+        <member name="P:JCass_PostProcessing.JunoInterfacing.JunoExportConfiguration.InfoColumnMappings">
+            <summary>
+            Mappings from Cassandra input file to the Info columns to use for informationXML. This needs to be held on sheet 'info_column_mappings' of the setup file, with
+            columns 'cassandra_input_column' and' info_column'. Keys are the Cassandra input file columns, values are the matching Info column names to assign, INCLUDING the 'info_' prefix.
+            </summary>
+        </member>
+        <member name="F:JCass_PostProcessing.JunoInterfacing.JunoExportConfiguration.ConfigurationName">
+            <summary>
+            Tag for the model configuration. 
+            </summary>
+        </member>
+        <member name="F:JCass_PostProcessing.JunoInterfacing.JunoExportConfiguration.ParameterMappingsFile">
+            <summary>
+            Excel file holding the mapping between Cassandra Model Parameter names and the Parameter Names to use for the DMS (more user-friendly names)
+            </summary>
+        </member>
+        <member name="F:JCass_PostProcessing.JunoInterfacing.JunoExportConfiguration.ParameterMappingsSheet">
+            <summary>
+            Excel sheet holding the mapping between Cassandra Model Parameter names and the Parameter Names to use for the DMS (more user-friendly names)
+            </summary>
+        </member>
+        <member name="F:JCass_PostProcessing.JunoInterfacing.JunoExportConfiguration.NetworkFilterID">
+            <summary>
+            Network ID to filter on. Only valid if input set contains data for several networks. Enter -1 to omit filtering on
+            networkID. If this value is NOT -1, then your input set must have a column named 'networkID'.
+            </summary>
+        </member>
+        <member name="F:JCass_PostProcessing.JunoInterfacing.JunoExportConfiguration.ExportInfoXML">
+            <summary>
+            Flag to indicate if InfoXML should be exported
+            </summary>
+        </member>
+        <member name="F:JCass_PostProcessing.JunoInterfacing.JunoExportConfiguration.ExportTreatmentsXML">
+            <summary>
+            Flag to indicate if Treatments XML should be exported
+            </summary>
+        </member>
+        <member name="F:JCass_PostProcessing.JunoInterfacing.JunoExportConfiguration.DMSOutputFilePath">
+            <summary>
+            Path to the DMS file to export
+            </summary>
+        </member>
+        <member name="F:JCass_PostProcessing.JunoInterfacing.JunoExportConfiguration.OutputFilePath">
+            <summary>
+            Path to the Excel file with the exported XML data
+            </summary>
+        </member>
+        <member name="F:JCass_PostProcessing.JunoInterfacing.JunoExportConfiguration.BaseFWPFile">
+            <summary>
+            Base FWP file (.csv file) with the info_ columns to export to Juno, for 'update' mode. This file should be a valid 
+            FWP import template with the required columns such as AreaGroupName, AreaName, locFrom, locTo etc. 
+            </summary>
+        </member>
+        <member name="F:JCass_PostProcessing.JunoInterfacing.JunoExportConfiguration.SetupFilePath">
+            <summary>
+            Path to the setup file that defines the export configuration
+            </summary>
+        </member>
+        <member name="F:JCass_PostProcessing.JunoInterfacing.JunoExportConfiguration.NetworkIdIfMissing">
+            <summary>
+            ID for the network in JunoViewer if it is missing in the input set. This is used for 'insert' mode only.
+            </summary>
+        </member>
+        <member name="T:JCass_PostProcessing.JunoInterfacing.JunoViewerFwpPrepV1">
+            <summary>
+            Tool to convert Cassandra model output and use it to prepare a FWP, with infoXML and treatmentsXML, ready for
+            import into JunoViewer. This tool assumes there is an existing FWP export from JunoViewer and uses the infoXML and
+            treatmentsXML from this export WITHOUT any modification. The only thing that is added is the modXML columns.
+            </summary>
+        </member>
+        <member name="F:JCass_PostProcessing.JunoInterfacing.JunoViewerFwpPrepV1._requiredLocationColumns">
+            <summary>
+            Required FWP location columns. Order of columns matter, so do not modify this!
+            </summary>
+        </member>
+        <member name="M:JCass_PostProcessing.JunoInterfacing.JunoViewerFwpPrepV1.GetJunoViewewerFWPXMLColumns(System.String,JCass_PostProcessing.Objects.OutputSet,JCass_PostProcessing.JunoInterfacing.JunoExportConfiguration)">
+            <summary>
+            This overload creates a full set of XML for a FWP in JunoViewer from the Cassandra output. Output includes InfoXML, TreatmentsXML and ModXML columns 
+            </summary>
+            <param name="userName">User name from license</param>
+            <param name="modelOutputs">OutputSet object representing the model output</param>
+            <param name="exportConfig">Export configuration object</param>
+            <returns></returns>
+            <exception cref="T:System.Exception"></exception>
+        </member>
+        <member name="M:JCass_PostProcessing.JunoInterfacing.JunoViewerFwpPrepV1.SetupAndCheckBaseFWP">
+            <summary>
+            Sets up the Base FWP depending on the import mode. If the import mode is 'update', the base FWP is read from the file and checked for required columns. If the 
+            import mode is 'insert', the base FWP is created from the raw input data.
+            </summary>
+            <exception cref="T:System.Exception"></exception>
+        </member>
+        <member name="M:JCass_PostProcessing.JunoInterfacing.JunoViewerFwpPrepV1.SetupBaseFWPForInsertNew">
+            <summary>
+            Sets up the Base FWP for an 'insert' action. This is done by creating a new FWP from the raw input data.
+            </summary>
+            <exception cref="T:System.Exception"></exception>
+        </member>
+        <member name="F:JCass_PostProcessing.ModelCompare.ModelCompareParameter._parameterData">
+            <summary>
+            First key is parameter code, second key is config run key, value is data for parameter
+            </summary>
+        </member>
+        <member name="P:JCass_PostProcessing.Objects.OutputSet.TreatmentsDictWithMaintenance">
+            <summary>
+            Dictionary of treatments (INCLUDING Routine Maintenance) for quick lookup on element index and period. First key is element index. Second key is treatment period. Value returned 
+            is the Treatment Row as exported.
+            </summary>    
+            <returns>First key is element index. Second key is treatment period.Value returned 
+            is the Treatment Row as exported, </returns>    
+        </member>
+        <member name="P:JCass_PostProcessing.Objects.OutputSet.TreatmentsDictNoMaintenance">
+            <summary>
+            Dictionary of treatments (EXCLUDING Routine Maintenance) for quick lookup on element index and period. First key is element index. Second key is treatment period. Value returned 
+            is the Treatment Row as exported.
+            </summary>    
+            <returns>First key is element index. Second key is treatment period.Value returned 
+            is the Treatment Row as exported, </returns>    
+        </member>
+        <member name="M:JCass_PostProcessing.Treatments.PreTreatCondition.GetElementsWithPreTreatmentValuesPassThreshold(JCass_PostProcessing.Objects.OutputSet,System.String,System.String,System.Double,System.String,System.Boolean)">
+            <summary>
+            Gets the indexes for all elements where the value in a given parameter passes a check against a threshold.
+            </summary>
+            <param name="outputSet">Output set to work with</param>
+            <param name="parameterCode">Code for the model parameter to check agains the threshold. Must be a parameter with Numeric values</param>
+            <param name="treatmentNameToConsider">Name of the treatment to consider. Pass 'all' to consider all treatments</param>
+            <param name="threshold">threshold against which to check the parameter value before treatment</param>
+            <param name="equalityOperator">Equality operator for check against threshold. Use one of 'lt', 'lte', 'gt' or 'gte'</param>
+            <param name="excludeMaintenance">Flag to indicate if Routine Maintenance should be excluded</param>
+            <returns>List with indexes of elements in which one or more treatments pass the filter</returns>
+        </member>
+        <member name="M:JCass_PostProcessing.Treatments.PreTreatCondition.GetPreTreatmentConditionStats(JCass_PostProcessing.Objects.OutputSet,System.String[],System.Int32)">
+            <summary>
+            Gets statistics for several parameters the epoch before the treatment was applied
+            </summary>
+            <param name="outputSet">Output set to work with</param>
+            <param name="parameters">Parameters for which to get statistics</param>
+            <param name="numDecimals">Number of decimals to round statistics values to</param>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_PostProcessing.Treatments.PreTreatCondition.GetPreTreatmentConditionStatsByPeriod(JCass_PostProcessing.Objects.OutputSet,System.String,System.String,System.Int32)">
+            <summary>
+            Gets statistics for several parameters the epoch before the treatment was applied, with statistics grouped by Period
+            </summary>
+            <param name="outputSet">Output set to work with</param>
+            <param name="treatmentName">Name of the treatment to consider. Pass 'all' to consider all treatments.</param>
+            <param name="parameterCode">Code of the parameter whose pre-treatment statistics should be computed.</param>
+            <param name="numDecimals">Number of decimals to round statistics values to</param>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_PostProcessing.Treatments.PreTreatVsThreshold.GetPreTreatmentVsThreshold(JCass_ModelCore.ModelObjects.ModelConfiguration,System.String,System.String,System.Double,System.String)">
+            <summary>
+            Gets the details for elements for which the number of treatments over the modelling period is less than or greater than a specified threshold
+            </summary>
+            <param name="modConfig">Model Configuration</param>
+            <param name="runKey">Model Run Key</param>
+            <param name="paramCode">Parameter code whose pre-treatment value is checked against the threshold.</param>
+            <param name="threshold">Threshold against which to check the parameter value before treatment.</param>
+            <param name="conditionOperator">Condition for comparison. Valid values are 'lt' or 'gt'</param>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_PostProcessing.Treatments.TreatmentQuantityOverTime.GetSpendingInfoOverTime(JCass_ModelCore.ModelObjects.ModelConfiguration,System.String,System.String,System.Double)">
+            <summary>
+            Gets the Spending Info Over Time, grouped by treatment name, budget category or treatment category
+            </summary>
+            <param name="modConfig">Modelconfuguration to use</param>
+            <param name="runKey">Key for the run/output to use</param>
+            <param name="groupBy">Use 'none' to group on Treatments; 'budget_cats' to group by budget categories; or 'treat_cats' to group by treatment categories</param>
+            <param name="scaleFactor"></param>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_PostProcessing.Treatments.TreatsGtOrLtThreshold.GetElementsWithNumTreatsOverOrUnderThreshold(JCass_ModelCore.ModelObjects.ModelConfiguration,System.String,System.Int32,System.String)">
+            <summary>
+            Gets the details for elements for which the number of treatments over the modelling period is less than or greater than a specified threshold
+            </summary>
+            <param name="modConfig">Model Configuration</param>
+            <param name="runKey">Model Run Key</param>
+            <param name="treatsThreshold">Threshold against which to check number of treatments when filtering out elements</param>
+            <param name="conditionOperator">Condition for comparison. Valid values are 'lt' or 'gt'</param>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_PostProcessing.Utilities.FileUtils.GetSpending(JCass_ModelCore.ModelObjects.ModelConfiguration,System.String,System.Boolean)">
+            <summary>
+            Gets dictionary of treatments
+            </summary>
+            <param name="modConfig">Model Configuration</param>
+            <param name="runKey">Run key</param>
+            <param name="includeRoutineMaintenance">If true, routine maintenance entries are included in the result.</param>
+            <returns>First key is element index. Second key is treatment period.</returns>
+            <exception cref="T:System.Exception"></exception>
+        </member>
+        <member name="M:JCass_PostProcessing.Utilities.FileUtils.GetTreatments(JCass_ModelCore.ModelObjects.ModelConfiguration,System.String,System.Boolean)">
+            <summary>
+            Gets dictionary of treatments
+            </summary>
+            <param name="modConfig">Model Configuration</param>
+            <param name="runKey">Run key</param>
+            <param name="includeRoutineMaintenance">If true, routine maintenance entries are included in the result.</param>
+            <returns>First key is element index. Second key is treatment period.</returns>
+            <exception cref="T:System.Exception"></exception>
+        </member>
+        <member name="M:JCass_PostProcessing.Utilities.PostProcUtils.GetStatisticsCodesAllowed">
+            <summary>
+            Gets the statistics codes used for Parameter Statistics. Also use this to check if user supplied value is allowed.
+            </summary>
+            <returns></returns>
+        </member>
+    </members>
+</doc>

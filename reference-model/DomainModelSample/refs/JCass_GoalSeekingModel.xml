@@ -1,0 +1,184 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>JCass_GoalSeekingModel</name>
+    </assembly>
+    <members>
+        <member name="M:JCass_GoalSeekingModel.BaseClasses.AsymmetricLossFunction.GetLossFunctionForObjectiveVariable(JCass_ModelCore.Models.ModelBase,JCass_GoalSeekingModel.BaseClasses.ObjectiveParameter)">
+            <summary>
+            Get the Assymetric Loss Function for a given objective variable in a model.
+            </summary>
+            <param name="model"></param>
+            <param name="objectiveParameter"></param>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_GoalSeekingModel.BaseClasses.AsymmetricLossFunction.GetLossFunctionsForAllObjectivesAndCombinedObjective(JCass_ModelCore.Models.ModelBase,System.Collections.Generic.List{JCass_GoalSeekingModel.BaseClasses.ObjectiveParameter})">
+            <summary>
+            Get the loss functions for all objectives and also  for the combined weighted objective value.
+            </summary>    
+        </member>
+        <member name="M:JCass_GoalSeekingModel.BaseClasses.DifferentialEvolution.Minimize(JCass_GoalSeekingModel.BaseClasses.DifferentialEvolution.ObjectiveFunction,System.Int32)">
+            <summary>
+            Runs Differential Evolution optimisation.
+            </summary>
+            <param name="objective">Objective function to minimise.</param>
+            <param name="maxGenerations">Maximum number of generations.</param>
+            <returns>Tuple of (best solution vector, best objective value).</returns>
+        </member>
+        <member name="P:JCass_GoalSeekingModel.BaseClasses.GoalSeekSetup.RunParallel">
+            <summary>
+            Flag to indicate whether the goal-seeking process should run in parallel. If parallel execution is enabled, the number of variables will
+            still be broken into tranches of 10 iterations, where each 10 iterations will be run in parallel. 
+            This is to avoid overloading the system with too many parallel tasks and to facilitate feedback (progress will be reported at the 
+            end of each tranche).
+            </summary>
+        </member>
+        <member name="P:JCass_GoalSeekingModel.BaseClasses.GoalSeekSetup.NumberOfVariations">
+            <summary>
+            Number of variations to be generated for the goal-seeking process. This is the number of samples that will be generated in
+            the Latin Hypercube Sampling (LHS) process. The default value is set to 200, but it can be adjusted based on the 
+            requirements of the goal-seeking process. It is recommended to have between 10 and 20 variations for each of the 
+            Goal Seek Variables. For example, if there are 10 Goal Seek Variables, then the NumberOfVariations should be set to between 100 and 200.
+            </summary>
+        </member>
+        <member name="P:JCass_GoalSeekingModel.BaseClasses.GoalSeekSetup.GoalSeekVariables">
+            <summary>
+            List of goal-seeking variables that will be varied during the goal-seeking process. 
+            </summary>
+        </member>
+        <member name="P:JCass_GoalSeekingModel.BaseClasses.GoalSeekSetup.ObjectiveParameters">
+            <summary>
+            List of objective parameters that will be used to evaluate the goal-seeking process.
+            </summary>
+        </member>
+        <member name="F:JCass_GoalSeekingModel.BaseClasses.GoalSeekSetup.BGWorker">
+            <summary>
+            Optional BackgroundWorker instance to report progress and handle cancellation of the goal-seeking process.
+            </summary>
+        </member>
+        <member name="P:JCass_GoalSeekingModel.BaseClasses.GoalSeekSetup.FileName">
+            <summary>
+            Name of the file to save the variation results from the Latin Hypercube Sampling (LHS) process. This file
+            will be saved into [workfolder]/goalseek/[fileName].csv. If the value does not end with .csv, it will be appended automatically.
+            </summary>
+        </member>
+        <member name="P:JCass_GoalSeekingModel.BaseClasses.GoalSeekSetup.SavePath">
+            <summary>
+            Path for saving results, if needed (desktop applications). Typically [workfolder]/goalseek/[fileName].csv.
+            </summary>
+        </member>
+        <member name="T:JCass_GoalSeekingModel.BaseClasses.GoalSeekVariable">
+            <summary>
+            Variable to use/vary in a Goal Seek operation or Sensitivity Run.
+            </summary>
+        </member>
+        <member name="P:JCass_GoalSeekingModel.BaseClasses.GoalSeekVariable.DataClass">
+            <summary>
+            Class of the data type. This should be 'lookups', 'budget' or 'mcda_weight'.
+            </summary>
+        </member>
+        <member name="P:JCass_GoalSeekingModel.BaseClasses.GoalSeekVariable.ParameterPath">
+            <summary>
+            Path to the parameter. Interpretation depends on DataClass.
+            </summary>
+        </member>
+        <member name="P:JCass_GoalSeekingModel.BaseClasses.GoalSeekVariable.Minimum">
+            <summary>
+            Minimum value to use for the search range
+            </summary>
+        </member>
+        <member name="P:JCass_GoalSeekingModel.BaseClasses.GoalSeekVariable.Maximum">
+            <summary>
+            Maximum value to use for the search range
+            </summary>
+        </member>
+        <member name="T:JCass_GoalSeekingModel.BaseClasses.ObjectiveFunction">
+            <summary>
+            Represents an objective function for goal seeking, containing multiple objective parameters and a loss function. This is defined
+            as a Record to allow for immutability and thread safe operations and easy value comparison.
+            </summary>
+        </member>
+        <member name="M:JCass_GoalSeekingModel.BaseClasses.ObjectiveFunction.GetObjectiveValues(JCass_ModelCore.Models.ModelBase)">
+            <summary>
+            Get the loss function values for all objectives and the combined objective value.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="T:JCass_GoalSeekingModel.BaseClasses.ObjectiveParameter">
+            <summary>
+            Parameter to use in the formulation of an objective function for a Goal Seek operation. This is set as a Records to 
+            ensure that downstream implementations are thread safe and immutable.
+            </summary>
+        </member>
+        <member name="P:JCass_GoalSeekingModel.BaseClasses.ObjectiveParameter.ParameterName">
+            <summary>
+            Name of the model parameter to use as a basis for the objective function.
+            </summary>
+        </member>
+        <member name="P:JCass_GoalSeekingModel.BaseClasses.ObjectiveParameter.WeightingColumn">
+            <summary>
+            Name of the input column to use in a weighted sum. Eg. to calculate the percentage by LENGTH of a parameter, use the LENGTH column (e.g. 'file_length').
+            If no weighting is to be done, use 'none'.
+            </summary>
+        </member>
+        <member name="P:JCass_GoalSeekingModel.BaseClasses.ObjectiveParameter.Operator">
+            <summary>
+            Operator to check against Threshold. Valid values are 'greater_than', 'less_than'.
+            </summary>
+        </member>
+        <member name="P:JCass_GoalSeekingModel.BaseClasses.ObjectiveParameter.Threshold">
+            <summary>
+            Threshold value to check against the parameter value.
+            </summary>
+        </member>
+        <member name="P:JCass_GoalSeekingModel.BaseClasses.ObjectiveParameter.TargetValue">
+            <summary>
+            Target value to compare results against. The deviation from this value will be used in the objective function.
+            </summary>
+        </member>
+        <member name="P:JCass_GoalSeekingModel.BaseClasses.ObjectiveParameter.UseFirstPeriodValueAsTarget">
+            <summary>
+            If true, the first period value of the parameter will be used as the target value instead of the specified TargetValue.
+            </summary>
+        </member>
+        <member name="P:JCass_GoalSeekingModel.BaseClasses.ObjectiveParameter.PenaltyWeightIfAboveThreshold">
+            <summary>
+            Penalty to apply if the parameter value is above the threshold. This is used in the objective function to penalize exceeding the threshold.
+            </summary>
+        </member>
+        <member name="P:JCass_GoalSeekingModel.BaseClasses.ObjectiveParameter.PenaltyWeightIfBelowThreshold">
+            <summary>
+            Penalty to apply if the parameter value is below the threshold. This is used in the objective function to penalize falling below the threshold.
+            </summary>
+        </member>
+        <member name="P:JCass_GoalSeekingModel.BaseClasses.ObjectiveParameter.Weight">
+            <summary>
+            Weight to apply to this parameter in the objective function. This allows for adjusting the importance of this parameter relative to others.
+            </summary>
+        </member>
+        <member name="M:JCass_GoalSeekingModel.BaseClasses.ObjectiveParameter.#ctor(System.Collections.Generic.Dictionary{System.String,System.Object})">
+            <summary>
+            Initializes a new instance of the <see cref="T:JCass_GoalSeekingModel.BaseClasses.ObjectiveParameter"/> class from a setup row dictionary.
+            </summary>
+            <param name="setupRow">Row from setp data. We presume that a check has already been done to ensure that the required
+            column names/keys are present</param>
+            <exception cref="T:System.ArgumentException"></exception>
+        </member>
+        <member name="P:JCass_GoalSeekingModel.BaseClasses.VariationSetGenerator.CancellationCheck">
+            <summary>
+            Delegate that returns whether cancellation is requested. Used to cancel model run while busy
+            </summary>
+        </member>
+        <member name="T:JCass_GoalSeekingModel.MLModels.ObjectiveFunctionTrainer">
+            <summary>
+            Class to train the objective function for the goal-seeking model.
+            </summary>
+        </member>
+        <member name="T:JCass_GoalSeekingModel.VariationHelpers.BudgetVariationHelper">
+            <summary>
+            Class to help with budget variation calculations in a Goal Seek operation, keeping track of the BASE budget and 
+            calculating variations based on the variation parameters.
+            </summary>
+        </member>
+    </members>
+</doc>

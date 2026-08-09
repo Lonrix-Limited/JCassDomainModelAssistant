@@ -26,14 +26,19 @@ kept as the contrast that makes the rule visible: tunable numbers belong in `inp
 where a modeller can change them and re-run without a developer, a rebuild and a republish.
 `DomainModelSample/README.md` section 7 sets moving them as the reader's first two exercises.
 
-## Building it right now
+## Building it
 
-**You cannot, unless you already have a local set of framework assemblies.** The `refs/` folder is
-excluded from this repository until session S2 replaces its contents with reference assemblies that
-are safe to publish. That is expected, not a fault.
-
-Once S2 lands, a clone builds straight away:
+Nothing to fetch — the framework assemblies are committed in `DomainModelSample/refs/`. From the
+repository root:
 
 ```powershell
 dotnet build reference-model/DomainModelSample/DomainModelSample.csproj -c Debug --no-incremental
 ```
+
+Expect `0 Warning(s), 0 Error(s)`.
+
+**Building it is as far as you get locally, and that is by design.** Those are *reference*
+assemblies — full public API, no method bodies — so they compile and give you complete IntelliSense
+and the runtime refuses to load them. Models run and are debugged in the web app's Debug Model
+page. [`../refs/README.md`](../refs/README.md) explains it, including what the failure looks like
+if you try.

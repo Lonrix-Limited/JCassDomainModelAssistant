@@ -1,0 +1,699 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>JCass_Data</name>
+    </assembly>
+    <members>
+        <member name="T:JCass_Data.JunoInterfacing.JunoDataParser">
+            <summary>
+            Parses a FWP exported from JunoViewer with all information XML and treatments XML into an Input Set and
+            a Committed Treatments set for use in Cassandra.
+            </summary>
+        </member>
+        <member name="T:JCass_Data.Objects.enumDataType">
+            <summary>
+            Data Type Enumeration for data processing purposes. Here, we do not particularly care if a number if real or an integer.
+            String = Text.
+            </summary>
+        </member>
+        <member name="F:JCass_Data.Objects.jcDataSet.Columns">
+            <summary>
+            Columns in the set. Key is column name; Value is zero-based index of the column
+            </summary>
+        </member>
+        <member name="F:JCass_Data.Objects.jcDataSet.ColumnInfo">
+            <summary>
+            Optional information about Columns in the set. Key is column name; Value is ColumnInfo for the object. If supplied, this information
+            can be used to convert to a DataTable
+            </summary>
+        </member>
+        <member name="F:JCass_Data.Objects.jcDataSet.Index">
+            <summary>
+            Lookup index, if data was read with a lookup key column provided. Key is the values of the key column, values
+            are the associated row indexes. Ensure that keys are valid strings and are all unique
+            </summary>
+        </member>
+        <member name="P:JCass_Data.Objects.jcDataSet.SourceFile">
+            <summary>
+            Source file (Excel file) from which this dataset was loaded
+            </summary>
+        </member>
+        <member name="P:JCass_Data.Objects.jcDataSet.SourceSheet">
+            <summary>
+            Source sheet (Excel sheet name) from which this dataset was loaded
+            </summary>
+        </member>
+        <member name="P:JCass_Data.Objects.jcDataSet.Count">
+            <summary>
+            Number of Rows in the Set
+            </summary>
+        </member>
+        <member name="M:JCass_Data.Objects.jcDataSet.Row(System.Int32)">
+            <summary>
+            Gets a specific row by Index
+            </summary>
+            <param name="index">Zero-based index of the row</param>
+            <returns>Dictionary in which the Keys are column names, and Values are the values in each column for this row</returns>
+        </member>
+        <member name="M:JCass_Data.Objects.jcDataSet.Row(System.String)">
+            <summary>
+            Gets a specific row by Key value in the Index (only valid if data was read with a Index Key column provided)
+            </summary>
+            <param name="key">Lookup key (index) that determines the row index</param>
+            <returns>Dictionary in which the Keys are column names, and Values are the values in each column for this row</returns>
+        </member>
+        <member name="M:JCass_Data.Objects.jcDataSet.AddColumn(System.String,System.String)">
+            <summary>
+            Adds a column to the columns collection, and optionally also a column type definition to the 
+            ColumnInfo collection if dataType is not 'none'
+            </summary>
+            <param name="columnName">Name of the columns to add</param>
+            <param name="dataType">If 'none' then no action is taken. If 'number' or 'text' then a columnInfo is added automatically</param>
+        </member>
+        <member name="M:JCass_Data.Objects.jcDataSet.GetTextColumnValueCounts(System.String,System.Int32@)">
+            <summary>
+            Gets the number of occurrences of a text value from a specific Column, and also returns the number of Null values encountered
+            </summary>
+            <param name="columnName">Name of the column</param>
+            <param name="nullCounts">Number of null values encountered. Note: null values are defined by the null values list passed in when the dataset is read from Excel</param>
+            <returns>A List of Key Value pairs in which the Key for each pair is the string value, and the Value is the number of occurrences. List is sorted by decreasing occurences</returns>
+        </member>
+        <member name="M:JCass_Data.Objects.jcDataSet.GetFilteredSetWithReference(System.Collections.Generic.Dictionary{System.String,System.Collections.Generic.List{System.String}},System.Boolean)">
+            <summary>
+            Returns a subset in which all rows are omitted for which certain columns have values that are in the lists passed as parameters. Only valid for Text columns and values.
+            </summary>
+            <param name="filterColumnsAndExcludeValueLists">Keys are column names, value is a list of values that are NOT allowed (to be ommitted)</param>
+            <param name="caseInsensitive">If true, then the comparison is NOT case-sensitive</param>
+            <returns>A DataSet that is referenced to this instance but with some rows removed where needed</returns>
+        </member>
+        <member name="M:JCass_Data.Objects.jcDataSet.GetDefaultNoDataList">
+            <summary>
+            Gets a list of 'No Data' values that will be converted to nulls. Detauls no data values assumed are:
+            <para>"No Data", "-999", "", " ", "  "</para>
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_Data.Objects.jcDataSet.GetClone(System.Int32)">
+            <summary>
+            Gets a clone that includes only the top 'nRows' rows
+            </summary>        
+        </member>
+        <member name="M:JCass_Data.Objects.jcDataSet.GetSorted(System.String,System.Boolean)">
+            <summary>
+            Returns a clone (no reference to current object) that is sorted on a specific column's values. Rows in which the
+            sorting column has non-numeric or empty values will be placed at the bottom of the resulting set
+            </summary>
+            <param name="sortColumn">Column on which to sort</param>
+            <param name="largestToSmallest">Flag to indicate if sort should be Descending</param>
+            <returns></returns>
+            <exception cref="T:System.Exception"></exception>
+        </member>
+        <member name="M:JCass_Data.Objects.jcDataSet.Transpose(JCass_Data.Objects.jcDataSet,System.String,System.String)">
+            <summary>
+            Transposes a jcDataSet
+            </summary>
+            <param name="data">Data Set to transpose</param>
+            <param name="columnThatHoldsHeaders">Name of the column that holds the values that will become headers in the transposed set</param>
+            <param name="rowHeaderName">Name to assign to the Row Column in the transposed set</param>
+            <returns></returns>
+        </member>
+        <member name="T:JCass_Data.Objects.MinMaxValue">
+            <summary>
+            Helper class to hold a Minimum/Maximum Pair
+            </summary>
+        </member>
+        <member name="T:JCass_Data.Objects.MinMiddleMaxSetup">
+            <summary>
+            A record to hold a "Min-Middle-Max" setup/configuration. This object is useful for example to specify a search range in which the object contains 
+            a minimum allowed, a middle representing an "ideal" or "best-guess" value, and then a maximum allowed. You can use this for other purposes as well. 
+            Similar to a Min-Max Range but with a middle value also
+            </summary>
+        </member>
+        <member name="M:JCass_Data.Objects.MinMiddleMaxSetup.#ctor(System.Double,System.Double,System.Double)">
+            <summary>
+            A record to hold a "Min-Middle-Max" setup/configuration. This object is useful for example to specify a search range in which the object contains 
+            a minimum allowed, a middle representing an "ideal" or "best-guess" value, and then a maximum allowed. You can use this for other purposes as well. 
+            Similar to a Min-Max Range but with a middle value also
+            </summary>
+        </member>
+        <member name="T:JCass_Data.Objects.ProjectLicense">
+            <summary>
+            DTO to hold information related to a Project/Network level license. For use in the
+            DesktopLicense class
+            </summary>
+            <seealso cref="!:DesktopLicense"/>
+        </member>
+        <member name="T:JCass_Data.Objects.PropertyMapper`1">
+            <summary>
+            A generic class that maps properties of a type <typeparamref name="T"/> based on a dictionary of key-value pairs.
+            The mapping is guided by a custom attribute <see cref="T:JCass_Data.Attributes.MapToKeyAttribute"/> applied to the properties of <typeparamref name="T"/>.
+            See code below this class for example on how to implement.
+            </summary>
+            <typeparam name="T">
+            The type of the object whose properties will be mapped. Must have a parameterless constructor.
+            </typeparam>
+        </member>
+        <member name="P:JCass_Data.Objects.PropertyMapper`1.Instance">
+            <summary>
+            Gets the instance of <typeparamref name="T"/> with its properties mapped from the provided dictionary.
+            </summary>
+        </member>
+        <member name="M:JCass_Data.Objects.PropertyMapper`1.#ctor(System.Collections.Generic.Dictionary{System.String,System.Object})">
+            <summary>
+            Initializes a new instance of the <see cref="T:JCass_Data.Objects.PropertyMapper`1"/> class and maps properties of <typeparamref name="T"/>
+            based on the provided dictionary.
+            </summary>
+            <param name="dictionary">
+            A dictionary containing key-value pairs, where keys correspond to the values of <see cref="P:JCass_Data.Attributes.MapToKeyAttribute.Key"/>
+            and values are assigned to the corresponding properties.
+            </param>
+        </member>
+        <member name="M:JCass_Data.Objects.PropertyMapper`1.MapProperties(System.Collections.Generic.Dictionary{System.String,System.Object})">
+            <summary>
+            Maps the properties of <typeparamref name="T"/> using the provided dictionary and the <see cref="T:JCass_Data.Attributes.MapToKeyAttribute"/>.
+            </summary>
+            <param name="dictionary">
+            A dictionary containing key-value pairs to map to properties.
+            </param>
+        </member>
+        <member name="M:JCass_Data.Objects.PropertyMapper`1.ConvertToListOfDictionaries(System.Collections.Generic.Dictionary{System.String,`0})">
+            <summary>
+            Converts a dictionary of objects to a list of dictionaries, where each dictionary corresponds to an object of type <typeparamref name="T"/>.
+            Each dictionary contains key-value pairs where the keys are the <see cref="P:JCass_Data.Attributes.MapToKeyAttribute.Key"/>
+            and the values are the corresponding property values.
+            </summary>
+            <param name="dictionaryList">
+            A dictionary containing the objects of type <typeparamref name="T"/> indexed by a key.
+            </param>
+            <returns>
+            A list of dictionaries where each dictionary represents an object of type <typeparamref name="T"/>.
+            </returns>
+        </member>
+        <member name="M:JCass_Data.Objects.PropertyMapper`1.ToDictionary(`0)">
+            <summary>
+            Converts an individual object of type <typeparamref name="T"/> to a dictionary of key-value pairs.
+            </summary>
+            <param name="item">
+            The object to be converted into a dictionary.
+            </param>
+            <returns>
+            A dictionary containing the property values of the object, with keys derived from the <see cref="T:JCass_Data.Attributes.MapToKeyAttribute"/>.
+            </returns>
+        </member>
+        <member name="T:JCass_Data.SQLiteHelper">
+            <summary>
+            High-performance SQLite helper. See Usage info block at bottom of class for use examples. This class is
+            optimised for .NET 9 with:
+            <list type="bullet">
+            <item><description>Fast table creation (DDL).</description></item>
+            <item><description>Fast reads with forward-only streaming.</description></item>
+            <item><description>High-throughput bulk inserts via prepared statement + transaction.</description></item>
+            </list>
+            <para>
+            Notes:
+            <list type="bullet">
+            <item><description>Uses <see cref="N:Microsoft.Data.Sqlite"/> (recommended for modern .NET).</description></item>
+            <item><description>Applies performance pragmas on open. Tune them for your durability needs.</description></item>
+            <item><description>Bulk insert is fastest when you reuse the same column set and supply many rows.</description></item>
+            </list>
+            </para>
+            </summary>
+        </member>
+        <member name="M:JCass_Data.SQLiteHelper.#ctor(System.String,System.Boolean,Microsoft.Data.Sqlite.SqliteCacheMode)">
+            <summary>
+            Creates an instance for a local SQLite database file.
+            </summary>
+            <param name="dbPath">Path to the SQLite file. Will be created if missing.</param>
+            <param name="readOnly">If true, opens the database read-only.</param>
+            <param name="cache">SQLite cache mode.</param>
+        </member>
+        <member name="M:JCass_Data.SQLiteHelper.OpenAsync(System.Threading.CancellationToken)">
+            <summary>
+            Opens the connection and applies performance pragmas.
+            Safe to call multiple times.
+            </summary>
+        </member>
+        <member name="M:JCass_Data.SQLiteHelper.CreateTableAsync(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Ensures the database schema exists by executing a CREATE TABLE statement.
+            </summary>
+            <param name="createTableSql">A full CREATE TABLE statement.</param>
+            <param name="ct">Cancellation token.</param>
+        </member>
+        <member name="M:JCass_Data.SQLiteHelper.CreateTableAsync(System.String,System.Collections.Generic.Dictionary{System.String,System.String},System.Boolean,System.Threading.CancellationToken)">
+            <summary>
+            Creates a table using a dictionary-based column definition.
+            </summary>
+            <param name="tableName">Table name.</param>
+            <param name="columns">
+            Column definitions where:
+            <list type="bullet">
+            <item><description><b>Key</b> = column name</description></item>
+            <item>
+            <description>
+            <b>Value</b> = SQLite data type / affinity.
+            Recommended codes:
+            <list type="table">
+            <listheader>
+            <term>Code</term>
+            <description>Typical .NET type / use</description>
+            </listheader>
+            <item><term>INTEGER</term><description>int, long, bool (0/1), enums</description></item>
+            <item><term>REAL</term><description>float, double, decimal</description></item>
+            <item><term>TEXT</term><description>string, DateTime (ISO-8601), Guid</description></item>
+            <item><term>BLOB</term><description>byte[]</description></item>
+            </list>
+            <para>
+            SQLite is dynamically typed; these are affinities rather than strict types.
+            For timestamps, store UTC as ISO-8601 TEXT (e.g. 2025-01-01T12:34:56Z).
+            </para>
+            </description>
+            </item>
+            </list>
+            </param>
+            <param name="ifNotExists">Adds IF NOT EXISTS to the CREATE TABLE statement.</param>
+            <param name="ct">Cancellation token.</param>
+        </member>
+        <member name="M:JCass_Data.SQLiteHelper.ExecuteNonQueryAsync(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Executes a non-query SQL statement (DDL/DML).
+            </summary>
+        </member>
+        <member name="M:JCass_Data.SQLiteHelper.ReadAsync``1(System.String,System.Func{Microsoft.Data.Sqlite.SqliteDataReader,``0},System.Action{Microsoft.Data.Sqlite.SqliteCommand},System.Threading.CancellationToken)">
+            <summary>
+            Reads rows using a streaming data reader. This avoids buffering all rows in memory.
+            </summary>
+            <typeparam name="T">Result type.</typeparam>
+            <param name="sql">SELECT query.</param>
+            <param name="map">Mapping function from reader to T.</param>
+            <param name="bind">Optional binder for parameters.</param>
+            <param name="ct">Cancellation token.</param>
+        </member>
+        <member name="M:JCass_Data.SQLiteHelper.ReadToListAsync``1(System.String,System.Func{Microsoft.Data.Sqlite.SqliteDataReader,``0},System.Action{Microsoft.Data.Sqlite.SqliteCommand},System.Threading.CancellationToken)">
+            <summary>
+            Reads all rows into a list (buffers results in memory).
+            </summary>
+        </member>
+        <member name="M:JCass_Data.SQLiteHelper.ReadToDictionariesAsync(System.String,System.Action{Microsoft.Data.Sqlite.SqliteCommand},System.Threading.CancellationToken)">
+            <summary>
+            Reads a query into a list of dictionaries (one dictionary per row).
+            <para>
+            Each dictionary key is the column name as returned by SQLite, and the value is the raw CLR value
+            (or null for DB NULL). This is useful for ad-hoc / exploratory queries where you don't want to
+            create a dedicated DTO type per query.
+            </para>
+            <para>
+            Notes:
+            <list type="bullet">
+            <item><description>Column names are taken from <see cref="M:Microsoft.Data.Sqlite.SqliteDataReader.GetName(System.Int32)"/>.</description></item>
+            <item><description>Values come from <see cref="M:Microsoft.Data.Sqlite.SqliteDataReader.GetValue(System.Int32)"/> (or null if NULL).</description></item>
+            <item><description>If you alias columns in SQL (e.g. <c>SELECT a AS Foo</c>), the alias becomes the key.</description></item>
+            </list>
+            </para>
+            </summary>
+        </member>
+        <member name="M:JCass_Data.SQLiteHelper.ReadAsDictionariesAsync(System.String,System.Action{Microsoft.Data.Sqlite.SqliteCommand},System.Threading.CancellationToken)">
+            <summary>
+            Streaming version of <see cref="M:JCass_Data.SQLiteHelper.ReadToDictionariesAsync(System.String,System.Action{Microsoft.Data.Sqlite.SqliteCommand},System.Threading.CancellationToken)"/> to avoid buffering all rows.
+            </summary>
+        </member>
+        <member name="M:JCass_Data.SQLiteHelper.BulkInsertAsync(System.String,System.Collections.Generic.IReadOnlyList{System.String},System.Collections.Generic.IEnumerable{System.Collections.Generic.IReadOnlyList{System.Object}},System.Int32,System.Threading.CancellationToken)">
+            <summary>
+            Performs a high-throughput bulk insert into a table using a prepared statement and a single transaction.
+            </summary>
+            <param name="tableName">Target table (will be quoted).</param>
+            <param name="columns">Column names (will be quoted).</param>
+            <param name="rows">Rows of values (each row length must match columns length).</param>
+            <param name="batchSize">Commits every N rows. Larger is faster; smaller reduces lock time.</param>
+            <param name="ct">Cancellation token.</param>
+            <returns>Total rows inserted.</returns>
+        </member>
+        <member name="M:JCass_Data.SQLiteHelper.BulkInsertAsync(System.String,System.Collections.Generic.List{System.Collections.Generic.Dictionary{System.String,System.Object}},System.Int32,System.Threading.CancellationToken)">
+            <summary>
+            Convenience overload for bulk insert using a list of dictionaries.
+            Dictionary keys are treated as column names; values are row values.
+            <para>
+            All dictionaries must contain the same set of keys.
+            Column order is inferred from the first row and reused for all rows.
+            </para>
+            </summary>
+            <param name="tableName">Target table name.</param>
+            <param name="rows">Rows expressed as column/value dictionaries.</param>
+            <param name="batchSize">Commit every N rows.</param>
+            <param name="ct">Cancellation token.</param>
+            <returns>Total rows inserted.</returns>
+        </member>
+        <member name="M:JCass_Data.SQLiteHelper.InsertAsync(System.String,System.Collections.Generic.Dictionary{System.String,System.Object},System.Threading.CancellationToken)">
+            <summary>
+            Inserts a single row into a table.
+            <para>
+            Intended for occasional inserts (e.g. creating a user, logging an event),
+            not for high-volume loops. For bulk workloads, use <see cref="M:JCass_Data.SQLiteHelper.BulkInsertAsync(System.String,System.Collections.Generic.IReadOnlyList{System.String},System.Collections.Generic.IEnumerable{System.Collections.Generic.IReadOnlyList{System.Object}},System.Int32,System.Threading.CancellationToken)"/>.
+            </para>
+            </summary>
+            <param name="tableName">Target table name.</param>
+            <param name="values">Column/value pairs.</param>
+            <param name="ct">Cancellation token.</param>
+            <returns>The number of rows inserted (typically 1).</returns>
+        </member>
+        <member name="M:JCass_Data.SQLiteHelper.InsertAndGetRowIdAsync(System.String,System.Collections.Generic.Dictionary{System.String,System.Object},System.Threading.CancellationToken)">
+            <summary>
+            Inserts a single row and returns the last inserted ROWID.
+            Useful when the table has an INTEGER PRIMARY KEY.
+            </summary>
+        </member>
+        <member name="M:JCass_Data.SQLiteHelper.UpdateAsync(System.String,System.Collections.Generic.Dictionary{System.String,System.Object},System.Collections.Generic.Dictionary{System.String,System.Object},System.Threading.CancellationToken)">
+            <summary>
+            Updates a single row (or multiple rows) in a table using dictionary-based values and WHERE criteria.
+            <para>
+            Example: UpdateAsync("Users",
+                setValues: new() { ["LastLoginUtc"] = DateTime.UtcNow },
+                whereValues: new() { ["UserId"] = 123 });
+            </para>
+            </summary>
+            <param name="tableName">Target table name.</param>
+            <param name="setValues">Column/value pairs to set.</param>
+            <param name="whereValues">Column/value pairs used in the WHERE clause (ANDed together).</param>
+            <param name="ct">Cancellation token.</param>
+            <returns>Rows affected.</returns>
+        </member>
+        <member name="M:JCass_Data.SQLiteHelper.UpsertAsync(System.String,System.Collections.Generic.Dictionary{System.String,System.Object},System.Collections.Generic.IReadOnlyList{System.String},System.Collections.Generic.IReadOnlyList{System.String},System.Threading.CancellationToken)">
+            <summary>
+            Performs an UPSERT using SQLite's "INSERT ... ON CONFLICT(...) DO UPDATE" syntax.
+            <para>
+            You specify:
+            <list type="bullet">
+            <item><description><paramref name="values"/>: all columns to insert (and available for update).</description></item>
+            <item><description><paramref name="conflictColumns"/>: the UNIQUE/PK columns that define the conflict target.</description></item>
+            <item><description><paramref name="updateColumns"/>: which columns should be updated on conflict (defaults to all non-conflict columns).</description></item>
+            </list>
+            </para>
+            <para>
+            Requires SQLite 3.24+ (supported by modern Microsoft.Data.Sqlite builds).
+            </para>
+            </summary>
+            <param name="tableName">Target table name.</param>
+            <param name="values">Column/value pairs for insert.</param>
+            <param name="conflictColumns">Columns that define the conflict target (must have UNIQUE or PK constraint).</param>
+            <param name="updateColumns">
+            Optional list of columns to update on conflict. If null/empty, updates all columns except conflict columns.
+            </param>
+            <param name="ct">Cancellation token.</param>
+            <returns>Rows affected (SQLite returns 1 for insert, 1 for update in most cases).</returns>
+        </member>
+        <member name="M:JCass_Data.SQLiteHelper.CreateIndexAsync(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Creates indexes efficiently (optional helper).
+            </summary>
+        </member>
+        <member name="M:JCass_Data.SQLiteHelper.CreateIndexAsync(System.String,System.String,System.Collections.Generic.IReadOnlyList{System.String},System.Boolean,System.Boolean,System.Threading.CancellationToken)">
+            <summary>
+            Creates an index without requiring raw SQL.
+            </summary>
+            <param name="indexName">Index name (without quoting).</param>
+            <param name="tableName">Table name.</param>
+            <param name="columns">One or more column names (in order).</param>
+            <param name="unique">If true, creates a UNIQUE index.</param>
+            <param name="ifNotExists">If true, adds IF NOT EXISTS.</param>
+            <param name="ct">Cancellation token.</param>
+        </member>
+        <member name="M:JCass_Data.SQLiteHelper.CreateIndexAsync(System.String,System.String,System.String,System.Boolean,System.Boolean,System.Threading.CancellationToken)">
+            <summary>
+            Convenience overload for a single-column index.
+            </summary>
+        </member>
+        <member name="M:JCass_Data.SQLiteHelper.Dispose">
+            <inheritdoc />
+        </member>
+        <member name="M:JCass_Data.SQLiteHelper.DisposeAsync">
+            <inheritdoc />
+        </member>
+        <member name="T:JCass_Data.Utils.CSVWriterWithLock">
+            <summary>
+            Class to write to a CSV file with mechanism to lock the file for concurrent access
+            by other threads.
+            </summary>
+        </member>
+        <member name="T:JCass_Data.Utils.DateParser">
+            <summary>
+            Class to parse a Date value (without time component) from a text value when the CultureInfo cannot be trusted.
+            Offers methods to parse a date or check if a date can be parsed. 
+            <para>IMPORTANT! If you are using the 'CanParseDate()'  or 'GetDate()'methods in a loop, then make sure to
+            initialise this class only ONCE before the start of the loop to ensure that the monthNumbers dictionary
+            is only initialised once. </para>
+            </summary>
+        </member>
+        <member name="M:JCass_Data.Utils.DateParser.CanParseDate(System.String,System.DateTime@)">
+            <summary>
+            Checks if a string can be parsed to a date.
+            </summary>
+            <param name="dateAsStringNoTime">String in a possible valid date format</param>
+            <param name="dateValue">Date Value if the string could be parsed</param>
+            <remarks>
+            <para>Valid date formats are '2007-06-22', '2007-6-22', '2007-Jun-22', '2007-June-22',  
+            '22-06-2007', '22-Jun-2007', etc. Variations with forward or backward slash instead of dash also valid.
+            </para>
+            <para>Because an error is thrown and caught when the value for 'dateAsStringNoTime' is not a
+            valid date, when using this method in a loop, it can slow down the code if most values are invalid dates.</para>
+            </remarks>
+        </member>
+        <member name="M:JCass_Data.Utils.DateParser.GetDate(System.String)">
+            <summary>
+            Parses a valid string representation of a date (without time component) to a DateTime value. 
+            Valid date formats are '2007-06-22', '2007-6-22', '2007-Jun-22', '2007-June-22',  
+            '22-06-2007', '22-Jun-2007', etc. Variations with forward or backward slash instead of dash also valid.
+            </summary>
+            <param name="dateAsStringNoTime"></param>
+            <para>Valid date formats are '2007-06-22', '2007-6-22', '2007-Jun-22', '2007-June-22',  
+            '22-06-2007', '22-Jun-2007', etc. Variations with forward slash instead of dash also valid.
+            </para>
+        </member>
+        <member name="M:JCass_Data.Utils.HelperMethods.GetDistanceBetweenPoints(System.Double,System.Double,System.Double,System.Double)">
+            <summary>
+            Get distance between two points in two-dimensional space. Uses Pythagras Theorem to get the Euclidian distance between two Cartesian Points
+            </summary>
+            <param name="x1">X coordinate of first point</param>
+            <param name="y1">y coordinate of first point</param>
+            <param name="x2">x coordinate of second point</param>
+            <param name="y2">y coordinate of second point</param>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_Data.Utils.HelperMethods.IsNoneOrEmptyString(System.String)">
+            <summary>
+            Returns true if value passed is one of (a) empty or null; or (b) 'none' (not case sensitive). If none of 
+            these two conditions are met, returns false;
+            </summary>
+            <param name="value">String value to check</param>
+            <returns>Returns true if value passed is one of (a) empty or null; or (b) 'none' (not case sensitive). If none of 
+            these two conditions are met, returns false;</returns>
+        </member>
+        <member name="M:JCass_Data.Utils.HelperMethods.GetStatistics">
+            <summary>
+            Get all the statistics which are available to calculate the strip data
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_Data.Utils.HelperMethods.IsNumeric(System.String)">
+            <summary>
+            Checks a string to see if it is a valid numeric value
+            </summary>
+            <param name="testValue"></param>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_Data.Utils.HelperMethods.IsInteger(System.String)">
+            <summary>
+            Checks a string to see if it is a valid integer value
+            </summary>
+            <param name="testValue"></param>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_Data.Utils.HelperMethods.GetMonthNumbers">
+            <summary>
+            Returns a key-value collection to look up the month numbers using the month as a LOWERCASE string, either in short format ('apr') or long format ('april')
+            </summary>        
+        </member>
+        <member name="M:JCass_Data.Utils.HelperMethods.SplitString(System.Collections.Generic.List{System.String},System.String)">
+            <summary>
+            Converts a list of strings to a single delimited string. Default delimited is pipe (|)
+            </summary>        
+        </member>
+        <member name="M:JCass_Data.Utils.HelperMethods.SplitString(System.String,System.String)">
+            <summary>
+            Wrapper for .Split method of string class
+            </summary>        
+        </member>
+        <member name="M:JCass_Data.Utils.HelperMethods.SplitStringToList(System.String,System.String)">
+            <summary>
+            Wrapper for .Split method of string class
+            </summary>        
+        </member>
+        <member name="M:JCass_Data.Utils.HelperMethods.SplitStringToListWithoutNulls(System.String,System.String,System.Boolean)">
+            <summary>
+            Wrapper for .Split method of string class, but with automatic removal of all empty values
+            </summary>        
+        </member>
+        <member name="M:JCass_Data.Utils.HelperMethods.GetDateFromString(System.String)">
+            <summary>
+            Converts the DateString to Specified Date formats, returns the value in DateTime format
+            </summary>
+            <param name="dateAsString">Date value as string, Datevalue should be any of the dateFormats used in the method</param>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_Data.Utils.HelperMethods.GetDateFromString(System.String,System.String,System.Collections.Generic.Dictionary{System.String,System.Int32})">
+            <summary>
+            Tries to do an exact parse of a date value (excluding time), as string, using an expected format
+            </summary>
+            <param name="dateAsString">Date value as string, e.g. '10/12/2013'</param>
+            <param name="expectedFormat">A valid custom date specification such as 'dd/MMM/yyyy' ; 'yyyy/MM/dd' ; 'MM/dd/yyyy'</param>
+            <param name="monthNumbers">Lookup for months, with months as keys in lowercase, and month number as integer as values. Get using HelperMethods.GetMonthNumbers()</param>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_Data.Utils.HelperMethods.GetDateTimeStringFormat(System.DateTime,System.String,System.Boolean)">
+            <summary>
+            Tries to do an exact parse of a date time string, using an expected format
+            </summary>
+            <param name="dateTimeToConvert">Date value as valid DateTime type</param>
+            <param name="expectedFormat">A valid custom date specification such as 'dd/MMM/yyyy' ; 'yyyy/MM/dd' ; 'MM/dd/yyyy'</param>
+            <param name="includeTime">If its true then we will always convert into one foramt of time ie., hh:mm tt</param>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_Data.Utils.HelperMethods.GetStringBindLength(System.Collections.Generic.Dictionary{System.String,System.String},System.String)">
+            <summary>
+            get string column length by column name from a table
+            </summary>  
+        </member>
+        <member name="M:JCass_Data.Utils.HelperMethods.isMaxiumSegmentsCountExceeded(System.Int32)">
+            <summary>
+            This helper method is to ensure that query engine does not look for unlimited segments. 
+            </summary>
+            <param name="segmentsCount"></param>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_Data.Utils.HelperMethods.MaxiumAllowedSegmentsCount">
+            <summary>
+            This helper method is to ensure that query engine does not look for unlimited segments. 
+            </summary>
+        </member>
+        <member name="M:JCass_Data.Utils.HelperMethods.IsOdd(System.Int32)">
+            <summary>
+            Returns true is a number is ODD
+            </summary>
+            <param name="value"></param>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_Data.Utils.HelperMethods.GetScaleFactorFromLabel(System.String)">
+            <summary>
+            Returns a numeric scale factor based on a UI friendly scale label like 'million'
+            </summary>
+            <param name="scaleFactorLabel">Handles 'none' = 1, 'thousand' = 1000, 'million', 'billion'. Not case sensitive and will handle plurals as well. If label is null or empty, 
+            or if no match is found, 1 is returned.</param>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_Data.Utils.HelperMethods.GetCostScaleFactor(System.Double)">
+            <summary>
+            Returns an appropriate scaling factor for cost. For example, if cost is over a million but less than a billion, will return 1,000,000
+            </summary>
+            <param name="value">Value for cost scaling</param>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_Data.Utils.HelperMethods.GetCostScaleFactorText(System.Double)">
+            <summary>
+            Returns an appropriate scaling factor for cost. For example, if cost is over a million but less than a billion, will return 1,000,000
+            </summary>
+            <param name="value">Value for cost scaling</param>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_Data.Utils.HelperMethods.GetHighLowParamNamesFromShortCode(System.String)">
+            <summary>
+            Gets the names of the statistics parameters to use for a HighLow Graph based on an abbreviated code. Returns parameter names to use IN THE ORDER  
+            High-Medium-Low. For example, returns a list containing '95th Percentile', 'Median Value' and '5th Percentile' for code '95th%-Median-5th%'
+            </summary>
+            <param name="shortCode"></param>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_Data.Utils.HelperMethods.StringContainsSpecialChars(System.String)">
+            <summary>
+            Returns true if stringToCheck contains any characters apart from a-z and 0-9 and '_';
+            </summary>
+        </member>
+        <member name="M:JCass_Data.Utils.HelperMethods.ReplaceSpecialCharactersWithUnderScore(System.String)">
+            <summary>
+            Returns the stringToCheck after replacing all the special chars in a string with '_'
+            </summary>
+        </member>
+        <member name="M:JCass_Data.Utils.HelperMethods.GetConvertedDecimalValue(System.String,System.Int32)">
+            <summary>
+            Gets the decimal value as a string and decimal places will be depend on the number of decimals we will pass 
+            </summary>
+        </member>
+        <member name="M:JCass_Data.Utils.HelperMethods.GetDecimalValueWithThousandSeperator(System.Decimal,System.Int32)">
+            <summary>
+            Gets the decimal value as a string (Thousand Separator) and decimal places will be depend on the number of decimals we will pass 
+            </summary>
+        </member>
+        <member name="M:JCass_Data.Utils.HelperMethods.NumberIsWhole(System.Double)">
+            <summary>
+            Checks if a number is a whole (integer) number or not
+            </summary>
+            <param name="numberToCheck"></param>        
+        </member>
+        <member name="M:JCass_Data.Utils.HelperMethods.GetSmartNumberFormatted(System.Double)">
+            <summary>
+            Gets a best guess for how a number is to be displayed as text
+            </summary>
+        </member>
+        <member name="M:JCass_Data.Utils.HelperMethods.GetRandomNumberOnDate">
+            <summary>
+            To get a random number based on datetime stamp.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_Data.Utils.HelperMethods.ConvertGenericListToDataTable``1(System.Collections.Generic.IList{``0})">
+            <summary>
+            To convert a strongly typed list to datatable
+            </summary>
+            <typeparam name="T">Represents Typed list type</typeparam>
+            <param name="data">List containing List</param>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_Data.Utils.HelperMethods.GetRandomNumbers(System.Double,System.Double,System.Int32)">
+            <summary>
+            Helper to generate set of random numbers within a given range, with uniform distribution
+            </summary>        
+        </member>
+        <member name="M:JCass_Data.Utils.HelperMethods.GetColourForSeries(System.Int32,System.Int32)">
+            <summary>
+            Returns a colour based on series number. For series 0 to 7, we return Salmon, SteelBlue, DarkRed, Navy, DarkGreen, DeepPink, Orange
+            </summary>
+        </member>
+        <member name="M:JCass_Data.Utils.HelperMethods.GetLaneCodesInPlotOrder(System.String)">
+            <summary>
+            Lanes order to display in strip map.
+            Type is to declare which country road type the lanes are to be plotted
+            </summary>
+        </member>
+        <member name="M:JCass_Data.Utils.HelperMethods.GetTreatmentYearBasedOnSpecificFormat(System.Int32,System.String)">
+            <summary>
+            Treatment year format which displying treatment, the user will decide whether to show Year (e.g. 2015), Previous/Year (e.g.14/15), or Year/Next (e.g. 15/16)
+            </summary>
+            <param name="year">Treatment year to format</param>
+            <param name="treatmentDisplayYrFormat">Format string (Show Year (e.g. 2015), Previous/Year (e.g.14/15), or Year/Next (e.g. 15/16))</param>
+            <returns></returns>
+        </member>
+        <member name="M:JCass_Data.Utils.HelperMethods.GetExcelDataTypeFormat(System.String,System.String)">
+            <summary>
+            Get the excel cell data type foramt based on data column data type
+            </summary>
+        </member>
+        <member name="M:JCass_Data.Utils.HelperMethods.GetValuesWithSingleQoute(System.String,System.String)">
+            <summary>
+            Prepare the ids with single qoutes
+            </summary>
+        </member>
+        <member name="T:JCass_Data.Utils.PasswordEvaluator">
+            <summary>
+            Evaluates a password. Bassed on https://stackoverflow.com/questions/6151576/how-to-check-password-strength
+            </summary>
+        </member>
+    </members>
+</doc>
