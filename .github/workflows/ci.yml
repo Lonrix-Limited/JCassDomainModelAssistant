@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # ---------------------------------------------------------------------
+      # The leak scan is the gate that must never be skipped or made optional.
+      # This repository is public; curation by human attention fails silently,
+      # and this is what makes it fail loudly instead. See scripts/leak-scan.ps1.
+      # ---------------------------------------------------------------------
+      - name: Leak scan
+        shell: pwsh
+        run: ./scripts/leak-scan.ps1
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      # ---------------------------------------------------------------------
+      # The reference model compiles against assemblies in its refs/ folder.
+      # Until S2 commits reference assemblies, refs/ is deliberately absent from
+      # the repository (it currently holds real framework DLLs, which must not be
+      # published), so there is nothing here to build against.
+      #
+      # This step detects that rather than asserting it, so it turns into a real
+      # gate by itself the moment S2 lands - no one has to remember to enable it.
+      # ---------------------------------------------------------------------
+      - name: Check for framework reference assemblies
+        id: refs
+        shell: pwsh
+        run: |
+          $refs = 'reference-model/DomainModelSample/refs'
+          $present = (Test-Path $refs) -and (@(Get-ChildItem $refs -Filter *.dll -ErrorAction SilentlyContinue).Count -gt 0)
+          if ($present) {
+            Write-Host 'Reference assemblies present - the reference model will be built.'
+          } else {
+            Write-Host '::notice::refs/ holds no assemblies, so the reference-model build is skipped. Expected until session S2 lands.'
+          }
+          "present=$($present.ToString().ToLower())" >> $env:GITHUB_OUTPUT
+
+      - name: Build reference model
+        if: steps.refs.outputs.present == 'true'
+        run: >
+          dotnet build reference-model/DomainModelSample/DomainModelSample.csproj
+          -c Debug --no-incremental -warnaserror

@@ -1,0 +1,56 @@
+{
+  // Juno Cassandra - Domain Model Assistant
+  //
+  // ADDING YOUR OWN MODEL TO THIS WORKSPACE
+  //
+  //   1. Create your model folder BESIDE this one, not inside it. If the Assistant is at
+  //          C:\juno\JCassDomainModelAssistant
+  //      then your model belongs at something like
+  //          C:\juno\MyRoadModel
+  //
+  //   2. Add a second entry to the "folders" list below:
+  //
+  //          { "name": "My model",     "path": "../MyRoadModel" },
+  //
+  //   3. Save this file and reopen the workspace (File > Open Workspace from File...).
+  //
+  // WHY BESIDE AND NOT INSIDE - this matters, and it is easy to get wrong:
+  //
+  //   * Uploading to the web Debug Model page sends your model folder WHOLE, and it must open
+  //     straight to your .csproj with exactly one .csproj at the top. A model nested inside the
+  //     Assistant would drag the Assistant along with it, and the upload would be rejected.
+  //
+  //   * When a newer Assistant is released you replace this folder wholesale. Your model is
+  //     untouched, because it was never in here. A model kept inside the Assistant would be
+  //     destroyed by its own upgrade.
+  //
+  // Your model folder is yours. Put it under version control if you want to; nothing here
+  // requires it.
+  "folders": [
+    {
+      "name": "Assistant",
+      "path": "."
+    }
+    // { "name": "My model", "path": "../MyRoadModel" },
+  ],
+  "settings": {
+    "files.exclude": {
+      "**/bin": true,
+      "**/obj": true,
+      "**/.vs": true
+    },
+    // The bundle is a binary .xlsx. Search results from inside it are meaningless.
+    "search.exclude": {
+      "**/bin": true,
+      "**/obj": true,
+      "**/refs": true,
+      "**/*.xlsx": true
+    },
+    "dotnet.defaultSolution": "disable"
+  },
+  "extensions": {
+    "recommendations": [
+      "ms-dotnettools.csdevkit"
+    ]
+  }
+}

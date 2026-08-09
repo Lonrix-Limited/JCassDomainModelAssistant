@@ -1,0 +1,35 @@
+bin/
+obj/
+.vs/
+.idea/
+*.user
+
+# Zips built for upload or hand-off. Windows names a "Send to > Compressed folder"
+# zip after the last-selected item, so these turn up under surprising names.
+*.zip
+
+# Symbols are never worth carrying.
+*.pdb
+
+# ---------------------------------------------------------------------------
+# refs\ — NOTHING IN IT IS COMMITTED YET. This is temporary, and S2 removes it.
+#
+# This repository is PUBLIC. The reference model arrived from its own private
+# repo carrying REAL framework assemblies, which are the commercial product and
+# must not be published. They are still on disk locally, so the project builds
+# on this machine, but they are kept out of every commit until S2 replaces them
+# with .NET REFERENCE assemblies — same public API, no method bodies, safe to
+# publish and enough for IntelliSense and compilation.
+#
+# Consequence, and it is expected rather than a bug: a fresh clone of this repo
+# cannot build the reference model until S2 lands. See reference-model/README.md.
+#
+# S2: delete this whole block, commit refs/ contents, and narrow the ignore to
+# refs/*.pdb.
+#
+# refs/README.md is documentation, not a framework file, so it is kept.
+# refs/FRAMEWORK-VERSION.txt is not: it records the maintainer's local source
+# path, which has no business in a public repository. S2 regenerates it.
+# ---------------------------------------------------------------------------
+**/refs/*
+!**/refs/README.md

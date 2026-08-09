@@ -1,0 +1,14 @@
+# Normalise line endings on commit; check out native. Keeps diffs clean when this kit is cloned
+# or unzipped onto a machine set up differently from the one it was authored on.
+* text=auto
+
+*.cs      text diff=csharp
+*.csproj  text
+*.md      text
+*.ps1     text eol=crlf
+*.yml     text eol=lf
+
+# Binary containers. Never touch these.
+*.xlsx    binary
+*.dll     binary
+*.pdb     binary

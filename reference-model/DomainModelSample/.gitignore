@@ -1,0 +1,14 @@
+bin/
+obj/
+.vs/
+
+# Zips built for upload or hand-off. Windows names a "Send to > Compressed folder"
+# zip after the last-selected item, so these turn up under surprising names.
+*.zip
+
+# NOTE: refs/*.dll and refs/*.xml ARE committed, deliberately. The project has to
+# compile and give IntelliSense the moment someone clones or unzips it — a starter
+# kit that opens to a screen of red squiggles has failed before it starts. See
+# refs/README.md, and refs/FRAMEWORK-VERSION.txt for which framework build they are.
+# Symbols are the one thing not worth carrying.
+refs/*.pdb
