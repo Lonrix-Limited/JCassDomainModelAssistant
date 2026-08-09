@@ -248,14 +248,33 @@ numeric columns, so a client CSV with blanks must use a sentinel value instead.
 Parameters are the state that survives from one period to the next. If a value must be remembered,
 it is a parameter; if it can be recomputed from inputs and other parameters, it need not be.
 
-1. `domain_model_setup.xlsx` → `parameters` → add a row. `minimum`/`maximum` are validation
-   bounds, not clamps — the run fails if a value lands outside them, which is usually what you
-   want.
+1. `domain_model_setup.xlsx` → `parameters` → add a row. **`minimum` and `maximum` are clamps,
+   not validation bounds.** Every value written to the parameter is forced into that range —
+   quietly, by design, so that one out-of-range calculation cannot abort a whole run. Get the
+   range wrong and there is no error to notice: the model runs to completion and the parameter
+   is simply pinned at a limit for the periods that hit it. A range of `0` to `0` flattens the
+   parameter to zero for the entire run.
+
+   So set the range to what the quantity can genuinely take. If a parameter is coming out
+   suspiciously flat, or sitting exactly on a round number, check this row first.
 2. `Objects\SampleElement.cs` → write it in `SetParameterValues`. **Every parameter in the sheet
    must be written there**, or setup fails.
 3. `Objects\ElementFactory.cs` → read it back in `GetElementFromModelData`.
 
 Numeric parameter names conventionally start with `par_`.
+
+`jcass-dm` writes that row for you, and will not let you skip the range. From the Assistant's
+root:
+
+```powershell
+.\tools\jcass-dm.exe add-parameter <path to your domain_model_setup.xlsx> `
+    --name par_iri --min 0 --max 20 --decimals 2 --comment "Roughness, IRI m/km"
+```
+
+It refuses a numeric parameter with no `--min` and `--max`, for exactly the reason above —
+there is no safe default for a number that clamps. `.\tools\jcass-dm.exe dump <bundle>` prints
+the sheet as text afterwards, so you can check it against your `SetParameterValues` without
+opening Excel.
 
 ### Add a treatment
 
