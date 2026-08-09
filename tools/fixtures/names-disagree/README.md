@@ -1,0 +1,214 @@
+# FixtureModel
+
+A Juno Cassandra **custom domain model**, scaffolded by `jcass-dm scaffold --from-sample`.
+
+Unlike an empty scaffold, this one **runs**. It carries a small working model — generic assets
+with an age, a condition and a material — so you can prove the whole pipeline before you write a
+line of your own engineering: build it, upload it, debug it, publish it, run it.
+
+**This is the model you keep.** There is no throwaway project and no rename later. You replace the
+sample's logic with your own, one file at a time, with a working build at every step.
+
+---
+
+## 1. The four names
+
+Four strings must be identical, and in this project they all read **`FixtureModel`**:
+
+| # | Where | Value |
+|---|---|---|
+| 1 | The `.csproj` filename | `FixtureModel.csproj` |
+| 2 | The assembly name | `FixtureModel` — inherited from #1, because `<AssemblyName>` is deliberately not set |
+| 3 | The entry class | `public class FixtureModel : DomainModelBase` |
+| 4 | `meta.main_dll` / `meta.main_class` in `domain_model_setup.xlsx` | `FixtureModel.dll` / `FixtureModel` |
+
+They agree because they were all written from one name. Keep it that way.
+
+Your model gets loaded by **two different routes** and they disagree about where the name comes
+from. A **normal run** reads the `meta` sheet of the bundle. A **debug run** — pressing F5 on the
+web Debug Model page — ignores that sheet entirely and derives both names from the `.csproj`
+filename, because mid-edit your source has usually drifted from whatever identity was last
+shipped. So the two only agree when all four strings match, and when they don't, everything looks
+fine until F5 gives you:
+
+```
+Domain Model class 'Whatever' was not found in the specified .dll
+```
+
+**To rename, use the tool, not four manual edits:**
+
+```powershell
+.\tools\jcass-dm.exe rename NewName --project ..\FixtureModel
+```
+
+**Do not add `<AssemblyName>` to the `.csproj`.** It is the one setting that breaks the rule
+silently.
+
+---
+
+## 2. Build it
+
+```powershell
+dotnet build FixtureModel.csproj -c Debug --no-incremental
+```
+
+Expected: `Build succeeded. 0 Warning(s) 0 Error(s)`, and `bin\Debug\net9.0\FixtureModel.dll`.
+
+**You can build here; you cannot run here.** The assemblies in `refs\` are *reference assemblies*
+— the framework's full public API with no method bodies. Enough for the compiler and for
+IntelliSense, and deliberately not enough for the runtime. Anything that tries to execute the
+framework locally compiles cleanly and then fails with
+`System.BadImageFormatException: ... Reference assemblies cannot be loaded for execution.` That is
+expected. You author here and you run and debug on the web app's Debug Model page.
+
+---
+
+## 3. What this model does
+
+A network of generic assets, each with an age, a condition rating (0 = good, 100 = poor), a
+material and an area.
+
+- Elements deteriorate by a fixed number of condition points per year, set by material.
+- Once an element is old enough and bad enough it triggers a **repair**; once it is worse than a
+  repair can fix, a **replace**.
+- An element that triggers a repair is *also* offered a replace, so the optimiser has a genuine
+  choice between the cheap holding action and the permanent fix.
+- Anything worse than the maintenance threshold picks up **routine maintenance** every period,
+  outside the budget competition.
+- Cost is `quantity × unit rate` — area in square metres, times a per-square-metre rate that
+  varies by material.
+
+**None of that is meant to be right.** It is meant to run, and to be structured the way a real
+model should be structured. It needs these input columns — `element_name`, `material`, `area_sqm`,
+`cond_rating`, `age` — and these lookup sets in the client's `inputs\lookups.xlsx`:
+`repair_thresholds`, `replace_thresholds`, `maintenance_thresholds`, `deterioration_rates`,
+`replacement_rates`, `rate_factors`, `unit_rates`. It fails at setup with a message naming any one
+that is missing.
+
+---
+
+## 4. The file map
+
+Each file is one stage of the framework's per-period loop, so a change always has an obvious home.
+
+```
+FixtureModel.csproj              Build config. The filename is load-bearing — see §1.
+domain_model_setup.xlsx       The bundle: what the framework needs before it can load you.
+refs\                         Framework reference assemblies and their docs.
+Objects\
+  FixtureModel.cs                Entry class. A switchboard — keep it thin.
+  Constants.cs                Every tunable number, read from lookups.xlsx. See §6.
+  TreatmentNames.cs           Treatment name constants, shared with the bundle.
+  ModelElement.cs              What an asset is: the state that carries between periods.
+  ModelElementFactory.cs       Framework dictionaries -> element. All input column names live here.
+  Initialiser.cs              Stage 1: starting state, before period 1.
+  TreatmentsTrigger.cs        Stage 2: what work is due, and what it costs. The judgement.
+  Incrementer.cs              Stage 4a: how an element decays when nothing is done.
+  Resetter.cs                 Stage 4b: how it recovers when something is.
+  RoutineMaintenance.cs       Stage 5: work that happens outside the budget.
+```
+
+Stage 3 is the optimiser, and stage 6 is `DoEndOfPeriodCalculations` on the entry class. You write
+neither unless you need to.
+
+---
+
+## 5. Replacing the sample with your model
+
+Prove the pipeline first — build, upload, F5, publish, run — then work down this list. Each step
+leaves you with a project that still builds and still runs.
+
+1. **`ModelElement.cs` and `ModelElementFactory.cs`** — what an element of *your* network is, and
+   which input columns describe it. Declare each column in the bundle:
+
+   ```powershell
+   .\tools\jcass-dm.exe add-input-header .\domain_model_setup.xlsx --column pavement_age --type number
+   ```
+
+2. **`SetParameterValues` and the `parameters` sheet** — the state that must survive between
+   periods. Keep the two in step; `jcass-dm check` tells you when they drift.
+
+   ```powershell
+   .\tools\jcass-dm.exe add-parameter .\domain_model_setup.xlsx --name par_iri --min 0 --max 20
+   ```
+
+   `--min` and `--max` are **clamps, not validation bounds** — values outside the range are pinned
+   into it silently, by design, so one bad calculation cannot abort a whole run. Get the range
+   wrong and the parameter simply comes out flat.
+
+3. **`Incrementer.cs`** — your deterioration model, with the rates in `lookups.xlsx`.
+
+4. **`TreatmentsTrigger.cs` and `Resetter.cs`** — your treatments. For each: a constant in
+   `TreatmentNames.cs`, a bundle row, a trigger method, a reset arm, a unit rate.
+
+   ```powershell
+   .\tools\jcass-dm.exe add-treatment .\domain_model_setup.xlsx --name reseal --budget-category resurfacing
+   ```
+
+5. **`Initialiser.cs`** — data cleaning, once you meet real survey data rather than the sample's.
+
+6. **Check as you go.**
+
+   ```powershell
+   .\tools\jcass-dm.exe check --project .
+   ```
+
+---
+
+## 6. Where the numbers live
+
+**Thresholds and rates belong in the client's `inputs\lookups.xlsx`, not in this project.**
+
+Not a style preference. A modeller recalibrating a model — moving a trigger from age 15 to age 12,
+escalating replacement costs by 10% — has to be able to do it themselves, look at the result, and
+try again. The web app's **Tuning** page exists for exactly that and writes back to
+`lookups.xlsx`. Every number hard-coded here is a number they must ask a developer for, then wait
+on a rebuild and a republish.
+
+**There is not one numeric literal in this model's trigger, incrementer or resetter.** That is
+deliberate and it is the property to preserve. `Constants.cs` shows both shapes worth copying: a
+threshold used in one comparison gets its own property; a *set* of values all used the same way —
+a rate per material, a rate per treatment — is kept whole and resolved by key at the point of use,
+so adding a material costs a spreadsheet row and nothing in C#.
+
+The test for whether a number belongs there is one question:
+
+> **Would a modeller ever change this to recalibrate the model?**
+
+Yes → `lookups.xlsx`. Changing it would break the *code* rather than change the *forecast* → it
+stays in C#, as a named constant. Unit conversions, array bounds, the `-999` invalid-coordinate
+sentinel and structural limits are all legitimately C#.
+
+And a whole **set** of related coefficients that gets regenerated together by a fit — a regression,
+a distribution definition, a per-cohort parameter table — belongs in neither. Put it in a CSV in
+the client's `supporting\` folder and load it once in `SetupInstance`. The test is update
+granularity: changed one at a time by judgement → `lookups.xlsx`; regenerated as a set by a refit
+→ a CSV. Nobody hand-edits forty lookup rows after a refit.
+
+---
+
+## 7. What not to touch
+
+- **`<AssemblyName>`** — leave it unset. See §1.
+- **The method signatures on `FixtureModel`.** They are `override`s of an abstract base the framework
+  owns.
+- **The five sheet names in `domain_model_setup.xlsx`.** All five must exist, spelled exactly,
+  including `network_functions` with no rows in it.
+- **The `refs\` folder contents.** They arrive with the Assistant and are replaced wholesale when
+  you download a newer one.
+- **`Private=false` on the `<Reference>` item.** It stops framework DLLs being copied next to your
+  own, which is what you want.
+
+---
+
+## 8. Uploading it
+
+The Debug Model page wants **source only**, opening **straight to the `.csproj`**:
+
+```powershell
+.\tools\jcass-dm.exe package --project .
+```
+
+Zipping the folder rather than its contents is the classic mistake — everything lands one level
+too deep and F5 fails with *"No .csproj file found at workspace root"*. `package` builds it the
+right way round and leaves out `refs\`, `bin\`, `obj\`, `.git\` and `.vs\`.

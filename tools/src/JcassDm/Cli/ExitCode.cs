@@ -27,6 +27,15 @@ public static class ExitCode
     /// <summary>The row already exists with different values and <c>--force</c> was not given. Nothing was written.</summary>
     public const int Conflict = 3;
 
+    /// <summary>
+    /// <c>check</c> found problems with the model. The tool worked and the answer is "not yet".
+    ///
+    /// <para>Distinct from <see cref="BundleInvalid"/> on purpose. A 2 means jcass-dm could not
+    /// read the thing it was pointed at; a 4 means it read it perfectly well and the model is not
+    /// ready to run. An agent should retry after fixing different things in each case.</para>
+    /// </summary>
+    public const int CheckFailed = 4;
+
     /// <summary>Unexpected failure inside jcass-dm. Always a defect - report it.</summary>
     public const int ToolFailure = 9;
 }

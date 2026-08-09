@@ -1,0 +1,187 @@
+using System;
+using System.Collections.Generic;
+
+namespace {{NAMESPACE}};
+
+/// <summary>
+/// Every tunable number this model uses, read once from the client's <c>inputs\lookups.xlsx</c>
+/// at setup and cached here for the run.
+///
+/// <para><b>This class is the reason a modeller can calibrate your model without you.</b>
+/// Thresholds and rates live in a spreadsheet, not in C#, so moving a trigger from age 15 to
+/// age 12 - or escalating every repair cost by 10% - is something they do themselves on the web
+/// app's <b>Tuning</b> page, which writes back to that same file. No rebuild, no republish, no
+/// developer. Every number you hard-code here instead is a number they can only file a ticket
+/// about.</para>
+///
+/// <para><b>Read them here, not earlier.</b> This object is built from
+/// <see cref="{{MODEL}}.SetupInstance"/>, which the framework calls after it has loaded lookups
+/// and before it touches any element. A lookup read from a constructor or a static initialiser
+/// that runs earlier gets an empty dictionary, and that reads as "key not found" rather than
+/// "too early".</para>
+///
+/// <para><b>How lookups.xlsx is structured.</b> Any sheet whose name starts with <c>lkp_</c> is
+/// read, and all of them are merged into one flat table with three columns that matter -
+/// <c>lookup_set_name</c>, <c>setting_key</c>, <c>setting_value</c>. A value is addressed by the
+/// pair (set name, key); which sheet a row sits in is only an organisational convenience.</para>
+///
+/// <para><b>Adding a threshold is three steps</b>, and they go in this order:</para>
+/// <list type="number">
+///   <item><description>Add a row to <c>inputs\lookups.xlsx</c>: a <c>lookup_set_name</c>, a
+///   <c>setting_key</c>, and the value.</description></item>
+///   <item><description>Add a <c>private const string</c> here for the set name if it is a new
+///   set, and a read-only property that reads the key through <see cref="GetNumber"/>.</description></item>
+///   <item><description>Use that property where the threshold is needed. Nowhere in this project
+///   should a trigger age or a condition limit appear as a literal.</description></item>
+/// </list>
+///
+/// <example>
+/// A trigger threshold, done properly. Note there is no default: if the row is missing, setup
+/// fails immediately with a message naming the set and the key, which is what you want.
+/// <code>
+/// private const string RepairThresholds = "repair_thresholds";
+///
+/// /// &lt;summary&gt;An element older than this many years may be considered for repair.&lt;/summary&gt;
+/// public double RepairAgeGreaterThan { get; }
+///
+/// // ...in the constructor:
+/// this.RepairAgeGreaterThan = GetNumber(lookupSets, RepairThresholds, "age_gt");
+/// </code>
+/// </example>
+///
+/// <para><b>Not every number belongs here.</b> The test is one question: <i>would a modeller ever
+/// change this to recalibrate the model?</i> Yes means <c>lookups.xlsx</c>. A unit conversion, an
+/// array bound, a framework sentinel value such as the <c>-999</c> invalid-coordinate marker -
+/// changing those would break the code rather than change the forecast, so they stay in C# as
+/// named constants. And a whole <i>set</i> of related coefficients that gets regenerated together
+/// by a regression fit belongs in neither: put it in a CSV in the client's <c>supporting\</c>
+/// folder and load it in <see cref="{{MODEL}}.SetupInstance"/>. Nobody hand-edits forty lookup
+/// rows after a refit.</para>
+/// </summary>
+public class Constants
+{
+    /// <summary>
+    /// Set name in lookups.xlsx holding the per-treatment unit rates. This is the set the web
+    /// app's Tuning page "Treatment Rates" tab edits, so expect its values to change between runs
+    /// with no code change at all.
+    /// </summary>
+    private const string UnitRates = "unit_rates";
+
+    /// <summary>
+    /// The whole unit-rate set, kept rather than unpacked into fixed properties. Rates are looked
+    /// up by treatment name at the point of use, so adding a treatment needs a row in
+    /// lookups.xlsx and a constant on <see cref="TreatmentNames"/> - and nothing in this class.
+    ///
+    /// <para>Thresholds are the other way round: each is used in a different comparison, so each
+    /// gets its own property. Rates are all used the same way, so they do not.</para>
+    /// </summary>
+    private readonly Dictionary<string, object> _unitRates;
+
+    // ---------------------------------------------------------------------------------------
+    // Your thresholds go here, as read-only properties assigned in the constructor below.
+    // See the <example> in this class's summary for the shape. Do not give any of them a
+    // default value: a threshold that silently falls back to a plausible number produces a
+    // forecast that looks like a modelling result.
+    // ---------------------------------------------------------------------------------------
+
+    /// <summary>
+    /// Reads every threshold from the model's lookups and holds on to the unit-rate set. Throws
+    /// with a message naming the missing set or key if the spreadsheet is incomplete - which is
+    /// what you want: a typo in <c>lookups.xlsx</c> fails immediately at setup rather than
+    /// silently defaulting and skewing a whole run.
+    /// </summary>
+    /// <param name="lookupSets">
+    /// The model's lookups, keyed by set name then setting key. Pass <c>this.model.Lookups</c>
+    /// from <see cref="{{MODEL}}.SetupInstance"/>.
+    /// </param>
+    public Constants(Dictionary<string, Dictionary<string, object>> lookupSets)
+    {
+        _unitRates = GetSet(lookupSets, UnitRates);
+
+        // Assign your threshold properties here, e.g.
+        //   this.RepairAgeGreaterThan = GetNumber(lookupSets, RepairThresholds, "age_gt");
+    }
+
+    /// <summary>
+    /// Returns the unit rate for a treatment, keyed by the treatment's name.
+    ///
+    /// <para>Looked up on demand rather than unpacked in the constructor, so a new treatment needs
+    /// a row in <c>lookups.xlsx</c> and a constant on <see cref="TreatmentNames"/> - and nothing
+    /// at all in this class.</para>
+    /// </summary>
+    /// <param name="treatmentName">One of the <see cref="TreatmentNames"/> constants.</param>
+    /// <exception cref="Exception">The treatment has no rate in the <c>unit_rates</c> set.</exception>
+    public double GetUnitRate(string treatmentName)
+    {
+        if (!_unitRates.ContainsKey(treatmentName))
+        {
+            throw new Exception(
+                $"Unit rate for Treatment '{treatmentName}' not found in lookup set '{UnitRates}'.");
+        }
+
+        return Convert.ToDouble(_unitRates[treatmentName]);
+    }
+
+    /// <summary>
+    /// Fetches a whole lookup set, failing with the set name if it is absent.
+    /// </summary>
+    /// <param name="lookupSets">The model's lookups.</param>
+    /// <param name="setName">Value of the <c>lookup_set_name</c> column to fetch.</param>
+    protected static Dictionary<string, object> GetSet(
+        Dictionary<string, Dictionary<string, object>> lookupSets,
+        string setName)
+    {
+        if (!lookupSets.ContainsKey(setName))
+        {
+            throw new Exception($"Lookup set '{setName}' not found in lookups.xlsx.");
+        }
+
+        return lookupSets[setName];
+    }
+
+    /// <summary>
+    /// Reads one numeric setting, failing with the set and key names if it is absent.
+    ///
+    /// <para>The conversion is not incidental: <c>setting_value</c> arrives as text regardless of
+    /// how the cell looks in Excel, so a raw cast would throw an unhelpful
+    /// <see cref="InvalidCastException"/> here.</para>
+    /// </summary>
+    /// <param name="lookupSets">The model's lookups.</param>
+    /// <param name="setName">Value of the <c>lookup_set_name</c> column.</param>
+    /// <param name="settingKey">Value of the <c>setting_key</c> column.</param>
+    protected static double GetNumber(
+        Dictionary<string, Dictionary<string, object>> lookupSets,
+        string setName,
+        string settingKey)
+    {
+        Dictionary<string, object> set = GetSet(lookupSets, setName);
+
+        if (!set.ContainsKey(settingKey))
+        {
+            throw new Exception($"Setting '{settingKey}' not found in lookup set '{setName}'.");
+        }
+
+        return Convert.ToDouble(set[settingKey]);
+    }
+
+    /// <summary>
+    /// Reads one text setting, failing with the set and key names if it is absent.
+    /// </summary>
+    /// <param name="lookupSets">The model's lookups.</param>
+    /// <param name="setName">Value of the <c>lookup_set_name</c> column.</param>
+    /// <param name="settingKey">Value of the <c>setting_key</c> column.</param>
+    protected static string GetText(
+        Dictionary<string, Dictionary<string, object>> lookupSets,
+        string setName,
+        string settingKey)
+    {
+        Dictionary<string, object> set = GetSet(lookupSets, setName);
+
+        if (!set.ContainsKey(settingKey))
+        {
+            throw new Exception($"Setting '{settingKey}' not found in lookup set '{setName}'.");
+        }
+
+        return Convert.ToString(set[settingKey]) ?? string.Empty;
+    }
+}

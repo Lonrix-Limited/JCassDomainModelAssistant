@@ -1,0 +1,44 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>SomethingElse</AssemblyName>
+    <!--
+      DELIBERATELY NOT SET: <AssemblyName>.
+
+      Leaving it unset makes the assembly name default to this file's stem, FixtureModel, which is
+      what keeps the four names aligned. Setting it is the one change that can break the model
+      silently: this file would still be called FixtureModel.csproj while the DLL came out under a
+      different name, and only a web debug (F5) run would notice.
+
+      If you need to change the model's name, run  jcass-dm rename <NewName>  from the Assistant.
+      It changes all four names together, or none of them.
+    -->
+  </PropertyGroup>
+
+  <!--
+    Framework references come from the sibling refs\ folder, NOT from <ProjectReference>.
+
+    Two reasons this is a wildcard over a folder rather than a list of named assemblies:
+
+      1. You do not have the framework source, so a <ProjectReference> is not an option.
+      2. The web Debug Model workspace stages framework DLLs into refs\ for you, and it stages
+         far more of them than a local copy does because it includes NuGet transitives. A
+         wildcard picks up whatever is actually there, so this exact csproj builds unchanged
+         both on your machine and on the debug sidecar. A hard-coded list would need editing
+         every time you moved between the two.
+
+    Private=false means "do not copy these into bin\". That is correct and load-bearing: at run
+    time the framework host has already loaded its own copy of every one of these assemblies, and
+    a duplicate next to your DLL only invites version confusion. Your bin\ folder should contain
+    FixtureModel.dll and FixtureModel.pdb, and nothing else.
+  -->
+  <ItemGroup>
+    <Reference Include="refs\*.dll">
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+</Project>

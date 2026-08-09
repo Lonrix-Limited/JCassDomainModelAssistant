@@ -1,0 +1,58 @@
+using System;
+using JCass_ModelCore.Models;
+
+namespace FixtureModel.Objects;
+
+/// <summary>
+/// Stage 4a of 6: how an element changes over one period when nothing is done to it.
+///
+/// <para>This is the deterioration model, and it runs for the great majority of elements in every
+/// period - the optimiser can only ever afford to treat a few. Everything the forecast says about
+/// a do-nothing future comes from this file.</para>
+///
+/// <para><b>Keep the order of the updates the same as the order of the parameters on the bundle's
+/// <c>parameters</c> sheet.</b> It costs nothing and it makes the two readable side by side,
+/// which is how you notice that one of them is not being incremented at all.</para>
+///
+/// <para><b>Watch the order where values depend on each other.</b> Below, age is incremented
+/// before <c>SetObjectiveValue</c>, so the objective is computed off the new age. That is a
+/// deliberate choice and it is invisible in the numbers, which is why it is written down.</para>
+///
+/// <para>The deterioration rate comes from the <c>deterioration_rates</c> set in
+/// <c>lookups.xlsx</c>, keyed by material - so a modeller recalibrating against observed
+/// condition data changes a spreadsheet row, and adding a sixth material costs a row and nothing
+/// in C#. That is the shape to keep. If the rates ever grow into something a regression produces
+/// - a coefficient per material per traffic band, refitted as a set - move them to a CSV in the
+/// client's <c>supporting\</c> folder and load it in <see cref="FixtureModel.SetupInstance"/>.</para>
+/// </summary>
+public class Incrementer
+{
+    private readonly ModelBase _frameworkModel;
+    private readonly FixtureModel _domainModel;
+
+    /// <summary>
+    /// Creates the incrementer. Built once in <see cref="FixtureModel.SetupInstance"/>.
+    /// </summary>
+    /// <param name="frameworkModel">The framework model, for lookups and the random source.</param>
+    /// <param name="domainModel">This domain model, for its <see cref="Constants"/>.</param>
+    public Incrementer(ModelBase frameworkModel, FixtureModel domainModel)
+    {
+        _frameworkModel = frameworkModel ?? throw new ArgumentNullException(nameof(frameworkModel));
+        _domainModel = domainModel ?? throw new ArgumentNullException(nameof(domainModel));
+    }
+
+    /// <summary>
+    /// Advances one element by a single period, with no treatment applied. Returns the same
+    /// instance, mutated - the caller writes it straight back through the parameter sinks.
+    /// </summary>
+    /// <param name="element">The element to advance.</param>
+    /// <param name="period">Modelling period (1-based) being entered.</param>
+    public ModelElement Increment(ModelElement element, int period)
+    {
+        element.Age += 1;
+        element.ConditionRating += _domainModel.Constants.GetDeteriorationRate(element.MaterialType);
+        element.SetObjectiveValue();
+
+        return element;
+    }
+}

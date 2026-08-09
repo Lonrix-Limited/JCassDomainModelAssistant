@@ -1,0 +1,116 @@
+using System;
+using System.Collections.Generic;
+using JCass_ModelCore.Models;
+using JCass_ModelCore.Treatments;
+
+namespace {{NAMESPACE}};
+
+/// <summary>
+/// Stage 2 of 6: what work is due on this element in this period, and what it would cost.
+///
+/// <para><b>This is where the engineering judgement lives.</b> Every other file in this project
+/// moves state around; this one decides. It is also the file a reviewer will read first, so it is
+/// worth keeping the conditions readable - one small <c>Add...IfValid</c> method per treatment,
+/// as the canonical models do, rather than one long chain of nested ifs.</para>
+///
+/// <para><b>Return every option, not just the best one.</b> Handing the optimiser a single
+/// candidate reduces it to a yes/no funding decision. Handing it two - a cheap holding action
+/// alongside the permanent fix - is what lets it trade elements off against each other under a
+/// budget, and it is what the benefit-cost models need in order to have anything to compare.
+/// Return an empty list, never <c>null</c>, when nothing is due.</para>
+///
+/// <para><b>You return candidates for this period only.</b> The framework's own strategy
+/// generator rolls each candidate forward into multi-period strategies - do it now, do it in
+/// three years, do nothing - before the optimiser scores them. You do not write that part.</para>
+///
+/// <para><b>Set <c>TreatmentSuitabilityScore</c> on every instance you build.</b> The optimiser
+/// ranks candidates by it. A candidate with no score set will never be chosen ahead of one that
+/// has one, and nothing reports that it was passed over.</para>
+///
+/// <para>Every threshold in this file comes from <see cref="Constants"/>, which reads it from the
+/// client's <c>inputs\lookups.xlsx</c>. A trigger age written here as a literal is a trigger age
+/// the modeller cannot recalibrate without you, a rebuild and a republish.</para>
+/// </summary>
+public class TreatmentsTrigger
+{
+    private readonly ModelBase _frameworkModel;
+    private readonly {{MODEL}} _domainModel;
+
+    /// <summary>
+    /// Creates the trigger. Built per element by
+    /// <see cref="{{MODEL}}.GetTreatmentCandidates"/>, which is cheap and keeps it stateless.
+    /// </summary>
+    /// <param name="frameworkModel">The framework model, for lookups, budgets and treatment types.</param>
+    /// <param name="domainModel">This domain model, for its <see cref="Constants"/>.</param>
+    public TreatmentsTrigger(ModelBase frameworkModel, {{MODEL}} domainModel)
+    {
+        _frameworkModel = frameworkModel ?? throw new ArgumentNullException(nameof(frameworkModel));
+        _domainModel = domainModel ?? throw new ArgumentNullException(nameof(domainModel));
+    }
+
+    /// <summary>
+    /// Returns every treatment the optimiser may consider for this element in this period.
+    /// </summary>
+    /// <param name="element">The element under test.</param>
+    /// <param name="period">Modelling period (1-based).</param>
+    /// <returns>The candidates, or an empty list when nothing is due.</returns>
+    public List<TreatmentInstance> GetTriggeredTreatments({{ELEMENT}} element, int period)
+    {
+        List<TreatmentInstance> candidates = new List<TreatmentInstance>();
+
+        // One call per treatment, e.g.
+        //   this.AddRepairIfValid(element, period, candidates);
+        //   this.AddReplaceIfValid(element, period, candidates);
+        //
+        // Order matters only in that a method may look at what is already in the list - which is
+        // how you offer "replace it properly instead" as an alternative to a triggered repair.
+
+        return candidates;
+    }
+
+    /// <summary>
+    /// Assembles a <see cref="TreatmentInstance"/>.
+    ///
+    /// <para><b>Use named arguments.</b> <c>TreatmentInstance</c> has several constructor
+    /// overloads and the positional order is easy to get wrong in a way that compiles - swapping
+    /// quantity and unit rate gives a cost that is wrong by orders of magnitude and an optimiser
+    /// that funds all the wrong things.</para>
+    ///
+    /// <para>Cost is <c>quantity x unitRate</c>. Where a treatment's cost has to be split across
+    /// several budget groups, there is a separate framework call for that
+    /// (<c>AssignBudgetCategoryFractions</c>) with a non-obvious idiom - check the patterns
+    /// documentation before reaching for it.</para>
+    /// </summary>
+    /// <param name="element">Element the treatment applies to.</param>
+    /// <param name="treatmentName">One of the <see cref="TreatmentNames"/> constants.</param>
+    /// <param name="period">Modelling period (1-based).</param>
+    /// <param name="quantity">Quantity treated, in the unit the rate is priced in.</param>
+    /// <param name="baseRate">Cost per unit before the lookup rate is applied.</param>
+    /// <param name="reason">Human-readable trigger reason. It reaches the model outputs, so make
+    /// it say which rule fired and with what numbers - it is the only explanation anybody gets
+    /// when they ask why an element was treated.</param>
+    private TreatmentInstance Build(
+        {{ELEMENT}} element,
+        string treatmentName,
+        int period,
+        double quantity,
+        double baseRate,
+        string reason)
+    {
+        TreatmentInstance treatment = new TreatmentInstance(
+            element.ElementIndex,
+            treatmentName,
+            period,
+            quantity: quantity,
+            unitRate: baseRate * _domainModel.Constants.GetUnitRate(treatmentName),
+            force: false,
+            reason: reason,
+            comment: "none");
+
+        // Set the suitability score here, from whatever your model ranks elements by. Leaving it
+        // at its default means this candidate loses every comparison it is ever in.
+        //   treatment.TreatmentSuitabilityScore = element.ObjectiveValue;
+
+        return treatment;
+    }
+}

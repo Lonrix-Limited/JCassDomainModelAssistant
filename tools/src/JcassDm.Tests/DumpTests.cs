@@ -186,8 +186,34 @@ public class DumpTests
         ToolResult result = bundle.Run();
 
         Assert.Equal(ExitCode.Ok, result.ExitCode);
-        Assert.Contains("COMMANDS", result.Output, StringComparison.Ordinal);
+        Assert.Contains("THE MODEL", result.Output, StringComparison.Ordinal);
+        Assert.Contains("THE BUNDLE", result.Output, StringComparison.Ordinal);
         Assert.Contains("EXIT CODES", result.Output, StringComparison.Ordinal);
+
+        // Every verb the dispatcher accepts appears here. The help is the only place an agent
+        // finds out what the tool can do, so a verb that ships without a line here is a verb
+        // nobody calls.
+        foreach (string verb in new[]
+                 {
+                     "scaffold", "rename", "check", "package",
+                     "dump", "set-meta", "add-treatment", "add-parameter", "add-input-header",
+                 })
+        {
+            Assert.Contains("  " + verb + " ", result.Output, StringComparison.Ordinal);
+        }
+    }
+
+    [Fact]
+    public void The_help_explains_the_four_name_rule()
+    {
+        // The single failure the whole tool is organised around. If somebody reads only the help,
+        // this is the thing they have to come away with.
+        using var bundle = TestBundle.FromReferenceModel();
+
+        ToolResult result = bundle.Run();
+
+        Assert.Contains("THE FOUR NAMES", result.Output, StringComparison.Ordinal);
+        Assert.Contains("was not found in the specified .dll", result.Output, StringComparison.Ordinal);
     }
 
     // -----------------------------------------------------------------------------

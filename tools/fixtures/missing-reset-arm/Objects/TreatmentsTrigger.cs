@@ -1,0 +1,191 @@
+using System;
+using System.Collections.Generic;
+using JCass_ModelCore.Models;
+using JCass_ModelCore.Treatments;
+
+namespace FixtureModel.Objects;
+
+/// <summary>
+/// Stage 2 of 6: what work is due on this element in this period, and what it would cost.
+///
+/// <para><b>This is where the engineering judgement lives.</b> Every other file in this project
+/// moves state around; this one decides. It is also the file a reviewer will read first, so it is
+/// worth keeping the conditions readable - one small <c>Add...IfValid</c> method per treatment,
+/// as below and as the canonical road models do, rather than one long chain of nested ifs.</para>
+///
+/// <para><b>Return every option, not just the best one.</b> Handing the optimiser a single
+/// candidate reduces it to a yes/no funding decision. Handing it two - a cheap holding action
+/// alongside the permanent fix - is what lets it trade elements off against each other under a
+/// budget, and it is what the benefit-cost models need in order to have anything to compare.
+/// That is what <see cref="AddReplaceAlternativeIfValid"/> is for. Return an empty list, never
+/// <c>null</c>, when nothing is due.</para>
+///
+/// <para><b>You return candidates for this period only.</b> The framework's own strategy
+/// generator rolls each candidate forward into multi-period strategies - do it now, do it in
+/// three years, do nothing - before the optimiser scores them. You do not write that part.</para>
+///
+/// <para><b>Set <c>TreatmentSuitabilityScore</c> on every instance you build.</b> The optimiser
+/// ranks candidates by it. A candidate with no score set will never be chosen ahead of one that
+/// has one, and nothing reports that it was passed over.</para>
+///
+/// <para>Every threshold here comes from <see cref="Constants"/>, which reads it from the
+/// client's <c>inputs\lookups.xlsx</c>. There is not one numeric literal in this file, and that
+/// is the property to preserve as you replace the sample's rules with your own.</para>
+/// </summary>
+public class TreatmentsTrigger
+{
+    private readonly ModelBase _frameworkModel;
+    private readonly FixtureModel _domainModel;
+
+    /// <summary>
+    /// Creates the trigger. Built per element by <see cref="FixtureModel.GetTreatmentCandidates"/>,
+    /// which is cheap and keeps it stateless.
+    /// </summary>
+    /// <param name="frameworkModel">The framework model, for lookups, budgets and treatment types.</param>
+    /// <param name="domainModel">This domain model, for its <see cref="Constants"/>.</param>
+    public TreatmentsTrigger(ModelBase frameworkModel, FixtureModel domainModel)
+    {
+        _frameworkModel = frameworkModel ?? throw new ArgumentNullException(nameof(frameworkModel));
+        _domainModel = domainModel ?? throw new ArgumentNullException(nameof(domainModel));
+    }
+
+    /// <summary>
+    /// Returns every treatment the optimiser may consider for this element in this period.
+    /// </summary>
+    /// <param name="element">The element under test.</param>
+    /// <param name="period">Modelling period (1-based).</param>
+    /// <returns>The candidates, or an empty list when nothing is due.</returns>
+    public List<TreatmentInstance> GetTriggeredTreatments(ModelElement element, int period)
+    {
+        List<TreatmentInstance> candidates = new List<TreatmentInstance>();
+
+        // Repair is tested first, so an element in the repairable band never generates a replace
+        // candidate on its own account - it gets one as an alternative instead, below.
+        this.AddRepairIfValid(element, period, candidates);
+        this.AddReplaceIfValid(element, period, candidates);
+        this.AddReplaceAlternativeIfValid(element, period, candidates);
+
+        return candidates;
+    }
+
+    /// <summary>
+    /// Adds a repair when the element is old enough, bad enough, and not yet too far gone for a
+    /// repair to help.
+    /// </summary>
+    /// <param name="element">The element under test.</param>
+    /// <param name="period">Modelling period (1-based).</param>
+    /// <param name="candidates">List to add to.</param>
+    private void AddRepairIfValid(ModelElement element, int period, List<TreatmentInstance> candidates)
+    {
+        Constants constants = _domainModel.Constants;
+
+        if (element.Age <= constants.RepairAgeGreaterThan) return;
+        if (element.ConditionRating <= constants.RepairConditionGreaterThan) return;
+        if (element.ConditionRating > constants.RepairConditionAtMost) return;
+
+        candidates.Add(this.Build(
+            element,
+            TreatmentNames.Repair,
+            period,
+            quantity: element.AreaSquareMetre,
+            baseRate: constants.GetRepairRate(element.MaterialType),
+            reason: $"Age {element.Age} > {constants.RepairAgeGreaterThan} and condition " +
+                    $"{Math.Round(element.ConditionRating, 1)} in " +
+                    $"({constants.RepairConditionGreaterThan}, {constants.RepairConditionAtMost}]"));
+    }
+
+    /// <summary>
+    /// Adds a replacement when the element is beyond what a repair can fix.
+    /// </summary>
+    /// <param name="element">The element under test.</param>
+    /// <param name="period">Modelling period (1-based).</param>
+    /// <param name="candidates">List to add to.</param>
+    private void AddReplaceIfValid(ModelElement element, int period, List<TreatmentInstance> candidates)
+    {
+        Constants constants = _domainModel.Constants;
+
+        if (element.Age <= constants.ReplaceAgeGreaterThan) return;
+        if (element.ConditionRating <= constants.ReplaceConditionGreaterThan) return;
+
+        candidates.Add(this.Build(
+            element,
+            TreatmentNames.Replace,
+            period,
+            quantity: element.AreaSquareMetre,
+            baseRate: constants.GetReplacementRate(element.MaterialType),
+            reason: $"Age {element.Age} > {constants.ReplaceAgeGreaterThan} and condition " +
+                    $"{Math.Round(element.ConditionRating, 1)} > {constants.ReplaceConditionGreaterThan}"));
+    }
+
+    /// <summary>
+    /// Offers "replace it properly instead" alongside a triggered repair, so the optimiser has a
+    /// genuine choice between the cheap holding action and the permanent fix rather than a
+    /// yes/no on one option. An element already bad enough to need replacing gets no second
+    /// option - a repair would not help it.
+    /// </summary>
+    /// <param name="element">The element under test.</param>
+    /// <param name="period">Modelling period (1-based).</param>
+    /// <param name="candidates">List to add to. Read as well as written: this method fires only
+    /// when a repair is already in it.</param>
+    private void AddReplaceAlternativeIfValid(ModelElement element, int period, List<TreatmentInstance> candidates)
+    {
+        bool repairTriggered = candidates.Exists(c => c.TreatmentName == TreatmentNames.Repair);
+        bool replaceAlready = candidates.Exists(c => c.TreatmentName == TreatmentNames.Replace);
+        if (!repairTriggered || replaceAlready) return;
+
+        candidates.Add(this.Build(
+            element,
+            TreatmentNames.Replace,
+            period,
+            quantity: element.AreaSquareMetre,
+            baseRate: _domainModel.Constants.GetReplacementRate(element.MaterialType),
+            reason: "Alternative to the triggered repair"));
+    }
+
+    /// <summary>
+    /// Assembles a <see cref="TreatmentInstance"/> and gives it the element's objective value as
+    /// its suitability score.
+    ///
+    /// <para><b>Use named arguments.</b> <c>TreatmentInstance</c> has several constructor
+    /// overloads and the positional order is easy to get wrong in a way that compiles - swapping
+    /// quantity and unit rate gives a cost that is wrong by orders of magnitude and an optimiser
+    /// that funds all the wrong things.</para>
+    ///
+    /// <para>Cost is <c>quantity x unitRate</c>, and the unit rate here is the element's
+    /// material-derived base rate multiplied by the treatment's rate from <c>lookups.xlsx</c>.
+    /// That second factor is what lets a modeller escalate every repair cost by 10% from the
+    /// Tuning page without touching code. Where a treatment's cost has to be split across several
+    /// budget groups there is a separate framework call for that
+    /// (<c>AssignBudgetCategoryFractions</c>) with a non-obvious idiom - check the patterns
+    /// documentation before reaching for it.</para>
+    /// </summary>
+    /// <param name="element">Element the treatment applies to.</param>
+    /// <param name="treatmentName">One of the <see cref="TreatmentNames"/> constants.</param>
+    /// <param name="period">Modelling period (1-based).</param>
+    /// <param name="quantity">Quantity treated, in the unit the rate is priced in.</param>
+    /// <param name="baseRate">Cost per unit before the lookup rate is applied.</param>
+    /// <param name="reason">Human-readable trigger reason. It reaches the model outputs, so it
+    /// carries the values that fired the rule and not just the rule's name - it is the only
+    /// explanation anybody gets when they ask why an element was treated.</param>
+    private TreatmentInstance Build(
+        ModelElement element,
+        string treatmentName,
+        int period,
+        double quantity,
+        double baseRate,
+        string reason)
+    {
+        TreatmentInstance treatment = new TreatmentInstance(
+            element.ElementIndex,
+            treatmentName,
+            period,
+            quantity: quantity,
+            unitRate: baseRate * _domainModel.Constants.GetUnitRate(treatmentName),
+            force: false,
+            reason: reason,
+            comment: "none");
+
+        treatment.TreatmentSuitabilityScore = element.ObjectiveValue;
+        return treatment;
+    }
+}

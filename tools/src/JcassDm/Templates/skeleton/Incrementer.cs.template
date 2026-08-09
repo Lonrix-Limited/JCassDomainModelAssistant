@@ -1,0 +1,64 @@
+using System;
+using JCass_ModelCore.Models;
+
+namespace {{NAMESPACE}};
+
+/// <summary>
+/// Stage 4a of 6: how an element changes over one period when nothing is done to it.
+///
+/// <para>This is the deterioration model, and it runs for the great majority of elements in every
+/// period - the optimiser can only ever afford to treat a few. Everything the forecast says about
+/// a do-nothing future comes from this file.</para>
+///
+/// <para><b>Keep the order of the updates the same as the order of the parameters on the bundle's
+/// <c>parameters</c> sheet.</b> It costs nothing and it makes the two readable side by side, which
+/// is how you notice that one of them is not being incremented at all.</para>
+///
+/// <para><b>Watch for values that depend on each other.</b> If condition is a function of age, and
+/// age is incremented first, condition is computed off the new age; increment them the other way
+/// round and it is computed off the old one. Both are defensible; only one is what you meant.
+/// Write down which, in a comment, because it is invisible in the numbers.</para>
+///
+/// <para>Every rate in here is tunable by definition - deterioration rates are the first thing a
+/// modeller recalibrates when observed condition data arrives. They belong in
+/// <c>lookups.xlsx</c>, read through <see cref="Constants"/>. A set of them that gets refitted
+/// together - regression coefficients, a per-material rate table with more than a handful of rows
+/// - belongs in a CSV in the client's <c>supporting\</c> folder instead, loaded once in
+/// <see cref="{{MODEL}}.SetupInstance"/>.</para>
+/// </summary>
+public class Incrementer
+{
+    private readonly ModelBase _frameworkModel;
+    private readonly {{MODEL}} _domainModel;
+
+    /// <summary>
+    /// Creates the incrementer. Built once in <see cref="{{MODEL}}.SetupInstance"/>.
+    /// </summary>
+    /// <param name="frameworkModel">The framework model, for lookups and the random source.</param>
+    /// <param name="domainModel">This domain model, for its <see cref="Constants"/>.</param>
+    public Incrementer(ModelBase frameworkModel, {{MODEL}} domainModel)
+    {
+        _frameworkModel = frameworkModel ?? throw new ArgumentNullException(nameof(frameworkModel));
+        _domainModel = domainModel ?? throw new ArgumentNullException(nameof(domainModel));
+    }
+
+    /// <summary>
+    /// Advances one element by a single period, with no treatment applied. Returns the same
+    /// instance, mutated - the caller writes it straight back through the parameter sinks.
+    /// </summary>
+    /// <param name="element">The element to advance.</param>
+    /// <param name="period">Modelling period (1-based) being entered.</param>
+    public {{ELEMENT}} Increment({{ELEMENT}} element, int period)
+    {
+        // Advance each piece of state by one period, in the same order as the bundle's
+        // `parameters` sheet, e.g.
+        //
+        //   element.Age += 1;
+        //   element.ConditionRating += _domainModel.Constants.ConditionPointsPerYear;
+        //
+        // The rate comes from Constants, which read it from lookups.xlsx. Nothing in this file
+        // should be a numeric literal that a modeller would ever want to change.
+
+        return element;
+    }
+}

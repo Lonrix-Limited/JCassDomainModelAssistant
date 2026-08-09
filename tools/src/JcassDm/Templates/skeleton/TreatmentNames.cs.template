@@ -1,0 +1,49 @@
+namespace {{NAMESPACE}};
+
+/// <summary>
+/// The treatment names this model knows about. These strings are a contract with two files
+/// outside the C# project and must match both exactly:
+///
+/// <list type="bullet">
+///   <item><description>the <c>treatment_name</c> column of the <c>treatments</c> sheet in
+///   <c>domain_model_setup.xlsx</c>, and</description></item>
+///   <item><description>the budget category columns in the client's <c>inputs\budgets.xlsx</c> -
+///   indirectly, via the <c>budget_category</c> column of that same <c>treatments</c>
+///   sheet.</description></item>
+/// </list>
+///
+/// <para>A mismatch surfaces late and quietly. A name that does not match the bundle throws
+/// partway through a run; a <c>budget_category</c> with no column in <c>budgets.xlsx</c> throws
+/// nothing at all - the treatment is simply never funded, in any period, and the forecast looks
+/// like a modelling result. Keeping the strings in one place is cheap insurance against the
+/// first, and <c>jcass-dm check</c> catches the second.</para>
+///
+/// <para><b>Adding a treatment</b> is a constant here, a bundle row, a trigger, and a reset arm:</para>
+/// <list type="number">
+///   <item><description>Add the <c>public const string</c> below.</description></item>
+///   <item><description><c>jcass-dm add-treatment &lt;bundle&gt; --name &lt;that exact string&gt;
+///   --budget-category &lt;a column in budgets.xlsx&gt;</c></description></item>
+///   <item><description>Decide when it fires, and what it costs, in <see cref="TreatmentsTrigger"/>.</description></item>
+///   <item><description>Handle it in <see cref="Resetter"/>. The <c>default:</c> arm there throws,
+///   so a treatment you forget fails loudly rather than doing nothing.</description></item>
+///   <item><description>Add its rate to the <c>unit_rates</c> set in <c>inputs\lookups.xlsx</c>.</description></item>
+/// </list>
+///
+/// <example>
+/// <code>
+/// /// &lt;summary&gt;Partial intervention: restores surface condition, does not renew the asset.&lt;/summary&gt;
+/// public const string Repair = "repair";
+/// </code>
+/// The constant's name is for your C#; the string is what the bundle, the budget and the outputs
+/// all see. They do not have to look alike, but the string has to match the bundle character for
+/// character - including case, and including any trailing space you cannot see.
+/// </example>
+/// </summary>
+public static class TreatmentNames
+{
+    // Your treatment name constants go here. See the <example> above for the shape.
+    //
+    // Nothing is declared yet, so this model triggers no work and the treatments sheet of the
+    // bundle is empty. That is a consistent starting state rather than a broken one:
+    // `jcass-dm check` will confirm the two agree.
+}

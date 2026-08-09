@@ -1,0 +1,233 @@
+using System;
+using System.Collections.Generic;
+
+namespace FixtureModel.Objects;
+
+/// <summary>
+/// Every tunable number this model uses, read once from the client's <c>inputs\lookups.xlsx</c>
+/// at setup and cached here for the run.
+///
+/// <para><b>This class is the reason a modeller can calibrate your model without you.</b>
+/// Thresholds and rates live in a spreadsheet, not in C#, so moving a repair trigger from age 15
+/// to age 12 - or escalating every repair cost by 10% - is something they do themselves on the
+/// web app's <b>Tuning</b> page, which writes back to that same file. No rebuild, no republish,
+/// no developer.</para>
+///
+/// <para><b>Read them here, not earlier.</b> This object is built from
+/// <see cref="FixtureModel.SetupInstance"/>, which the framework calls after it has loaded lookups
+/// and before it touches any element. A lookup read from a constructor or a static initialiser
+/// that runs earlier gets an empty dictionary, and that reads as "key not found" rather than
+/// "too early".</para>
+///
+/// <para><b>How lookups.xlsx is structured.</b> Any sheet whose name starts with <c>lkp_</c> is
+/// read, and all of them are merged into one flat table with three columns that matter -
+/// <c>lookup_set_name</c>, <c>setting_key</c>, <c>setting_value</c>. A value is addressed by the
+/// pair (set name, key); which sheet a row sits in is only an organisational convenience, so you
+/// can regroup sheets freely without touching this file.</para>
+///
+/// <para><b>Two shapes, and both are worth copying.</b> A threshold used in one specific
+/// comparison gets unpacked into its own property. A <i>set</i> of values that are all used the
+/// same way - a rate per material, a rate per treatment - is kept whole and resolved by key at
+/// the point of use, so that adding a material or a treatment costs a spreadsheet row and
+/// nothing at all in this class. See <see cref="GetDeteriorationRate"/> and
+/// <see cref="GetUnitRate"/>.</para>
+///
+/// <para><b>Every number here came with the walking skeleton and is somebody else's.</b> They are
+/// there so the model runs end to end on day one, not because they describe your network.
+/// Replace them by editing <c>lookups.xlsx</c> - not by editing this file.</para>
+/// </summary>
+public class Constants
+{
+    /// <summary>Set name in lookups.xlsx holding the repair trigger thresholds.</summary>
+    private const string RepairThresholds = "repair_thresholds";
+
+    /// <summary>Set name in lookups.xlsx holding the replace trigger thresholds.</summary>
+    private const string ReplaceThresholds = "replace_thresholds";
+
+    /// <summary>Set name in lookups.xlsx holding the routine maintenance thresholds.</summary>
+    private const string MaintenanceThresholds = "maintenance_thresholds";
+
+    /// <summary>Set name in lookups.xlsx holding condition points added per year, by material.</summary>
+    private const string DeteriorationRates = "deterioration_rates";
+
+    /// <summary>Set name in lookups.xlsx holding replacement cost per square metre, by material.</summary>
+    private const string ReplacementRates = "replacement_rates";
+
+    /// <summary>Set name in lookups.xlsx holding cost factors that are not per-material.</summary>
+    private const string RateFactors = "rate_factors";
+
+    /// <summary>
+    /// Set name in lookups.xlsx holding the per-treatment unit rates. This is the set the web
+    /// app's Tuning page "Treatment Rates" tab edits, so expect its values to change between runs
+    /// with no code change at all.
+    /// </summary>
+    private const string UnitRates = "unit_rates";
+
+    private readonly Dictionary<string, object> _unitRates;
+    private readonly Dictionary<string, object> _deteriorationRates;
+    private readonly Dictionary<string, object> _replacementRates;
+
+    /// <summary>An element older than this many years may be considered for repair.</summary>
+    public double RepairAgeGreaterThan { get; }
+
+    /// <summary>Condition must be worse than this for a repair to be worth doing.</summary>
+    public double RepairConditionGreaterThan { get; }
+
+    /// <summary>Above this condition a repair no longer helps - replacement territory.</summary>
+    public double RepairConditionAtMost { get; }
+
+    /// <summary>Condition is multiplied by this after a repair. A repair improves, it does not renew.</summary>
+    public double ConditionFactorAfterRepair { get; }
+
+    /// <summary>An element older than this many years may be considered for replacement.</summary>
+    public double ReplaceAgeGreaterThan { get; }
+
+    /// <summary>Condition must be worse than this for a replacement to be triggered.</summary>
+    public double ReplaceConditionGreaterThan { get; }
+
+    /// <summary>Condition an element is left in after a replacement.</summary>
+    public double ConditionAfterReplace { get; }
+
+    /// <summary>Condition above which routine maintenance is needed every period.</summary>
+    public double MaintenanceConditionGreaterThan { get; }
+
+    /// <summary>A repair costs this fraction of a replacement on the same element.</summary>
+    public double RepairFractionOfReplacement { get; }
+
+    /// <summary>
+    /// Reads every threshold from the model's lookups and holds on to the three rate sets. Throws
+    /// with a message naming the missing set or key if the spreadsheet is incomplete - which is
+    /// what you want: a typo in <c>lookups.xlsx</c> fails immediately at setup rather than
+    /// silently defaulting and skewing a whole run.
+    /// </summary>
+    /// <param name="lookupSets">
+    /// The model's lookups, keyed by set name then setting key. Pass <c>this.model.Lookups</c>
+    /// from <see cref="FixtureModel.SetupInstance"/>.
+    /// </param>
+    public Constants(Dictionary<string, Dictionary<string, object>> lookupSets)
+    {
+        this.RepairAgeGreaterThan = GetNumber(lookupSets, RepairThresholds, "age_gt");
+        this.RepairConditionGreaterThan = GetNumber(lookupSets, RepairThresholds, "cond_gt");
+        this.RepairConditionAtMost = GetNumber(lookupSets, RepairThresholds, "cond_lte");
+        this.ConditionFactorAfterRepair = GetNumber(lookupSets, RepairThresholds, "cond_factor");
+
+        this.ReplaceAgeGreaterThan = GetNumber(lookupSets, ReplaceThresholds, "age_gt");
+        this.ReplaceConditionGreaterThan = GetNumber(lookupSets, ReplaceThresholds, "cond_gt");
+        this.ConditionAfterReplace = GetNumber(lookupSets, ReplaceThresholds, "cond_after");
+
+        this.MaintenanceConditionGreaterThan = GetNumber(lookupSets, MaintenanceThresholds, "cond_gt");
+
+        this.RepairFractionOfReplacement = GetNumber(lookupSets, RateFactors, "repair_fraction");
+
+        _unitRates = GetSet(lookupSets, UnitRates);
+        _deteriorationRates = GetSet(lookupSets, DeteriorationRates);
+        _replacementRates = GetSet(lookupSets, ReplacementRates);
+    }
+
+    /// <summary>
+    /// Condition points added per year for a material. Higher means faster decay.
+    /// </summary>
+    /// <param name="materialType">Value of the element's <c>material</c> input column.</param>
+    /// <exception cref="Exception">The material has no rate in the <c>deterioration_rates</c> set.</exception>
+    public double GetDeteriorationRate(string materialType)
+        => Resolve(_deteriorationRates, materialType, DeteriorationRates);
+
+    /// <summary>
+    /// Cost per square metre of replacing an element of a given material.
+    /// </summary>
+    /// <param name="materialType">Value of the element's <c>material</c> input column.</param>
+    /// <exception cref="Exception">The material has no rate in the <c>replacement_rates</c> set.</exception>
+    public double GetReplacementRate(string materialType)
+        => Resolve(_replacementRates, materialType, ReplacementRates);
+
+    /// <summary>
+    /// Cost per square metre of repairing an element of a given material.
+    /// </summary>
+    /// <param name="materialType">Value of the element's <c>material</c> input column.</param>
+    public double GetRepairRate(string materialType)
+        => this.GetReplacementRate(materialType) * this.RepairFractionOfReplacement;
+
+    /// <summary>
+    /// Returns the unit rate for a treatment, keyed by the treatment's name.
+    ///
+    /// <para>Looked up on demand rather than unpacked in the constructor, so a new treatment needs
+    /// a row in <c>lookups.xlsx</c> and a constant on <see cref="TreatmentNames"/> - and nothing
+    /// at all in this class.</para>
+    /// </summary>
+    /// <param name="treatmentName">One of the <see cref="TreatmentNames"/> constants.</param>
+    /// <exception cref="Exception">The treatment has no rate in the <c>unit_rates</c> set.</exception>
+    public double GetUnitRate(string treatmentName) => Resolve(_unitRates, treatmentName, UnitRates);
+
+    /// <summary>
+    /// Reads one value out of a whole set that was kept rather than unpacked. Guard before you
+    /// index, and name both the set and the key in the message: a typo in the spreadsheet then
+    /// fails at setup with something the modeller can act on, rather than as a bare
+    /// <see cref="KeyNotFoundException"/> five minutes into a run.
+    /// </summary>
+    /// <param name="set">The lookup set, already fetched.</param>
+    /// <param name="key">Value of the <c>setting_key</c> column to read.</param>
+    /// <param name="setName">Name of the set, for the failure message.</param>
+    private static double Resolve(Dictionary<string, object> set, string key, string setName)
+    {
+        if (!set.ContainsKey(key))
+        {
+            throw new Exception($"'{key}' has no value in lookup set '{setName}' in lookups.xlsx.");
+        }
+
+        return Convert.ToDouble(set[key]);
+    }
+
+    /// <summary>
+    /// Fetches a whole lookup set, failing with the set name if it is absent.
+    /// </summary>
+    /// <param name="lookupSets">The model's lookups.</param>
+    /// <param name="setName">Value of the <c>lookup_set_name</c> column to fetch.</param>
+    protected static Dictionary<string, object> GetSet(
+        Dictionary<string, Dictionary<string, object>> lookupSets,
+        string setName)
+    {
+        if (!lookupSets.ContainsKey(setName))
+        {
+            throw new Exception($"Lookup set '{setName}' not found in lookups.xlsx.");
+        }
+
+        return lookupSets[setName];
+    }
+
+    /// <summary>
+    /// Reads one numeric setting, failing with the set and key names if it is absent.
+    ///
+    /// <para>The conversion is not incidental: <c>setting_value</c> arrives as text regardless of
+    /// how the cell looks in Excel, so a raw cast would throw an unhelpful
+    /// <see cref="InvalidCastException"/> here.</para>
+    /// </summary>
+    /// <param name="lookupSets">The model's lookups.</param>
+    /// <param name="setName">Value of the <c>lookup_set_name</c> column.</param>
+    /// <param name="settingKey">Value of the <c>setting_key</c> column.</param>
+    protected static double GetNumber(
+        Dictionary<string, Dictionary<string, object>> lookupSets,
+        string setName,
+        string settingKey)
+        => Resolve(GetSet(lookupSets, setName), settingKey, setName);
+
+    /// <summary>
+    /// Reads one text setting, failing with the set and key names if it is absent.
+    /// </summary>
+    /// <param name="lookupSets">The model's lookups.</param>
+    /// <param name="setName">Value of the <c>lookup_set_name</c> column.</param>
+    /// <param name="settingKey">Value of the <c>setting_key</c> column.</param>
+    protected static string GetText(
+        Dictionary<string, Dictionary<string, object>> lookupSets,
+        string setName,
+        string settingKey)
+    {
+        Dictionary<string, object> set = GetSet(lookupSets, setName);
+
+        if (!set.ContainsKey(settingKey))
+        {
+            throw new Exception($"Setting '{settingKey}' not found in lookup set '{setName}'.");
+        }
+
+        return Convert.ToString(set[settingKey]) ?? string.Empty;
+    }
+}

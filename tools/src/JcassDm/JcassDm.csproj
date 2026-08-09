@@ -20,10 +20,28 @@
     <Title>jcass-dm</Title>
     <Description>Reads and writes the Juno Cassandra domain model bundle (domain_model_setup.xlsx).</Description>
     <Copyright>Lonrix Ltd 2026</Copyright>
-    <Version>1.0.0</Version>
-    <AssemblyVersion>1.0.0.0</AssemblyVersion>
-    <FileVersion>1.0.0.0</FileVersion>
+    <Version>1.1.0</Version>
+    <AssemblyVersion>1.1.0.0</AssemblyVersion>
+    <FileVersion>1.1.0.0</FileVersion>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- The scaffolder's skeleton, embedded rather than shipped as loose files beside the exe.
+
+         The alternative was a tools/templates/ folder the exe reads at run time, which would be
+         nicer to browse and diff. It loses on the one property that matters: jcass-dm has to work
+         when it is the only thing somebody copied. A template folder that goes missing turns a
+         generator into a confusing partial failure, and "clone and go" is a hard property of this
+         project. They are still readable and diffable here, as .template source files - and they
+         are excluded from compilation by the extension, so the placeholders inside them cannot
+         break the build. -->
+    <!-- WithCulture="false" is load-bearing and its absence is silent. MSBuild's AssignCulture
+         task reads the second-to-last extension of a resource file name as a culture, and "cs"
+         in Constants.cs.template is Czech - so without this every C# template is routed into a
+         cs\ satellite assembly and GetManifestResourceStream finds nothing. The scaffolder then
+         fails at run time on a build that was perfectly green. -->
+    <EmbeddedResource Include="Templates\**\*.template" WithCulture="false" />
+  </ItemGroup>
 
   <ItemGroup>
     <!-- ClosedXML directly, NOT JCass_Excel.

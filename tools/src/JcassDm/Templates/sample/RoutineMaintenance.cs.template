@@ -1,0 +1,58 @@
+using System;
+using JCass_ModelCore.Treatments;
+
+namespace {{NAMESPACE}};
+
+/// <summary>
+/// Stage 5 of 6: work that happens whether or not there is capital budget for it.
+///
+/// <para>Routine maintenance is applied <b>after</b> the optimiser has run and does not compete
+/// for capital budget. It is the pothole filling, the crack sealing, the make-safe work that a
+/// network does regardless - and modelling it matters because it is usually the largest single
+/// consequence of deferring renewal. A model that leaves it out makes doing nothing look free.</para>
+///
+/// <para>Returns <c>null</c> when none is due, which for most elements in most periods is the
+/// answer.</para>
+///
+/// <para><b>Note that the quantity is not the element's area.</b> Maintenance effort scales with
+/// how bad the element is rather than how big it is, so the quantity is a condition-derived
+/// measure. Whatever you choose, be sure it is in the unit the rate in <c>lookups.xlsx</c> is
+/// priced in - the two are multiplied and nothing checks that they agree.</para>
+///
+/// <para><b>Its budget category still has to exist.</b> Maintenance is charged like any other
+/// treatment, so its <c>budget_category</c> in the bundle needs a matching column in the client's
+/// <c>inputs\budgets.xlsx</c> - otherwise it is silently never funded.</para>
+///
+/// <para>Static rather than an instance class, because unlike the other stages it needs nothing
+/// cached at setup. The canonical models split on this: one keeps a stateful maintenance model
+/// built in <c>SetupInstance</c>. Move it to an instance class the moment it needs one.</para>
+/// </summary>
+public static class RoutineMaintenance
+{
+    /// <summary>
+    /// Returns the routine maintenance due on this element in this period, or <c>null</c> if
+    /// none is due.
+    /// </summary>
+    /// <param name="element">The element under test.</param>
+    /// <param name="constants">Thresholds and rates read from lookups.xlsx.</param>
+    /// <param name="period">Modelling period (1-based).</param>
+    public static TreatmentInstance? GetTriggeredMaintenance({{ELEMENT}} element, Constants constants, int period)
+    {
+        if (element.ConditionRating <= constants.MaintenanceConditionGreaterThan) return null;
+
+        double quantity = Math.Sqrt(element.ConditionRating);
+
+        TreatmentInstance maintenance = new TreatmentInstance(
+            element.ElementIndex,
+            TreatmentNames.RoutineMaintenance,
+            period,
+            quantity: quantity,
+            unitRate: constants.GetUnitRate(TreatmentNames.RoutineMaintenance),
+            force: false,
+            reason: $"Condition {Math.Round(element.ConditionRating, 1)} > " +
+                    $"{constants.MaintenanceConditionGreaterThan}",
+            comment: "none");
+
+        return maintenance;
+    }
+}

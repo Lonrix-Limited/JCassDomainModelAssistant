@@ -1,0 +1,87 @@
+using System;
+
+namespace {{NAMESPACE}};
+
+/// <summary>
+/// One asset in the network, as this domain model sees it. This is the class you will change
+/// most: it holds the state that carries from one modelling period to the next.
+///
+/// <para>Nothing here is framework machinery. The framework never sees this type - it hands the
+/// domain model dictionaries of raw inputs and parameter values, and
+/// <see cref="{{ELEMENT}}Factory"/> turns those into one of these.</para>
+///
+/// <para><b>What goes on this class, and what does not.</b> Properties, and the derived values
+/// every stage needs - here. The rules that move the state forward live one per stage, in
+/// <see cref="Incrementer"/>, <see cref="Resetter"/> and <see cref="TreatmentsTrigger"/>, so a
+/// change has an obvious home and a reader has an obvious place to look.</para>
+///
+/// <para>The properties below describe a generic asset with an age, a condition and a material.
+/// They came with the walking skeleton so that it runs end to end on day one. Replace them with
+/// what your network actually is - and remember that anything you add which has to survive
+/// between periods needs three things: a property here, a line in
+/// <see cref="SetParameterValues"/>, and a row on the bundle's <c>parameters</c> sheet.</para>
+/// </summary>
+public class {{ELEMENT}}
+{
+    private double _objectiveValue;
+
+    /// <summary>Zero-based index of this element in the model's input data.</summary>
+    public int ElementIndex { get; set; }
+
+    /// <summary>Identifier from the <c>element_name</c> input column. Carried for reporting only.</summary>
+    public string ElementName { get; set; } = string.Empty;
+
+    /// <summary>Condition on a 0 (good) to 100 (poor) scale. Deteriorates upward.</summary>
+    public double ConditionRating { get; set; }
+
+    /// <summary>Material from the <c>material</c> input column. Drives both deterioration and cost.</summary>
+    public string MaterialType { get; set; } = string.Empty;
+
+    /// <summary>Element area in square metres, from the <c>area_sqm</c> input column.</summary>
+    public double AreaSquareMetre { get; set; }
+
+    /// <summary>Years since the element was new or last replaced.</summary>
+    public int Age { get; set; }
+
+    /// <summary>
+    /// Score the optimiser ranks candidate treatments by. Higher means "treating this element is
+    /// more worthwhile". Recomputed by <see cref="SetObjectiveValue"/> whenever state changes.
+    /// </summary>
+    public double ObjectiveValue => _objectiveValue;
+
+    /// <summary>
+    /// Recomputes <see cref="ObjectiveValue"/> from current state. Call it after any change to
+    /// condition or age - <see cref="Incrementer"/> and <see cref="Resetter"/> both do.
+    ///
+    /// <para>The formula is deliberately trivial and is the first thing worth replacing: a real
+    /// model weighs traffic, criticality and the consequence of failure. Note that it uses no
+    /// tunable numbers, which is why it can live in C# - a weighting that a modeller would want
+    /// to adjust would have to come from <see cref="Constants"/> instead.</para>
+    /// </summary>
+    public void SetObjectiveValue()
+    {
+        _objectiveValue = this.ConditionRating * Math.Sqrt(this.Age);
+    }
+
+    /// <summary>
+    /// Writes this element's state back into the framework's parameter store.
+    ///
+    /// <para><b>Every parameter named on the <c>parameters</c> sheet of
+    /// <c>domain_model_setup.xlsx</c> must be written here</b>, or the framework reports a
+    /// missing-parameter setup error. <c>jcass-dm check</c> compares this method against the
+    /// bundle and tells you which one is missing.</para>
+    ///
+    /// <para>Values are <b>clamped</b> into the <c>minimum</c>/<c>maximum</c> range declared on
+    /// that sheet, not validated against it. That is by design - one out-of-range calculation
+    /// must not abort a whole run - but it means a wrong range fails silently. A parameter coming
+    /// out suspiciously flat, or pinned to a round number, is that.</para>
+    /// </summary>
+    /// <param name="numModParamValues">Sink for numeric parameters, supplied by the framework.</param>
+    /// <param name="textModParamValues">Sink for text parameters, supplied by the framework. Unused in this model.</param>
+    public void SetParameterValues(Action<string, double> numModParamValues, Action<string, string> textModParamValues)
+    {
+        numModParamValues("par_age", this.Age);
+        numModParamValues("par_cond_rating", this.ConditionRating);
+        numModParamValues("par_obj", this.ObjectiveValue);
+    }
+}

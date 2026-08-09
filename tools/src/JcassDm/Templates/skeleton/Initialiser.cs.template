@@ -1,0 +1,70 @@
+using System;
+using System.Collections.Generic;
+using JCass_ModelCore.Models;
+
+namespace {{NAMESPACE}};
+
+/// <summary>
+/// Stage 1 of 6: what state every element starts the run in.
+///
+/// <para>Called once per element, before period 1. The job is to turn the client's survey data
+/// into a sane starting state - and "sane" is doing real work here. Field data arrives with gaps,
+/// with values surveyed several years ago that need ageing forward, and with the occasional
+/// impossible number. A model that starts from bad state produces a bad forecast in every
+/// subsequent period, and nothing downstream will flag it.</para>
+///
+/// <para>The canonical models all do three things here, in this order:</para>
+/// <list type="number">
+///   <item><description>Build the element from raw inputs, via
+///   <see cref="{{ELEMENT}}Factory.GetFromInputData"/>.</description></item>
+///   <item><description>Fix what is missing or impossible - clamp to a floor, substitute a
+///   default derived from a cohort, age a stale survey value forward to today.</description></item>
+///   <item><description>Derive anything computed from the above.</description></item>
+/// </list>
+///
+/// <para>Any threshold you use in step 2 is a tunable number: it goes in <c>lookups.xlsx</c> and
+/// is read through <see cref="Constants"/>, not written here as a literal. That includes the
+/// boring ones - a minimum traffic count, a maximum plausible roughness.</para>
+/// </summary>
+public class Initialiser
+{
+    private readonly ModelBase _frameworkModel;
+    private readonly {{MODEL}} _domainModel;
+
+    /// <summary>
+    /// Creates the initialiser. Built once in <see cref="{{MODEL}}.SetupInstance"/>, so
+    /// <c>_domainModel.Constants</c> is available by the time <see cref="Initialise"/> runs.
+    /// </summary>
+    /// <param name="frameworkModel">The framework model, for raw data and lookups.</param>
+    /// <param name="domainModel">This domain model, for its <see cref="Constants"/>.</param>
+    public Initialiser(ModelBase frameworkModel, {{MODEL}} domainModel)
+    {
+        _frameworkModel = frameworkModel ?? throw new ArgumentNullException(nameof(frameworkModel));
+        _domainModel = domainModel ?? throw new ArgumentNullException(nameof(domainModel));
+    }
+
+    /// <summary>
+    /// Returns the starting state for one element.
+    /// </summary>
+    /// <param name="iElemIndex">Zero-based index of the element.</param>
+    /// <param name="numInputs">Numeric raw input columns, keyed by column name.</param>
+    /// <param name="textInputs">Text raw input columns, keyed by column name.</param>
+    public {{ELEMENT}} Initialise(
+        int iElemIndex,
+        Dictionary<string, double> numInputs,
+        Dictionary<string, string> textInputs)
+    {
+        {{ELEMENT}} element = {{ELEMENT}}Factory.GetFromInputData(iElemIndex, numInputs, textInputs);
+
+        // Data cleaning and derived starting values go here, e.g.
+        //
+        //   element.AverageDailyTraffic = Math.Max(
+        //       _domainModel.Constants.MinimumPlausibleTraffic, element.AverageDailyTraffic);
+        //
+        // Note where the floor comes from: a property on Constants, backed by a row in
+        // lookups.xlsx. Not `Math.Max(1, ...)`. A modeller recalibrating against observed data
+        // will want to move that number, and they should not need you to do it.
+
+        return element;
+    }
+}

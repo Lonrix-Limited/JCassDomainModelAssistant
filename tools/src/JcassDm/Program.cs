@@ -80,6 +80,18 @@ public static class Program
                 case "add-input-header":
                     return AddInputHeaderVerb.Run(parsed, output);
 
+                case "scaffold":
+                    return ScaffoldVerb.Run(parsed, output);
+
+                case "rename":
+                    return RenameVerb.Run(parsed, output);
+
+                case "check":
+                    return CheckVerb.Run(parsed, output);
+
+                case "package":
+                    return PackageVerb.Run(parsed, output);
+
                 default:
                     throw new UsageFailure(
                         $"Unknown command '{parsed.Verb}'." + Environment.NewLine +

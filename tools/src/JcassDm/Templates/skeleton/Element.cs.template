@@ -1,0 +1,66 @@
+using System;
+
+namespace {{NAMESPACE}};
+
+/// <summary>
+/// One asset in the network, as this domain model sees it. This is the class you will change
+/// most: it holds the state that carries from one modelling period to the next.
+///
+/// <para>Nothing here is framework machinery. The framework never sees this type - it hands the
+/// domain model dictionaries of raw inputs and parameter values, and
+/// <see cref="{{ELEMENT}}Factory"/> turns those into one of these. Working in a plain object
+/// rather than in dictionaries is a convention, not a requirement, but it is what keeps the
+/// modelling rules readable, and it is what every model in the Cassandra corpus does.</para>
+///
+/// <para><b>What goes on this class, and what does not.</b> Properties and the two or three
+/// derived values that every stage needs - here. The rules that move the state forward belong in
+/// <see cref="Incrementer"/>, <see cref="Resetter"/> and <see cref="TreatmentsTrigger"/>, one
+/// file per stage, so that a change has an obvious home and a reader has an obvious place to
+/// look.</para>
+/// </summary>
+public class {{ELEMENT}}
+{
+    /// <summary>Zero-based index of this element in the model's input data. Set by the factory.</summary>
+    public int ElementIndex { get; set; }
+
+    // ---------------------------------------------------------------------------------------
+    // Your element's state goes here, as properties.
+    //
+    // Two kinds, and it is worth being deliberate about which is which:
+    //
+    //   - Attributes that never change over the run - a name, a material, a length, a road
+    //     hierarchy class. These come from the client's input CSV every period, via
+    //     {{ELEMENT}}Factory, and they do NOT need to be model parameters.
+    //
+    //   - State that evolves - age, condition, remaining life. This must be written in
+    //     SetParameterValues below AND declared on the `parameters` sheet of the bundle, or it
+    //     is forgotten between periods.
+    //
+    // The test for the second kind: if the value cannot be recomputed from the inputs and the
+    // other parameters, it has to be a parameter.
+    // ---------------------------------------------------------------------------------------
+
+    /// <summary>
+    /// Writes this element's state back into the framework's parameter store.
+    ///
+    /// <para><b>Every parameter named on the <c>parameters</c> sheet of
+    /// <c>domain_model_setup.xlsx</c> must be written here</b>, or the framework reports a
+    /// missing-parameter setup error. <c>jcass-dm check</c> compares this method against the
+    /// bundle and tells you which one is missing.</para>
+    ///
+    /// <para>Values are <b>clamped</b> into the <c>minimum</c>/<c>maximum</c> range declared on
+    /// that sheet, not validated against it. That is by design - one out-of-range calculation
+    /// must not abort a whole run - but it means a wrong range fails silently. A parameter coming
+    /// out suspiciously flat, or pinned to a round number, is that.</para>
+    /// </summary>
+    /// <param name="numModParamValues">Sink for numeric parameters, supplied by the framework.</param>
+    /// <param name="textModParamValues">Sink for text parameters, supplied by the framework.</param>
+    public void SetParameterValues(Action<string, double> numModParamValues, Action<string, string> textModParamValues)
+    {
+        // One line per parameter on the bundle's `parameters` sheet, e.g.
+        //   numModParamValues("par_age", this.Age);
+        //   textModParamValues("par_surface_material", this.SurfaceMaterial);
+        //
+        // Numeric parameter names conventionally start with par_.
+    }
+}
