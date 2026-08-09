@@ -12,3 +12,4 @@
 *.xlsx    binary
 *.dll     binary
 *.pdb     binary
+*.exe     binary

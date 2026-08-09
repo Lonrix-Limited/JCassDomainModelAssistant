@@ -1,0 +1,44 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+
+    <!-- The verb the docs and the skills call. Note this is NOT the situation the
+         reference model's README warns about: <AssemblyName> is dangerous in a
+         DOMAIN MODEL because the debug run derives the class name from the .csproj
+         filename while a normal run reads it from the bundle, so the two disagree
+         silently. Nothing resolves this assembly by reflection - here the setting
+         just names the executable. -->
+    <AssemblyName>jcass-dm</AssemblyName>
+    <RootNamespace>JcassDm</RootNamespace>
+
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+
+    <Title>jcass-dm</Title>
+    <Description>Reads and writes the Juno Cassandra domain model bundle (domain_model_setup.xlsx).</Description>
+    <Copyright>Lonrix Ltd 2026</Copyright>
+    <Version>1.0.0</Version>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- ClosedXML directly, NOT JCass_Excel.
+
+         JCass_Excel reaches this repository only as a REFERENCE assembly
+         (refs/JCass_Excel.dll): it compiles and gives IntelliSense, and the runtime
+         refuses to load it, so a tool built against it would fail on its first call.
+         ClosedXML is the same engine JCass_Excel wraps, and this tool deliberately
+         mirrors ExcelHelperOXML's read semantics (see SheetTable), so the framework
+         reads exactly what is written here. tools/README.md records the decision. -->
+    <PackageReference Include="ClosedXML" Version="0.104.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="JcassDm.Tests" />
+  </ItemGroup>
+
+</Project>

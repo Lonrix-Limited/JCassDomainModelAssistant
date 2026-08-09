@@ -61,3 +61,32 @@ jobs:
         run: >
           dotnet build reference-model/DomainModelSample/DomainModelSample.csproj
           -c Debug --no-incremental -warnaserror
+
+      # ---------------------------------------------------------------------
+      # jcass-dm's tests run on every push, on Linux, against a copy of the
+      # reference model's bundle. They are the only thing standing between a
+      # change here and a tool that quietly corrupts somebody's bundle - the
+      # committed exe is rebuilt by hand, so CI cannot check the binary itself,
+      # only the source it should have come from.
+      # ---------------------------------------------------------------------
+      - name: Test jcass-dm
+        run: dotnet test tools/src/JcassDm.Tests/JcassDm.Tests.csproj --nologo --verbosity quiet
+
+      # ---------------------------------------------------------------------
+      # The committed exe must exist and must have a stamp beside it. It cannot
+      # be run here (win-x64), and it can drift from tools/src without anything
+      # noticing - the stamp records which commit it came from so that drift is
+      # at least visible to a person.
+      # ---------------------------------------------------------------------
+      - name: Check jcass-dm is shipped
+        shell: pwsh
+        run: |
+          foreach ($required in @('tools/jcass-dm.exe', 'tools/jcass-dm.build.txt')) {
+            if (-not (Test-Path $required)) {
+              Write-Host "::error::$required is missing. Rebuild with ./scripts/build-jcass-dm.ps1 and commit it."
+              exit 1
+            }
+          }
+          $size = [math]::Round((Get-Item 'tools/jcass-dm.exe').Length / 1MB, 1)
+          Write-Host "tools/jcass-dm.exe - $size MB"
+          Write-Host (Get-Content 'tools/jcass-dm.build.txt' -Raw)
