@@ -87,7 +87,9 @@ internal static class AddParameterVerb
         output.WriteLine();
         output.WriteLine("Two things the bundle cannot do for you:");
         output.WriteLine($"  1. SetParameterValues - write '{name}'. EVERY parameter on this sheet must be");
-        output.WriteLine( "                          written there, or setup fails.");
+        output.WriteLine( "                          written there. Nothing tells you if one is not: it stays");
+        output.WriteLine( "                          at zero for the whole run and the outputs look plausible.");
+        output.WriteLine( "                          'jcass-dm check' is the only thing that catches it.");
         output.WriteLine($"  2. The element factory - read '{name}' back when rebuilding the element.");
 
         if (isNumeric && !name.StartsWith("par_", StringComparison.Ordinal))

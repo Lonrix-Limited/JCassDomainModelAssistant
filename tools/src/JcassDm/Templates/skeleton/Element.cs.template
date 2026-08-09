@@ -44,9 +44,11 @@ public class {{ELEMENT}}
     /// Writes this element's state back into the framework's parameter store.
     ///
     /// <para><b>Every parameter named on the <c>parameters</c> sheet of
-    /// <c>domain_model_setup.xlsx</c> must be written here</b>, or the framework reports a
-    /// missing-parameter setup error. <c>jcass-dm check</c> compares this method against the
-    /// bundle and tells you which one is missing.</para>
+    /// <c>domain_model_setup.xlsx</c> must be written here.</b> Nothing in the framework checks
+    /// that you did. A declared parameter that is never written is allocated and left at zero for
+    /// every element in every period, and the run completes with a column of zeros in the outputs
+    /// that looks exactly like a modelling result. <c>jcass-dm check</c> compares this method
+    /// against the bundle and is the only thing that will tell you.</para>
     ///
     /// <para>Values are <b>clamped</b> into the <c>minimum</c>/<c>maximum</c> range declared on
     /// that sheet, not validated against it. That is by design - one out-of-range calculation

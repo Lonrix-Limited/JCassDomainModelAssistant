@@ -4,7 +4,7 @@ This repository is the **Juno Cassandra Domain Model Assistant**. It gives an AI
 the context it does not otherwise have: how the Juno Cassandra framework expects a **domain model**
 to be written, which of its conventions fail silently, and the tooling to check your work.
 
-**Read [`docs/00-start-here.md`](docs/00-start-here.md) before doing anything else.** It is the
+**Read [`docs/00-start-here.md`](../docs/00-start-here.md) before doing anything else.** It is the
 single entry point and it routes you from there.
 
 Two things to know before you read it, because they change what you should do:

@@ -1,6 +1,6 @@
 # docs/patterns/ — placeholder
 
-**Filled by session S10.**
+**Not written yet.**
 
 Will hold the canonical shape of each recurring piece of a real model — the element class, the
 factory, the trigger, the incrementer and resetter, strategy generation, treatment costing and

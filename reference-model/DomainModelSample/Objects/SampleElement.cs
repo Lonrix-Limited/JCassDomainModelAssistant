@@ -52,9 +52,14 @@ public class SampleElement
     }
 
     /// <summary>
-    /// Writes this element's state back into the framework's parameter store. Every parameter
-    /// named in the <c>parameters</c> sheet of <c>domain_model_setup.xlsx</c> must be written
-    /// here, or the framework will report a missing-parameter setup error.
+    /// Writes this element's state back into the framework's parameter store.
+    ///
+    /// <para><b>Every parameter named in the <c>parameters</c> sheet of
+    /// <c>domain_model_setup.xlsx</c> must be written here, and nothing in the framework checks
+    /// that you did.</b> A declared parameter that is never written is allocated and left at zero
+    /// for every element in every period; the run completes and the outputs carry a column of
+    /// zeros that looks exactly like a modelling result. <c>jcass-dm check</c> compares this
+    /// method against the bundle and is the only thing that will tell you.</para>
     /// </summary>
     /// <param name="numModParamValues">Sink for numeric parameters, supplied by the framework.</param>
     /// <param name="textModParamValues">Sink for text parameters, supplied by the framework. Unused in this model.</param>

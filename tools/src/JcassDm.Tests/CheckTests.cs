@@ -85,6 +85,21 @@ public class CheckTests
     }
 
     [Fact]
+    public void A_missing_parameter_says_that_nothing_else_catches_it()
+    {
+        // Until 2026-08-10 this rule's message pointed downstream at a framework setup error that
+        // does not exist. ModelSetupChecker.RunSetupChecksStage1 has no rule for a declared
+        // parameter that is never written, and ModelParameterData simply allocates the array: the
+        // parameter is zero for every element in every period and the run completes. That makes
+        // this rule the ONLY defence, and the message has to say so - a modeller who believes the
+        // framework will catch it later has no reason to act on a local warning now.
+        ToolResult result = Run("parameter-not-written");
+
+        Assert.Contains("Nothing else catches this", result.Output, StringComparison.Ordinal);
+        Assert.DoesNotContain("fails at setup when a declared parameter", result.Output, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void A_treatment_with_no_reset_arm_is_named()
     {
         ToolResult result = Run("missing-reset-arm");

@@ -251,8 +251,14 @@ internal static class CheckVerb
     }
 
     /// <summary>
-    /// Every parameter the bundle declares has to be written in <c>SetParameterValues</c>, or the
-    /// framework reports a missing-parameter error at setup.
+    /// Every parameter the bundle declares has to be written in <c>SetParameterValues</c>.
+    ///
+    /// <para><b>Nothing in the framework catches this one</b> - verified against
+    /// <c>ModelSetupChecker.RunSetupChecksStage1</c>, which has no such rule, and against
+    /// <c>ModelParameterData</c>, whose arrays are simply allocated at their default. A declared
+    /// parameter that is never written is zero for every element in every period, and the run
+    /// completes normally. This rule is therefore the only defence there is, which is why its
+    /// message says so rather than pointing downstream at a framework error that never arrives.</para>
     /// </summary>
     private static void CheckParameters(BundleFile bundle, SourceFacts facts, CheckReport report)
     {
@@ -271,7 +277,9 @@ internal static class CheckVerb
                 $"The bundle declares {declared.Count} parameter{(declared.Count == 1 ? "" : "s")} " +
                 "and there is no SetParameterValues method anywhere in the project.",
                 "Every parameter on the bundle's parameters sheet must be written through the " +
-                "framework's sinks, or setup fails.",
+                "framework's sinks. Nothing reports it if one is not: the framework allocates the " +
+                "parameter and leaves it at zero for every element in every period, and the run " +
+                "completes with a column of zeros in the outputs.",
                 "Declared: " + string.Join(", ", declared));
             return;
         }
@@ -285,9 +293,12 @@ internal static class CheckVerb
 
         report.Problem("parameters vs C#",
             $"Declared in the bundle but never written in SetParameterValues: {string.Join(", ", missing)}.",
-            "The framework fails at setup when a declared parameter is never written. Note that " +
-            "the reverse - writing a parameter the bundle does not declare - is not checked here, " +
-            "because a name assembled at run time would look like that too.",
+            "Nothing else catches this. The framework does not check that a declared parameter is " +
+            "ever written - it allocates the parameter and leaves it at zero, so the run completes " +
+            "and the outputs carry a column of zeros that looks like a modelling result. This " +
+            "check is the only place you will be told. Note that the reverse - writing a parameter " +
+            "the bundle does not declare - is not checked here, because a name assembled at run " +
+            "time would look like that too; the framework does throw on that one, by name.",
             "Either write it in SetParameterValues, or remove its row from the parameters sheet.");
     }
 

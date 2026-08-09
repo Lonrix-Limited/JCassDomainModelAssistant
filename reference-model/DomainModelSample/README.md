@@ -178,11 +178,18 @@ These get confused, and getting it wrong wastes an afternoon:
 | **Sending the kit to someone**, for local development | Everything, **including `refs\`** | They need the DLLs to compile and to get IntelliSense |
 | **Uploading to the web Debug Model page** | Source only, **no `refs\`** | That workspace stages its own larger set; overwriting part of it is how local and server drift apart |
 
-For the upload zip, select the items **inside** the project folder — `Objects`,
-`DomainModelSample.csproj`, `domain_model_setup.xlsx`, `README.md` — right-click, **Send to →
-Compressed (zipped) folder**. Do not zip the folder itself: if the zip opens to a
-`DomainModelSample\` folder rather than straight to `Objects` and the `.csproj`, everything lands
-one level too deep and F5 fails with *"No .csproj file found at workspace root"*.
+**Build the upload zip with the tool.** It gets both halves right — no `refs\`, and a zip that opens
+straight to the `.csproj`:
+
+```powershell
+.\tools\jcass-dm.exe package --project .
+```
+
+Doing it by hand is the classic afternoon-waster, so if you must: select the items **inside** the
+project folder — `Objects`, `DomainModelSample.csproj`, `domain_model_setup.xlsx`, `README.md` —
+right-click, **Send to → Compressed (zipped) folder**. Do not zip the folder itself. If the zip
+opens to a `DomainModelSample\` folder rather than straight to `Objects` and the `.csproj`,
+everything lands one level too deep and F5 fails with *"No .csproj file found at workspace root"*.
 
 `bin` and `obj` are filtered out by the upload, so they do no harm if they slip in. **`refs\` is
 not — leave it out yourself.** It matters more than it used to: the assemblies here cannot be
@@ -266,13 +273,20 @@ it is a parameter; if it can be recomputed from inputs and other parameters, it 
    not validation bounds.** Every value written to the parameter is forced into that range —
    quietly, by design, so that one out-of-range calculation cannot abort a whole run. Get the
    range wrong and there is no error to notice: the model runs to completion and the parameter
-   is simply pinned at a limit for the periods that hit it. A range of `0` to `0` flattens the
-   parameter to zero for the entire run.
+   is simply pinned at a limit for the periods that hit it.
+
+   The one range the framework does reject is a *degenerate* one — a minimum above the maximum, or
+   both the same — because that would flatten the parameter completely. Those stop the run at
+   setup with a message naming the parameter. A range that is merely too narrow does not.
 
    So set the range to what the quantity can genuinely take. If a parameter is coming out
    suspiciously flat, or sitting exactly on a round number, check this row first.
 2. `Objects\SampleElement.cs` → write it in `SetParameterValues`. **Every parameter in the sheet
-   must be written there**, or setup fails.
+   must be written there, and nothing in the framework checks that you did.** A declared parameter
+   that is never written is allocated and left at zero for every element in every period. The run
+   completes and the outputs carry a column of zeros that looks exactly like a modelling result.
+   `jcass-dm check` is the only thing that catches it — see
+   [`silent-failures.md`](../../docs/conventions/silent-failures.md).
 3. `Objects\ElementFactory.cs` → read it back in `GetElementFromModelData`.
 
 Numeric parameter names conventionally start with `par_`.
@@ -380,19 +394,24 @@ The genuinely quiet trap in `SetupInstance` is a different one. `NElements`, `NP
 by one of them at setup and you get a silent wrong answer, not an exception. Use them from
 `Initialise` onwards.
 
-### The one number deliberately left hard-coded
+### The three numbers deliberately left hard-coded
 
-`TreatmentTrigger.RoutineMaintenanceConditionGreaterThan` is still a `const`, as the
-counter-example. Compare it against anything on `Constants` and the difference in who can change
-it is the whole point. Moving it is a good first exercise:
+Three values in this kit are hard-coded **on purpose**, as the contrast that makes the rule visible.
+Each one carries a `DELIBERATE COUNTER-EXAMPLE — do not copy this shape` block in the source, so
+that anybody reading the code rather than this README still sees it.
+
+`TreatmentTrigger.RoutineMaintenanceConditionGreaterThan` is a `const`. Compare it against anything
+on `Constants` and the difference in who can change it is the whole point. Moving it is a good first
+exercise:
 
 1. Add a row to `lkp_project`: set `maintenance_thresholds`, key `cond_gt`, value `50`.
 2. Add a property to `Constants` reading it, alongside the others.
 3. Replace the `const` reference in `TreatmentTrigger.GetTriggeredMaintenance`.
 
-The per-material deterioration and cost rates in `SampleElement` are hard-coded for the same
-reason — they are the second exercise, and in a real model they belong in lookups too, since
-deterioration rates are exactly what gets recalibrated against observed condition data.
+`SampleElement.GetDeteriorationRate` and `SampleElement.GetReplacementRate` are the other two, and
+they are the second exercise. In a real model both belong in lookups: deterioration rates are
+exactly what gets recalibrated against observed condition data, and a unit rate is the single
+most-often-retuned number in any model.
 
 ---
 

@@ -4,8 +4,9 @@ A self-contained VS Code project that lets a civil engineer, working alongside a
 assistant, design, build, debug, publish and maintain a **Custom Domain Model** for
 [Juno Cassandra](https://junocassandra.com) — without being a software developer.
 
-> **Status: under construction.** The skeleton and the reference model are in place. The
-> documentation, the `jcass-dm` tool and the skills are not written yet. See
+> **Status: under construction.** The reference model, the `jcass-dm` tool, the framework API
+> reference and the core documentation are in place. The end-to-end workflow guide, the pattern
+> library and the Claude skills are not written yet. See
 > [What is here today](#what-is-here-today).
 
 ---
@@ -28,7 +29,7 @@ repository is the context that makes the assistant useful instead.**
 
 ## How to use it
 
-1. Download or clone this repository.
+1. Download this repository as a ZIP and unpack it.
 2. Open it in VS Code, alongside your own model folder — use
    [`assistant.code-workspace`](assistant.code-workspace).
 3. Point your AI assistant at [`docs/00-start-here.md`](docs/00-start-here.md).
@@ -37,22 +38,22 @@ repository is the context that makes the assistant useful instead.**
 it is what makes this repository safe to replace wholesale when a newer version is released:
 re-downloading the Assistant never touches your model.
 
-You need a paid AI coding assistant that runs inside your editor and can run commands and read
-their output. A browser chat window is not enough. Claude is the recommended and supported choice;
-others work but are untested. The subscription is yours, not Lonrix's — and it is an accelerant,
-not a requirement. A Custom Domain Model can still be written entirely by hand, exactly as before.
+You need a paid AI coding assistant that runs inside your editor — a browser chat window is not
+enough — and the subscription is yours rather than Lonrix's. It is an accelerant, not a licence
+requirement. What to install, which assistant, and the full statement on who pays:
+[`docs/orientation/prerequisites.md`](docs/orientation/prerequisites.md).
 
 ## What is here today
 
 | Folder | Holds | State |
 |---|---|---|
-| [`docs/`](docs/) | Orientation, conventions, workflow, patterns, framework API reference | Sessions S7–S10 |
+| [`docs/`](docs/) | Orientation, conventions and the framework API reference | **Present** — workflow and patterns still to come |
 | [`reference-model/`](reference-model/) | `DomainModelSample`, a small working model, plus a snapshot of sample inputs | **Present** |
-| [`examples/`](examples/) | Focused examples of individual patterns | Session S10 |
-| [`tools/`](tools/) | `jcass-dm` — scaffolds, reads and writes the bundle, checks, packages | Sessions S5–S6 |
+| [`examples/`](examples/) | Focused examples of individual patterns | Not written yet |
+| [`tools/`](tools/) | `jcass-dm` — scaffolds, reads and writes the bundle, checks, packages | **Present** |
 | [`refs/`](refs/) | Framework reference assemblies to compile against, and their API documentation | **Present** |
-| [`scripts/`](scripts/) | Maintenance scripts, including the leak scanner | **Present** |
-| [`.claude/`](.claude/) | Claude skills — a convenience layer, never a holder of unique knowledge | Session S11 |
+| [`scripts/`](scripts/) | Maintenance scripts | **Present** |
+| [`.claude/`](.claude/) | Claude skills — a convenience layer, never a holder of unique knowledge | Not written yet |
 
 ## Getting help
 
