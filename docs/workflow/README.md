@@ -8,13 +8,19 @@ each one, and the file every edit lands in. That is deliberate: when someone say
 through adding a treatment"*, the answer is to walk them through the page that already exists,
 not to improvise a lesson that comes out differently every time.
 
+**Every command on these pages is typed into a PowerShell terminal**, normally the one sitting in
+the `JCassDomainModelAssistant` folder — which is what makes `.\tools\...` and `..\MyRoadModel` mean
+what they say. If that sentence is not obvious, read
+[`../orientation/running-commands.md`](../orientation/running-commands.md) first; it takes five
+minutes and prevents the most common failure there is. Assistants: say which terminal, every time.
+
 ---
 
 ## The two ways in
 
 | Where you are | Start at |
 |---|---|
-| **You are writing a new domain model.** Nothing exists yet. | [`10-scaffold-and-build.md`](10-scaffold-and-build.md) |
+| **You are writing a new domain model.** Nothing exists yet. | [`01-plan-your-model.md`](01-plan-your-model.md), then [`10-scaffold-and-build.md`](10-scaffold-and-build.md) |
 | **You have inherited a model somebody else wrote** — "help me refactor the model in folder X", or a model that only exists on the server. | [`05-adopt-an-existing-model.md`](05-adopt-an-existing-model.md) — **and read it before you touch anything** |
 
 Both paths rejoin at [`20-upload-and-debug.md`](20-upload-and-debug.md) and are identical from
@@ -27,6 +33,7 @@ there on.
 | | Page | What it covers |
 |---|---|---|
 | 00 | [`00-prerequisites.md`](00-prerequisites.md) | What has to be installed and granted first |
+| 01 | [`01-plan-your-model.md`](01-plan-your-model.md) | **New models.** The engineering settled on paper before any command — treatments, input columns, parameters, increment and reset rules, grouped thresholds |
 | 05 | [`05-adopt-an-existing-model.md`](05-adopt-an-existing-model.md) | The second entry path — diagnose an inherited model |
 | 10 | [`10-scaffold-and-build.md`](10-scaffold-and-build.md) | `scaffold --from-sample`, build locally, `check` |
 | 20 | [`20-upload-and-debug.md`](20-upload-and-debug.md) | Package, upload, initialise the workspace, F5 with real breakpoints |

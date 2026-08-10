@@ -6,16 +6,48 @@ What has to be in place before an engineer can build a domain model, and who pro
 
 ## On their machine
 
+**The download links live once, in [`../../README.md` § Prerequisites](../../README.md#prerequisites--have-these-before-you-download)** — that is the section written for somebody who has not
+downloaded anything yet. This page owns the *reasoning*: why each item is needed, which assistant,
+who pays, and how updates arrive. Send an engineer to the README for the links; extend this page
+when the reasoning changes.
+
 | What | Why | Note |
 |---|---|---|
+| **A Windows PC** | `jcass-dm` ships as a Windows executable and every command in `workflow\` is PowerShell. | Windows 10 or 11. |
 | **VS Code** | Where the work happens. Open this repository and their model folder side by side using [`assistant.code-workspace`](../../assistant.code-workspace). | Free. |
 | **The .NET 9 SDK** | Builds the model. `dotnet build` comes from it. | Free. Check with `dotnet --version`. |
 | **This repository** | The framework reference assemblies, the API reference, the conventions, and `jcass-dm`. | Download the ZIP; no account needed. |
+| **A folder they can read *and write*** | Both this repository and their model folder are written into — the build alone creates thousands of files. | Under **Documents** is always safe. See below. |
 | **A paid AI coding assistant** | See below. | Theirs to choose and to pay for. |
 
 Nothing else. There is no framework installer, no NuGet feed and no licence key on the engineer's
 side — the reference assemblies are committed in `refs\`, so the project compiles the moment it is
 unzipped.
+
+### The folder, and why it is on this list
+
+**Ask about write permission before the first command, not after it fails.** Engineers commonly work
+on machines where the obvious folder is not theirs to write to: a managed corporate drive, a shared
+network location, `C:\Program Files`, the root of `C:\`. Reading works, so nothing looks wrong until
+the first write.
+
+`jcass-dm scaffold` now probes for this and refuses with a plain message naming the folder rather
+than failing part-way through, but the cheaper moment to catch it is in conversation. How to check
+it in ten seconds, and why a synced folder (OneDrive, Dropbox, SharePoint) is worth avoiding for a
+model folder: [`running-commands.md` § 4](running-commands.md#4-you-need-write-permission-in-both-folders).
+
+### Git and GitHub — recommended, never required
+
+**A GitHub account is worth having and nothing here depends on it.** A model folder in a git
+repository gives the engineer a history of every change, a way back to last week's version, and a
+way to hand the model to a colleague or to Lonrix support. That is genuinely useful for a model that
+will be maintained for years.
+
+**It changes nothing about how an assistant works, and the rule stands:** never assume git
+knowledge, never make a git step part of a procedure, and never route an Assistant *update* through
+git — updates are a re-download ([below](#getting-a-newer-version)). If the engineer raises git, or
+already keeps their model in a repository, help them with it as an ordinary request. Do not raise it
+unprompted in the middle of a modelling task.
 
 ## On the web app
 

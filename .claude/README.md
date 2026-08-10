@@ -19,7 +19,7 @@ skill should link to it.
 
 | Skill | Wraps |
 |---|---|
-| `new-domain-model` | [`workflow/10-scaffold-and-build.md`](../docs/workflow/10-scaffold-and-build.md) · `scaffold`, `set-meta`, `check` |
+| `new-domain-model` | [`workflow/01-plan-your-model.md`](../docs/workflow/01-plan-your-model.md), [`workflow/10-scaffold-and-build.md`](../docs/workflow/10-scaffold-and-build.md) · `scaffold`, `set-meta`, `check` |
 | `adopt-existing-model` | [`workflow/05-adopt-an-existing-model.md`](../docs/workflow/05-adopt-an-existing-model.md) · `check`, `rename`, `dump` |
 | `check-my-model` | [`conventions/silent-failures.md`](../docs/conventions/silent-failures.md) · `check` |
 | `add-treatment` | [`workflow/30`](../docs/workflow/30-make-a-change.md#add-a-treatment) · [`patterns/treatment-instances.md`](../docs/patterns/treatment-instances.md), [`treatment-suitability-scoring.md`](../docs/patterns/treatment-suitability-scoring.md), [`candidate-strategies.md`](../docs/patterns/candidate-strategies.md) · `add-treatment` |
@@ -29,9 +29,13 @@ skill should link to it.
 | `package-for-upload` | [`workflow/20-upload-and-debug.md`](../docs/workflow/20-upload-and-debug.md) · `package` |
 | `draft-support-request` | [`support-request-template.md`](../docs/support-request-template.md) |
 
-Three properties every one of them inherits, because they are properties of the Assistant rather
+Four properties every one of them inherits, because they are properties of the Assistant rather
 than of any skill:
 
+- **It says where a command runs and what a path resolves to.** Every command block is introduced
+  by the terminal it belongs in, and any path that will be written to outside this repository is
+  stated absolutely and confirmed before the command runs —
+  [`docs/orientation/running-commands.md`](../docs/orientation/running-commands.md).
 - **It honours the verb.** *"Guide me through adding a treatment"* gets a lesson;
   *"add a treatment called reseal"* gets the change. A skill is never the way round the teaching —
   [`docs/00-start-here.md` § 2](../docs/00-start-here.md).

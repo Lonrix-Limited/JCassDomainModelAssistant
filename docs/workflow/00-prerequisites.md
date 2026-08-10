@@ -14,6 +14,7 @@ two lists of what you need drift apart, and then neither can be trusted.
 | You need | Provided by |
 |---|---|
 | VS Code, the .NET 9 SDK, this repository | Free downloads. Nothing to licence, no NuGet feed, no installer |
+| **A folder you can read *and write* in**, holding both this repository and your model beside it | You. Under **Documents** is always safe — [`../orientation/running-commands.md` § 4](../orientation/running-commands.md#4-you-need-write-permission-in-both-folders) |
 | **A paid AI coding assistant that runs inside the editor** and can run commands *and read their output* | **The client.** Lonrix does not pay for it and does not procure it |
 | A Juno Cassandra client with `inputs\` populated | Already true of any operating client |
 | Access to the **Debug Model** page, and permission to **publish** | An administrator at Juno grants both |
@@ -60,6 +61,10 @@ same as "this is mine to change".
 
 ---
 
-Next: [`10-scaffold-and-build.md`](10-scaffold-and-build.md), or
+Never used a terminal? Read [`../orientation/running-commands.md`](../orientation/running-commands.md)
+before step 10. Five minutes, and it covers the one mistake that accounts for most "the command did
+not work" — a terminal sitting in the wrong folder.
+
+Next: [`01-plan-your-model.md`](01-plan-your-model.md) for a new model, or
 [`05-adopt-an-existing-model.md`](05-adopt-an-existing-model.md) if you are picking up a model
 somebody else wrote.

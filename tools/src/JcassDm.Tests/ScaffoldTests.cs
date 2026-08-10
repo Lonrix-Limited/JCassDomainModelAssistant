@@ -224,6 +224,33 @@ public class ScaffoldTests
         Assert.False(Directory.Exists(folder));
     }
 
+    [Fact]
+    public void A_target_several_folders_deep_still_scaffolds()
+    {
+        // Guards the write probe: it writes into the nearest EXISTING ancestor, so a target whose
+        // parents do not exist yet must still be treated as writable rather than refused.
+        using TemporaryModel target = TemporaryModel.Empty();
+        string folder = Path.Combine(target.Folder, "Projects", "2026", "MyRoadModel");
+
+        ToolResult result = target.Run("scaffold", "MyRoadModel", "--output", folder);
+
+        Assert.Equal(ExitCode.Ok, result.ExitCode);
+        Assert.True(File.Exists(Path.Combine(folder, "MyRoadModel.csproj")));
+    }
+
+    [WindowsOnlyFact("a drive letter is meaningless on Linux, where 'Q:\\nowhere' is just a filename")]
+    public void A_target_on_a_drive_that_does_not_exist_is_refused_by_name()
+    {
+        // The engineer typed a drive letter that is not mounted, or a network drive that is not
+        // connected. Say which, rather than reporting it as a defect in the tool.
+        using TemporaryModel target = TemporaryModel.Empty();
+
+        ToolResult result = target.Run("scaffold", "MyRoadModel", "--output", @"Q:\nowhere\MyRoadModel");
+
+        Assert.Equal(ExitCode.UsageError, result.ExitCode);
+        Assert.Contains("not on any drive", result.All, StringComparison.Ordinal);
+    }
+
     private static string StripComments(string code)
     {
         code = System.Text.RegularExpressions.Regex.Replace(code, @"//[^\n]*", string.Empty);

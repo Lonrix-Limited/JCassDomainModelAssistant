@@ -9,10 +9,11 @@ namespace JcassDm.Tests;
 /// </summary>
 /// <remarks>
 /// <para>Use this only where the <em>test technique</em> needs Windows, not where the behaviour
-/// under test happens to have been written there. There are exactly two at the time of writing,
-/// both in <c>RenameTests</c>, and both for the same reason.</para>
+/// under test happens to have been written there. Two in <c>RenameTests</c> need it for the
+/// read-only-file reason below; one in <c>ScaffoldTests</c> needs it because a drive letter is
+/// meaningless on Linux, where <c>Q:\nowhere</c> parses as an ordinary relative filename.</para>
 ///
-/// <para>They force a write failure with
+/// <para>The rename pair force a write failure with
 /// <c>File.SetAttributes(path, FileAttributes.ReadOnly)</c>. On Windows that makes the file
 /// genuinely unwritable. On Linux and macOS it does not: <see cref="System.IO.File.Replace"/>
 /// swaps one directory entry for another, and POSIX governs that by the <em>containing

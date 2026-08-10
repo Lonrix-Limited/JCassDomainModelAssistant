@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Security;
 using JcassDm.Bundle;
 using JcassDm.Cli;
 using JcassDm.Project;
@@ -61,6 +62,7 @@ internal static class ScaffoldVerb
 
         string folder = Path.GetFullPath(outputOption ?? model.Value);
         RequireEmptyTarget(folder, model);
+        RequireWritableTarget(folder);
 
         string variant = fromSample ? "sample" : "skeleton";
 
@@ -141,6 +143,67 @@ internal static class ScaffoldVerb
             $"have, that is a different job:  jcass-dm rename {model} --project {folder}" +
             Environment.NewLine +
             "Otherwise pick another folder with --output.");
+    }
+
+    /// <summary>
+    /// Fails clearly, before anything is written, when the target folder cannot be written to.
+    ///
+    /// <para><b>Without this the message is actively misleading.</b> The first write throws
+    /// <see cref="UnauthorizedAccessException"/>, which reaches the top-level handler in
+    /// <c>Program</c> and is reported as "jcass-dm failed unexpectedly. This is a bug in the tool"
+    /// with a stack trace under it. It is not a bug: it is an engineer running scaffold against a
+    /// folder their Windows account cannot write to - a managed corporate drive, a synced folder
+    /// that is read-only, Program Files, the root of a drive. Reported as a tool defect it becomes
+    /// a support email about something they could fix in ten seconds by choosing another
+    /// folder.</para>
+    ///
+    /// <para>The probe is written into the nearest <i>existing</i> ancestor, because that is the
+    /// folder <see cref="Directory.CreateDirectory(string)"/> will actually write into when the
+    /// target does not exist yet.</para>
+    /// </summary>
+    private static void RequireWritableTarget(string folder)
+    {
+        string ancestor = NearestExistingAncestor(folder);
+        string probe = Path.Combine(ancestor, ".jcass-dm-write-probe-" + Guid.NewGuid().ToString("N"));
+
+        try
+        {
+            File.WriteAllText(probe, string.Empty);
+            File.Delete(probe);
+        }
+        catch (Exception ex) when (ex is UnauthorizedAccessException or IOException or SecurityException)
+        {
+            throw new UsageFailure(
+                $"Cannot create files in '{ancestor}'. Nothing was written." + Environment.NewLine +
+                Environment.NewLine +
+                "Your Windows account does not have permission to write there. This is not a " +
+                "problem with jcass-dm and not a problem with your model." + Environment.NewLine +
+                Environment.NewLine +
+                "Choose a folder you own - one under your Documents folder is always safe - and " +
+                "run scaffold again with --output pointing into it. Put the model folder beside " +
+                "the Assistant folder, not inside it." + Environment.NewLine +
+                Environment.NewLine +
+                "Underlying error: " + ex.Message);
+        }
+    }
+
+    /// <summary>
+    /// The closest folder up the chain from <paramref name="folder"/> that exists today.
+    /// For <c>C:\Work\New\MyModel</c> where only <c>C:\Work</c> exists, that is <c>C:\Work</c>.
+    /// </summary>
+    private static string NearestExistingAncestor(string folder)
+    {
+        string? candidate = folder;
+        while (candidate is not null)
+        {
+            if (Directory.Exists(candidate)) return candidate;
+            candidate = Path.GetDirectoryName(candidate);
+        }
+
+        throw new UsageFailure(
+            $"'{folder}' is not on any drive this machine can see. Nothing was written." +
+            Environment.NewLine +
+            "Check the drive letter, and check that a network drive is connected.");
     }
 
     private static void WriteProjectFiles(

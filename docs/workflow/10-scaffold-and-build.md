@@ -10,7 +10,12 @@ Picking up a model somebody else wrote? Go to
 
 ## Before you start
 
-Decide **one name** for your model. It becomes four things at once — the project file name, the
+**Settle the engineering first.** [`01-plan-your-model.md`](01-plan-your-model.md) — your
+treatments, your input columns, your parameters, how each one increments and resets, and your
+thresholds. It is half an hour with a spreadsheet and it decides how the next fortnight goes. If you
+have not done it, do it now; this page will still be here.
+
+Then decide **one name** for your model. It becomes four things at once — the project file name, the
 assembly name, the entry class, and two settings inside the model's bundle spreadsheet — and they
 have to stay identical for the rest of the model's life.
 
@@ -22,16 +27,48 @@ never edit the four by hand. See [`../conventions/four-names.md`](../conventions
 
 ## Step 1 — Scaffold
 
-Open a PowerShell terminal **in this repository's folder** (in VS Code: **Terminal → New
-Terminal**), and run:
+### First, know where the model is about to be created
+
+The command below writes a new folder, and **where** it lands is decided by the folder your terminal
+is sitting in — not by anything you can see on screen. Get this straight before you run it and you
+will not spend an afternoon looking for your model.
+
+**Open a PowerShell terminal in this repository's folder.** In VS Code: **Terminal → New Terminal**.
+It normally opens in the folder you have open, which is the right one. Confirm it:
+
+```powershell
+pwd
+```
+
+You should see the path of the `JCassDomainModelAssistant` folder — something like
+`C:\Work\JCassDomainModelAssistant`. If not, `cd` to it. The whole of this is explained in
+[`../orientation/running-commands.md`](../orientation/running-commands.md).
+
+**Your model will be created next door**, as a sibling of that folder:
+
+```
+C:\Work\
+    JCassDomainModelAssistant\     <- your terminal is here
+    MyRoadModel\                   <- your model will be created here
+```
+
+**Check you can write there.** Open `C:\Work\` — the parent folder — in File Explorer, right-click
+in the empty space, **New → Text Document**, then delete it. If both work, carry on. If they do not,
+choose a folder you own (anywhere under **Documents** is safe), move the Assistant folder there, and
+start again. `scaffold` will refuse with a plain message rather than writing half a model, but it is
+cheaper to know now.
+
+### Then run it
+
+In that same PowerShell terminal:
 
 ```powershell
 .\tools\jcass-dm.exe scaffold MyRoadModel --from-sample --output ..\MyRoadModel
 ```
 
-Substitute your own name in both places. `--output ..\MyRoadModel` puts the project **beside this
-repository, not inside it** — that is what makes it safe to replace the Assistant with a newer
-version later without touching your work.
+Substitute your own name in both places. `..\` means *the folder next door*, so
+`--output ..\MyRoadModel` puts the project **beside this repository, not inside it** — that is what
+makes it safe to replace the Assistant with a newer version later without touching your work.
 
 **You should see** a summary ending with the four names, then a `Next:` block and a list of the
 lookup sets the model will need:
@@ -50,6 +87,11 @@ The four names all read 'MyRoadModel', and they were all written from that one n
   3. class MyRoadModel : DomainModelBase
   4. meta.main_dll = MyRoadModel.dll, meta.main_class = MyRoadModel
 ```
+
+**Read the `Scaffolded ... at ...` line and check the path is where you expected.** It is the full
+path, spelled out, and this is the moment to notice if the terminal was somewhere other than you
+thought. Nothing else has happened yet, so the fix is to delete that folder and run the command
+again from the right place.
 
 **Why `--from-sample`.** It carries the reference model's working logic, so the project runs end to
 end before you have written anything. That is the walking skeleton — see
@@ -97,6 +139,8 @@ C# extension, then try again.
 
 ## Step 3 — Build
 
+Back in your PowerShell terminal — the one still sitting in the Assistant folder — run:
+
 ```powershell
 dotnet build ..\MyRoadModel\MyRoadModel.csproj -c Debug --no-incremental
 ```
@@ -117,6 +161,8 @@ which line of the output matters and what the common messages mean.
 > server, in step 20. This is the design, not a fault — `refs\README.md` explains it.
 
 ## Step 4 — Check
+
+Same terminal again:
 
 ```powershell
 .\tools\jcass-dm.exe check --project ..\MyRoadModel
@@ -193,5 +239,8 @@ the third tier for coefficient *sets*: [`../conventions/where-numbers-live.md`](
 - [ ] `dotnet build` says `Build succeeded`, 0 warnings, 0 errors.
 - [ ] `jcass-dm check` says `No problems`.
 - [ ] Your model folder is **beside** this repository, not inside it.
+- [ ] **You can say the full path of your model folder out loud** — `C:\...\MyRoadModel`. Every
+      later step reaches it with `..\MyRoadModel` from the Assistant folder, and knowing the real
+      path is what lets you tell a wrong turn from a broken command.
 
 Next: [`20-upload-and-debug.md`](20-upload-and-debug.md).

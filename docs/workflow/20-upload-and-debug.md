@@ -20,7 +20,8 @@ with **Release my lock** when you finish for the day.
 
 ## Step 2 — Package the upload zip
 
-Back in a terminal in this repository's folder:
+Back in your PowerShell terminal on your own machine — the one sitting in this repository's folder
+([`../orientation/running-commands.md`](../orientation/running-commands.md)):
 
 ```powershell
 .\tools\jcass-dm.exe package --project ..\MyRoadModel
@@ -101,7 +102,9 @@ editor mount in the frame below.
 
 ## Step 6 — Build on the server
 
-In the editor frame, open a terminal (**Terminal → New Terminal**) and:
+**This one is not on your machine.** In the editor frame *in the browser*, open a terminal
+(**Terminal → New Terminal**) — a terminal on the server, not the PowerShell one on your machine,
+and it is already sitting in your uploaded project. Then:
 
 ```bash
 dotnet build

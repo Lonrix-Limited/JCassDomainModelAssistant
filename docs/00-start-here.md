@@ -18,11 +18,23 @@ That changes how you work:
 
 - **Give exact commands, not options to choose between.** One command they can paste. Not "you
   could either… or…".
+- **Say where every command runs, every time.** A bare command block assumes they know what a
+  terminal is and which one to use. Put one line in front of it — *"In your PowerShell terminal —
+  the one you already have open in the `JCassDomainModelAssistant` folder — run:"* — and say
+  **Terminal → New Terminal** if they do not have one yet. Full rule and the folder mechanics:
+  [`orientation/running-commands.md`](orientation/running-commands.md).
+- **Name the absolute folder before anything is written outside this repository.** `--output
+  ..\MyRoadModel` is relative to *the terminal's* folder, which the engineer cannot see. Before
+  `scaffold`, say *"this will create `C:\Work\MyRoadModel`, beside the Assistant folder"* and ask
+  them to confirm they can create files there. Folder layout is the thing this audience finds
+  confusing, and a model written somewhere unexpected is discovered late.
 - **Prefer File Explorer over the command line** wherever both would work. "Open the `Objects`
   folder and double-click `Constants.cs`" beats a `cd` and an editor invocation.
 - **Never assume git knowledge.** Do not tell them to branch, stash, merge or resolve a conflict.
   They do not need git to build a domain model, and improvements to this Assistant arrive by
   re-downloading it, never by `git pull` — see [`orientation/prerequisites.md`](orientation/prerequisites.md).
+  A GitHub account is *recommended* for keeping a history of their own model; help with it if they
+  raise it, never make it a step.
 - **Explain in modelling terms, not C# terms.** "This is where you say how fast a surface wears
   out" lands; "this method mutates the instance's backing field" does not.
 - **You do the plumbing; you never supply the engineering judgement.** Deterioration rates, trigger
@@ -79,6 +91,7 @@ reasoning you need before you tighten or loosen it:
 |---|---|
 | **Understand what you are building at all** | [`orientation/what-you-are-building.md`](orientation/what-you-are-building.md) |
 | Know what the engineer needs installed, which AI assistant, and who pays | [`orientation/prerequisites.md`](orientation/prerequisites.md) |
+| **Tell them where to run a command**, or work out why `.\tools\jcass-dm.exe` "is not recognized" | [`orientation/running-commands.md`](orientation/running-commands.md) |
 | Know when the framework calls which of your methods | [`orientation/how-a-run-works.md`](orientation/how-a-run-works.md) |
 | Explain a C# idea to somebody who has not written C# | [`orientation/csharp-you-need.md`](orientation/csharp-you-need.md) |
 | Make sense of a build error, a crash, or a breakpoint that will not bind | [`orientation/reading-errors.md`](orientation/reading-errors.md) |
@@ -106,7 +119,7 @@ reasoning you need before you tighten or loosen it:
 | Model work outside the capital budget | [`patterns/routine-maintenance.md`](patterns/routine-maintenance.md) |
 | | |
 | **Do any of this end to end** | [`workflow/`](workflow/README.md) — the whole path, as procedures a human can follow |
-| **Start a new model** | [`workflow/10-scaffold-and-build.md`](workflow/10-scaffold-and-build.md) |
+| **Start a new model** | [`workflow/01-plan-your-model.md`](workflow/01-plan-your-model.md) **first** — the engineering questions, before any command — then [`workflow/10-scaffold-and-build.md`](workflow/10-scaffold-and-build.md) |
 | **Pick up a model somebody else wrote** | [`workflow/05-adopt-an-existing-model.md`](workflow/05-adopt-an-existing-model.md) — `check` first, always |
 | **Add a treatment** | [`workflow/30-make-a-change.md`](workflow/30-make-a-change.md#add-a-treatment) — five places, and missing one is silent in four of them |
 | **Add an input column** | [`workflow/30-make-a-change.md`](workflow/30-make-a-change.md#add-an-input-column) — **both** factory methods |
@@ -126,7 +139,14 @@ reasoning you need before you tighten or loosen it:
 upload, debug, publish, run — written as numbered procedures a human can follow. In a guided
 session, walk the engineer through the relevant page rather than improvising a lesson.
 
-Two things from it that shape everything else, so they are here rather than one click away:
+Three things from it that shape everything else, so they are here rather than one click away:
+
+**Plan before you scaffold.** When somebody says *"I want to start a new domain model"*, the first
+page is [`workflow/01-plan-your-model.md`](workflow/01-plan-your-model.md), not a command. Four
+engineering questions — start simple; which treatments, input columns and parameters; how each
+parameter increments and resets; which thresholds and constants, grouped. **Walk them one at a
+time** and wait for each answer. The scaffolded bundle is where those answers land, so the ordering
+is real rather than pedagogical, and the lists are the engineer's to fill in — never yours.
 
 **Prove the pipeline before you model anything.**
 
