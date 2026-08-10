@@ -4,10 +4,11 @@ A self-contained VS Code project that lets a civil engineer, working alongside a
 assistant, design, build, debug, publish and maintain a **Custom Domain Model** for
 [Juno Cassandra](https://junocassandra.com) — without being a software developer.
 
-> **Status: under construction.** The reference model, the `jcass-dm` tool, the framework API
-> reference and the core documentation are in place. The end-to-end workflow guide, the pattern
-> library and the Claude skills are not written yet. See
-> [What is here today](#what-is-here-today).
+> **Status: complete, not yet released.** Everything an engineer needs is in place — the reference
+> model, the `jcass-dm` tool, the framework API reference, the conventions, the end-to-end workflow,
+> the pattern library and the Claude skills. What is still outstanding is on Lonrix's side: a full
+> end-to-end acceptance pass and a published release process. Expect the occasional rough edge, and
+> send it to **support@lonrix.com**.
 
 ---
 
@@ -47,13 +48,13 @@ requirement. What to install, which assistant, and the full statement on who pay
 
 | Folder | Holds | State |
 |---|---|---|
-| [`docs/`](docs/) | Orientation, conventions and the framework API reference | **Present** — workflow and patterns still to come |
+| [`docs/`](docs/) | Orientation, conventions, the framework API reference, the ten canonical patterns, and the end-to-end workflow | **Present** |
 | [`reference-model/`](reference-model/) | `DomainModelSample`, a small working model, plus a snapshot of sample inputs | **Present** |
-| [`examples/`](examples/) | Focused examples of individual patterns | Not written yet |
+| [`examples/`](examples/) | One compiling example per pattern, built in CI | **Present** |
 | [`tools/`](tools/) | `jcass-dm` — scaffolds, reads and writes the bundle, checks, packages | **Present** |
 | [`refs/`](refs/) | Framework reference assemblies to compile against, and their API documentation | **Present** |
 | [`scripts/`](scripts/) | Maintenance scripts | **Present** |
-| [`.claude/`](.claude/) | Claude skills — a convenience layer, never a holder of unique knowledge | Not written yet |
+| [`.claude/`](.claude/) | Claude skills — a convenience layer, never a holder of unique knowledge | **Present** — and optional: delete the folder and everything still works, with more typing |
 
 ## Getting help
 

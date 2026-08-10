@@ -1,8 +1,9 @@
 # docs/
 
 Everything an AI assistant needs to know about writing a Juno Cassandra domain model. Plain
-markdown, readable by any agent. Claude skills will be added under `.claude/` later; they will be a
-shortcut to what is written here and will never hold knowledge of their own.
+markdown, readable by any agent. The Claude skills under `.claude/` are a shortcut to what is
+written here and hold no knowledge of their own — delete that folder and everything still works,
+with more typing.
 
 **The entry point is [`00-start-here.md`](00-start-here.md).** Read it first, every session. It
 routes; it carries almost no content of its own.
