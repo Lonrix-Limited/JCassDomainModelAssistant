@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(dotnet build:*)",
+      "Bash(dotnet --version)",
+      "Bash(dotnet --info)",
+      "PowerShell(dotnet build:*)",
+      "PowerShell(dotnet --version)",
+      "PowerShell(dotnet --info)",
+
+      "Bash(./tools/jcass-dm.exe check:*)",
+      "Bash(./tools/jcass-dm.exe dump:*)",
+      "Bash(./tools/jcass-dm.exe version)",
+      "Bash(.\\tools\\jcass-dm.exe check:*)",
+      "Bash(.\\tools\\jcass-dm.exe dump:*)",
+      "Bash(.\\tools\\jcass-dm.exe version)",
+      "PowerShell(.\\tools\\jcass-dm.exe check:*)",
+      "PowerShell(.\\tools\\jcass-dm.exe dump:*)",
+      "PowerShell(.\\tools\\jcass-dm.exe version)",
+
+      "Bash(./scripts/check-framework-version.ps1)",
+      "Bash(./scripts/leak-scan.ps1)",
+      "PowerShell(.\\scripts\\check-framework-version.ps1)",
+      "PowerShell(.\\scripts\\leak-scan.ps1)"
+    ],
+    "deny": [
+      "Bash(curl:*)",
+      "Bash(wget:*)",
+      "PowerShell(Invoke-RestMethod:*)",
+      "PowerShell(Invoke-WebRequest:*)",
+      "PowerShell(curl:*)",
+      "PowerShell(wget:*)",
+      "WebFetch"
+    ]
+  }
+}
