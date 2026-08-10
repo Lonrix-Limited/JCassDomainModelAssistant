@@ -57,8 +57,10 @@ internal static class AddTreatmentVerb
         output.WriteLine();
         output.WriteLine("The bundle now declares this treatment. Four things it cannot do for you:");
         output.WriteLine($"  1. TreatmentNames.cs      - add a constant whose value is exactly '{name}'.");
-        output.WriteLine( "  2. TreatmentTrigger.cs    - decide when it fires and what it costs.");
-        output.WriteLine( "  3. StrategyGenerator.cs   - decide whether it competes with the others.");
+        output.WriteLine( "  2. TreatmentsTrigger.cs   - decide when it fires and what it costs, and");
+        output.WriteLine( "                              CALL it from GetTriggeredTreatments. Set");
+        output.WriteLine( "                              TreatmentSuitabilityScore, or it is never chosen.");
+        output.WriteLine( "  3. lookups.xlsx           - a unit_rates row, plus any thresholds it reads.");
         output.WriteLine( "  4. The element's Reset    - handle it. The default branch throws, so a treatment");
         output.WriteLine( "                              missing here fails loudly rather than doing nothing.");
         output.WriteLine();

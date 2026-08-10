@@ -71,10 +71,11 @@ public class TreatmentsTrigger
     /// <summary>
     /// Assembles a <see cref="TreatmentInstance"/>.
     ///
-    /// <para><b>Use named arguments.</b> <c>TreatmentInstance</c> has several constructor
-    /// overloads and the positional order is easy to get wrong in a way that compiles - swapping
-    /// quantity and unit rate gives a cost that is wrong by orders of magnitude and an optimiser
-    /// that funds all the wrong things.</para>
+    /// <para><b>Use named arguments.</b> <c>TreatmentInstance</c> has exactly one constructor and
+    /// it takes eight parameters, two of them consecutive <c>double</c>s - so the positional order
+    /// is easy to get wrong in a way that still compiles. Swapping quantity and unit rate gives a
+    /// cost that is wrong by orders of magnitude and an optimiser that funds all the wrong
+    /// things.</para>
     ///
     /// <para>Cost is <c>quantity x unitRate</c>. Where a treatment's cost has to be split across
     /// several budget groups, there is a separate framework call for that

@@ -24,6 +24,13 @@ namespace {{NAMESPACE}};
 /// <c>inputs\budgets.xlsx</c>. The framework checks that at setup and names any mismatch, so this
 /// one fails early and clearly rather than quietly.</para>
 ///
+/// <para><b>Set <c>RankParamSimple</c> on whatever you return.</b> Maintenance is not optimised:
+/// the framework sorts every maintenance job by that value, descending, and funds down the list
+/// until the maintenance budget runs out. Left at its default of zero every job compares equal, so
+/// the order is whatever the element loop happened to produce - reproducibly arbitrary, which is
+/// worse than randomly arbitrary because it looks deliberate. See
+/// <c>docs\patterns\treatment-suitability-scoring.md</c>.</para>
+///
 /// <para>Static rather than an instance class, because unlike the other stages it needs nothing
 /// cached at setup. The canonical models split on this: one keeps a stateful maintenance model
 /// built in <c>SetupInstance</c>. Move it to an instance class the moment it needs one.</para>
@@ -53,6 +60,12 @@ public static class RoutineMaintenance
             reason: $"Condition {Math.Round(element.ConditionRating, 1)} > " +
                     $"{constants.MaintenanceConditionGreaterThan}",
             comment: "none");
+
+        // Maintenance is sorted by this and funded down the list until the money runs out. It is
+        // the model's ONLY control over what gets done first, and the constructor leaves it at
+        // zero. Reusing the element's objective value keeps one definition of "urgent" across the
+        // model - replace it with your own measure of maintenance urgency, built from lookups.
+        maintenance.RankParamSimple = element.ObjectiveValue;
 
         return maintenance;
     }

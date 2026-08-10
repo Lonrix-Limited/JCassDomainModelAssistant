@@ -157,6 +157,36 @@ public class RenameTests
         }
     }
 
+    /// <summary>
+    /// The two-step sequence the adoption workflow actually produces: rename first, then decide
+    /// the stale namespace should move after all.
+    ///
+    /// <para>This regressed once and was silent. The set of movable namespaces was derived from
+    /// the ENTRY CLASS NAME, so after the first step - which aligns the class with the target -
+    /// a namespace still reading the old name matched nothing. The verb reported "unchanged",
+    /// exited 0, and left the namespace exactly as it was, having been asked explicitly to move
+    /// it. `05-adopt-an-existing-model.md` step 3 tells the engineer to run the first command,
+    /// and the verb's own success note then offers the second.</para>
+    /// </summary>
+    [Fact]
+    public void The_namespace_still_moves_when_asked_after_the_names_already_agree()
+    {
+        using TemporaryModel model = FixtureModels.Copy("names-disagree");
+
+        model.Run("rename", "InheritedRoadModel", "--project", model.Folder);
+
+        ToolResult result = model.Run("rename", "InheritedRoadModel", "--project", model.Folder, "--namespace");
+
+        Assert.Equal(ExitCode.Ok, result.ExitCode);
+        Assert.DoesNotContain("unchanged", result.Output, StringComparison.Ordinal);
+
+        foreach (string file in Directory.GetFiles(model.PathTo("Objects")))
+        {
+            Assert.Contains("namespace InheritedRoadModel.Objects;",
+                File.ReadAllText(file), StringComparison.Ordinal);
+        }
+    }
+
     [Fact]
     public void Renaming_a_model_with_two_project_files_is_refused()
     {

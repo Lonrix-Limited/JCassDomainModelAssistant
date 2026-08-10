@@ -247,21 +247,34 @@ internal sealed class RenamePlan
     {
         bool classChanges = !string.Equals(entry.Name, this._target.ClassName, StringComparison.Ordinal);
 
-        // Namespaces that begin with the old class name are the ones --namespace would move.
-        // Working from the class name rather than the csproj stem is deliberate: on a model that
-        // already breaks the four-name rule those two differ, and the namespace almost always
-        // follows the class.
-        var movable = this._project.Namespaces()
-            .Where(ns => string.Equals(ns, entry.Name, StringComparison.Ordinal)
-                         || ns.StartsWith(entry.Name + ".", StringComparison.Ordinal))
-            .ToList();
-
-        if (!renameNamespace) this.NamespacesThatCouldMove = movable;
-
         // Occurrences of the old name followed by a dot are namespace-qualified when a namespace
         // of that name exists, and must be left to the namespace pass. Without this test a
         // fully-qualified `OldName.Objects.Thing` would be half-rewritten.
-        bool oldNameIsNamespacePrefix = movable.Count > 0;
+        bool oldNameIsNamespacePrefix = this._project.Namespaces()
+            .Any(ns => string.Equals(ns, entry.Name, StringComparison.Ordinal)
+                       || ns.StartsWith(entry.Name + ".", StringComparison.Ordinal));
+
+        // Every declared namespace whose leading segment is not already the target is one that
+        // --namespace would move.
+        //
+        // This used to be anchored on the ENTRY CLASS NAME, and that silently did nothing in the
+        // case that matters most. `05-adopt-an-existing-model.md` tells the engineer to run
+        // `rename <Name>` first; the verb's own success note then says "pass --namespace if you
+        // want it moved too". By that point the class name already reads the target, so a stale
+        // namespace matched nothing, the plan came out empty, and the verb reported "unchanged"
+        // and exited 0 - having done exactly nothing the engineer asked for. A stale namespace is
+        // the adoption case, which is the one time somebody actually reaches for this flag.
+        List<string> movableRoots = this._project.Namespaces()
+            .Select(RootSegment)
+            .Where(root => !string.Equals(root, this._target.Value, StringComparison.Ordinal))
+            .Distinct(StringComparer.Ordinal)
+            .ToList();
+
+        var movable = this._project.Namespaces()
+            .Where(ns => movableRoots.Contains(RootSegment(ns), StringComparer.Ordinal))
+            .ToList();
+
+        if (!renameNamespace) this.NamespacesThatCouldMove = movable;
 
         foreach (SourceFile source in this._project.Sources)
         {
@@ -270,9 +283,12 @@ internal sealed class RenamePlan
             {
                 text = RewriteClassName(text, entry.Name, this._target.ClassName, oldNameIsNamespacePrefix);
             }
-            if (renameNamespace && movable.Count > 0)
+            if (renameNamespace)
             {
-                text = RewriteNamespace(text, entry.Name, this._target.Value);
+                foreach (string root in movableRoots)
+                {
+                    text = RewriteNamespace(text, root, this._target.Value);
+                }
             }
 
             if (!string.Equals(text, source.Text, StringComparison.Ordinal))
@@ -393,6 +409,13 @@ internal sealed class RenamePlan
     {
         int row = meta.FindRowByKey("Setting", key);
         return row < 0 ? string.Empty : meta.Text(row, "Value").Trim();
+    }
+
+    /// <summary>The leading segment of a namespace - <c>MyModel</c> from <c>MyModel.Objects</c>.</summary>
+    private static string RootSegment(string ns)
+    {
+        int dot = ns.IndexOf('.');
+        return dot < 0 ? ns : ns[..dot];
     }
 
     private static IEnumerable<string> SplitKeepingLineEndings(string text)

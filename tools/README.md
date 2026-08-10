@@ -131,6 +131,7 @@ Agents branch on these, so they are a contract rather than an implementation det
 | `1` | The command line was wrong — unknown option, missing or unparseable value. | Read the message and fix the command. |
 | `2` | The bundle is unusable — missing file, missing sheet, missing column. | Fix the bundle. The message names what is missing. |
 | `3` | The row exists with different values and `--force` was not given. | Decide: overwrite with `--force`, or use a different name. |
+| `4` | `check` found problems with the model. The tool worked; the answer is "not yet". | Fix what it named, then re-run. Distinct from `2` on purpose: a `2` means the bundle could not be read, a `4` means it read fine and the model is not ready. |
 | `9` | `jcass-dm` itself failed. | A bug in the tool. Report it — see the escalation route in the docs. |
 
 An unrecognised option is always `1`, never ignored. `--budget_category` instead of
