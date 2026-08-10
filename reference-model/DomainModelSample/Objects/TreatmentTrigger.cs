@@ -83,7 +83,7 @@ public static class TreatmentTrigger
         // quantity here is a condition-derived measure rather than the element's area.
         double quantity = Math.Sqrt(element.ConditionRating);
 
-        return Build(
+        TreatmentInstance maintenance = Build(
             element,
             TreatmentNames.RoutineMaintenance,
             baseRate: 1.0,
@@ -91,6 +91,18 @@ public static class TreatmentTrigger
             iPeriod: iPeriod,
             reason: $"Condition > {RoutineMaintenanceConditionGreaterThan}",
             quantity: quantity);
+
+        // Maintenance is NOT optimised. The framework sorts every maintenance job by this value,
+        // descending, and funds down the list until the maintenance budget runs out - so this is
+        // the model's only control over what gets done first when maintenance money is short.
+        // The constructor leaves it at zero, and at zero every job compares equal: the order
+        // becomes whatever the element loop produced, which is stable across runs and therefore
+        // looks deliberate. TreatmentSuitabilityScore, set in Build, does nothing here; it is the
+        // capital candidates' ranking. Reusing the objective value keeps one definition of
+        // "urgent" across the model. See docs\patterns\treatment-suitability-scoring.md.
+        maintenance.RankParamSimple = element.ObjectiveValue;
+
+        return maintenance;
     }
 
     /// <summary>
