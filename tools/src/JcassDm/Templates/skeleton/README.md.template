@@ -8,6 +8,22 @@ make, and none of them has been filled with a plausible-looking guess.
 
 ---
 
+## 0. Where to run the commands on this page
+
+**Every command here is typed into a PowerShell terminal sitting in the Assistant folder** — the
+folder holding `tools\jcass-dm.exe`, next door to this one. In VS Code: **Terminal → New Terminal**,
+then check with `pwd`.
+
+That is why the commands say `.\tools\jcass-dm.exe` (the tool, in the folder you are in) and
+`..\{{MODEL}}` (this project, next door). Run them from inside this folder instead and PowerShell
+answers *"The term '.\tools\jcass-dm.exe' is not recognized"* — it is not there, and nothing is
+wrong beyond which folder you are standing in.
+
+The Assistant's `docs\orientation\running-commands.md` covers this in five minutes if any of it is
+unfamiliar.
+
+---
+
 ## 1. The four names
 
 Four strings must be identical, and in this project they all read **`{{MODEL}}`**:
@@ -48,7 +64,7 @@ silently — the file would still be `{{MODEL}}.csproj` while the DLL came out u
 ## 2. Build it
 
 ```powershell
-dotnet build {{MODEL}}.csproj -c Debug --no-incremental
+dotnet build ..\{{MODEL}}\{{MODEL}}.csproj -c Debug --no-incremental
 ```
 
 Expected: `Build succeeded. 0 Warning(s) 0 Error(s)`, and `bin\Debug\net9.0\{{MODEL}}.dll`.
@@ -96,7 +112,7 @@ In this order. Each step leaves you with a project that still builds.
    columns onto them in `{{ELEMENT}}Factory.cs`. Declare each column in the bundle:
 
    ```powershell
-   .\tools\jcass-dm.exe add-input-header .\domain_model_setup.xlsx --column area_sqm --type number
+   .\tools\jcass-dm.exe add-input-header ..\{{MODEL}}\domain_model_setup.xlsx --column area_sqm --type number
    ```
 
 2. **Decide what state has to survive between periods.** Anything that cannot be recomputed from
@@ -104,7 +120,7 @@ In this order. Each step leaves you with a project that still builds.
    factory's `GetFromModelData`, and declare it:
 
    ```powershell
-   .\tools\jcass-dm.exe add-parameter .\domain_model_setup.xlsx --name par_cond --min 0 --max 100
+   .\tools\jcass-dm.exe add-parameter ..\{{MODEL}}\domain_model_setup.xlsx --name par_cond --min 0 --max 100
    ```
 
    `--min` and `--max` are **clamps, not validation bounds** — values outside the range are pinned
@@ -117,7 +133,7 @@ In this order. Each step leaves you with a project that still builds.
    `TreatmentsTrigger.cs`, a reset arm in `Resetter.cs`, a unit rate in `lookups.xlsx`.
 
    ```powershell
-   .\tools\jcass-dm.exe add-treatment .\domain_model_setup.xlsx --name repair --budget-category renewals
+   .\tools\jcass-dm.exe add-treatment ..\{{MODEL}}\domain_model_setup.xlsx --name repair --budget-category renewals
    ```
 
    The `budget_category` must match a column in the client's `inputs\budgets.xlsx`. One that
@@ -127,7 +143,7 @@ In this order. Each step leaves you with a project that still builds.
 5. **Check as you go.**
 
    ```powershell
-   .\tools\jcass-dm.exe check --project .
+   .\tools\jcass-dm.exe check --project ..\{{MODEL}}
    ```
 
 ---
@@ -181,7 +197,7 @@ lookup rows after a refit, and a model that asks them to gets recalibrated wrong
 The Debug Model page wants **source only**, opening **straight to the `.csproj`**:
 
 ```powershell
-.\tools\jcass-dm.exe package --project .
+.\tools\jcass-dm.exe package --project ..\{{MODEL}}
 ```
 
 Zipping the folder rather than its contents is the classic mistake — everything lands one level

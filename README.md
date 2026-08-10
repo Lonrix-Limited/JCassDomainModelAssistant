@@ -64,6 +64,9 @@ one; this section is the short list you need before you download anything.
 ## How to use it
 
 1. Download this repository as a ZIP and unpack it into the folder you chose in prerequisite 5.
+   **GitHub names the unpacked folder `JCassDomainModelAssistant-main`**, with the `-main` on the
+   end. Rename it to `JCassDomainModelAssistant` if you like — nothing depends on the name, but
+   these pages use the short one, and a folder you can spell is a folder you can `cd` into.
 2. Open it in VS Code, alongside your own model folder — use
    [`assistant.code-workspace`](assistant.code-workspace).
 3. Point your AI assistant at [`docs/00-start-here.md`](docs/00-start-here.md).

@@ -59,6 +59,9 @@ cd C:\Work\JCassDomainModelAssistant
 Use the real path on your machine. Copy it from the address bar in File Explorer if you are not
 sure, and keep the quotes if it contains a space: `cd "C:\My Work\JCassDomainModelAssistant"`.
 
+**A downloaded ZIP unpacks to `JCassDomainModelAssistant-main`**, with `-main` on the end, unless
+it has been renamed. These pages use the short name; use whatever your folder is actually called.
+
 ## 3. The two folders, and how they sit
 
 There are exactly two folders in play, side by side:

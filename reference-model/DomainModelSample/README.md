@@ -126,10 +126,15 @@ name, and only the debug path would notice.
 
 ## 4. Build it
 
-Nothing to fetch. The framework assemblies are committed in `refs\`, so from the project root:
+Nothing to fetch — the framework assemblies are committed in `refs\`.
+
+**The commands below run in a PowerShell terminal sitting in the Assistant folder**, the one
+holding `tools\jcass-dm.exe`. That is the same terminal every page in `docs\workflow\` uses, and
+keeping to one folder is why the paths are spelled out rather than relative to wherever you happen
+to be. In VS Code: **Terminal → New Terminal**, then `pwd` to confirm.
 
 ```powershell
-dotnet build DomainModelSample.csproj -c Debug --no-incremental
+dotnet build .\reference-model\DomainModelSample\DomainModelSample.csproj -c Debug --no-incremental
 ```
 
 Expected: `Build succeeded. 0 Warning(s) 0 Error(s)`, and `bin\Debug\net9.0\DomainModelSample.dll`.
@@ -161,7 +166,7 @@ Assistant. From the Assistant's root:
 what *regular* model runs load, so it should be optimised:
 
 ```powershell
-dotnet build DomainModelSample.csproj -c Release
+dotnet build .\reference-model\DomainModelSample\DomainModelSample.csproj -c Release
 ```
 
 Debug buys you nothing there — a web **Debug Model** F5 run never loads the registry DLL at all, it
@@ -182,8 +187,11 @@ These get confused, and getting it wrong wastes an afternoon:
 straight to the `.csproj`:
 
 ```powershell
-.\tools\jcass-dm.exe package --project .
+.\tools\jcass-dm.exe package --project .\reference-model\DomainModelSample
 ```
+
+For your own model that is `--project ..\MyRoadModel` — same terminal, same folder, a different
+project path.
 
 Doing it by hand is the classic afternoon-waster, so if you must: select the items **inside** the
 project folder — `Objects`, `DomainModelSample.csproj`, `domain_model_setup.xlsx`, `README.md` —

@@ -11,6 +11,22 @@ sample's logic with your own, one file at a time, with a working build at every 
 
 ---
 
+## 0. Where to run the commands on this page
+
+**Every command here is typed into a PowerShell terminal sitting in the Assistant folder** — the
+folder holding `tools\jcass-dm.exe`, next door to this one. In VS Code: **Terminal → New Terminal**,
+then check with `pwd`.
+
+That is why the commands say `.\tools\jcass-dm.exe` (the tool, in the folder you are in) and
+`..\{{MODEL}}` (this project, next door). Run them from inside this folder instead and PowerShell
+answers *"The term '.\tools\jcass-dm.exe' is not recognized"* — it is not there, and nothing is
+wrong beyond which folder you are standing in.
+
+The Assistant's `docs\orientation\running-commands.md` covers this in five minutes if any of it is
+unfamiliar.
+
+---
+
 ## 1. The four names
 
 Four strings must be identical, and in this project they all read **`{{MODEL}}`**:
@@ -49,7 +65,7 @@ silently.
 ## 2. Build it
 
 ```powershell
-dotnet build {{MODEL}}.csproj -c Debug --no-incremental
+dotnet build ..\{{MODEL}}\{{MODEL}}.csproj -c Debug --no-incremental
 ```
 
 Expected: `Build succeeded. 0 Warning(s) 0 Error(s)`, and `bin\Debug\net9.0\{{MODEL}}.dll`.
@@ -122,14 +138,14 @@ leaves you with a project that still builds and still runs.
    which input columns describe it. Declare each column in the bundle:
 
    ```powershell
-   .\tools\jcass-dm.exe add-input-header .\domain_model_setup.xlsx --column pavement_age --type number
+   .\tools\jcass-dm.exe add-input-header ..\{{MODEL}}\domain_model_setup.xlsx --column pavement_age --type number
    ```
 
 2. **`SetParameterValues` and the `parameters` sheet** — the state that must survive between
    periods. Keep the two in step; `jcass-dm check` tells you when they drift.
 
    ```powershell
-   .\tools\jcass-dm.exe add-parameter .\domain_model_setup.xlsx --name par_iri --min 0 --max 20
+   .\tools\jcass-dm.exe add-parameter ..\{{MODEL}}\domain_model_setup.xlsx --name par_iri --min 0 --max 20
    ```
 
    `--min` and `--max` are **clamps, not validation bounds** — values outside the range are pinned
@@ -142,7 +158,7 @@ leaves you with a project that still builds and still runs.
    `TreatmentNames.cs`, a bundle row, a trigger method, a reset arm, a unit rate.
 
    ```powershell
-   .\tools\jcass-dm.exe add-treatment .\domain_model_setup.xlsx --name reseal --budget-category resurfacing
+   .\tools\jcass-dm.exe add-treatment ..\{{MODEL}}\domain_model_setup.xlsx --name reseal --budget-category resurfacing
    ```
 
 5. **`Initialiser.cs`** — data cleaning, once you meet real survey data rather than the sample's.
@@ -150,7 +166,7 @@ leaves you with a project that still builds and still runs.
 6. **Check as you go.**
 
    ```powershell
-   .\tools\jcass-dm.exe check --project .
+   .\tools\jcass-dm.exe check --project ..\{{MODEL}}
    ```
 
 ---
@@ -206,7 +222,7 @@ granularity: changed one at a time by judgement → `lookups.xlsx`; regenerated 
 The Debug Model page wants **source only**, opening **straight to the `.csproj`**:
 
 ```powershell
-.\tools\jcass-dm.exe package --project .
+.\tools\jcass-dm.exe package --project ..\{{MODEL}}
 ```
 
 Zipping the folder rather than its contents is the classic mistake — everything lands one level
