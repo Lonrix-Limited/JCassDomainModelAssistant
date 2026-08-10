@@ -67,9 +67,22 @@ one; this section is the short list you need before you download anything.
    **GitHub names the unpacked folder `JCassDomainModelAssistant-main`**, with the `-main` on the
    end. Rename it to `JCassDomainModelAssistant` if you like — nothing depends on the name, but
    these pages use the short one, and a folder you can spell is a folder you can `cd` into.
-2. Open it in VS Code, alongside your own model folder — use
-   [`assistant.code-workspace`](assistant.code-workspace).
-3. Point your AI assistant at [`docs/00-start-here.md`](docs/00-start-here.md).
+2. **Open it in VS Code.** Double-click [`assistant.code-workspace`](assistant.code-workspace)
+   inside the unpacked folder. VS Code opens with this repository loaded and offers to install the
+   C# extension — accept it.
+
+   *A `.code-workspace` file is just a small VS Code settings file that says which folders to open
+   and how. Nothing more; you never have to edit it by hand.* If double-clicking does nothing,
+   open VS Code first and use **File → Open Workspace from File…**.
+3. Point your AI assistant at [`docs/00-start-here.md`](docs/00-start-here.md), and tell it what you
+   want to do — see [What to say to your assistant](#what-to-say-to-your-assistant) below.
+4. **Later, once your model folder exists**, add it to the same VS Code window:
+   **File → Add Folder to Workspace…**, pick your model folder, and say yes if VS Code offers to
+   save the workspace. You then see the Assistant and your model side by side in one window, and
+   your assistant can read the guidance and edit your model without you switching between them.
+
+   There is nothing to add at step 2 — **your model does not exist yet**. Your assistant creates it
+   in your first session, in a folder beside this one.
 
 **Your model lives in its own folder, beside this one — never inside it.** That is deliberate, and
 it is what makes this repository safe to replace wholesale when a newer version is released:

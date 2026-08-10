@@ -1,18 +1,27 @@
 {
   // Juno Cassandra - Domain Model Assistant
   //
+  // WHAT THIS FILE IS
+  //
+  //   A VS Code settings file that says which folders to open and how. Double-click it and VS
+  //   Code opens with this repository loaded. You never have to edit it by hand.
+  //
   // ADDING YOUR OWN MODEL TO THIS WORKSPACE
   //
-  //   1. Create your model folder BESIDE this one, not inside it. If the Assistant is at
-  //          C:\juno\JCassDomainModelAssistant
-  //      then your model belongs at something like
-  //          C:\juno\MyRoadModel
+  //   Your model folder goes BESIDE this one, not inside it. If the Assistant is at
+  //       C:\juno\JCassDomainModelAssistant
+  //   then your model belongs at something like
+  //       C:\juno\MyRoadModel
   //
-  //   2. Add a second entry to the "folders" list below:
+  //   THE EASY WAY, once that folder exists:
   //
-  //          { "name": "My model",     "path": "../MyRoadModel" },
+  //       File > Add Folder to Workspace...  ->  choose your model folder
+  //       Say yes if VS Code offers to save the workspace.
   //
-  //   3. Save this file and reopen the workspace (File > Open Workspace from File...).
+  //   BY HAND, if you prefer: add a second entry to the "folders" list below, save, and reopen
+  //   the workspace (File > Open Workspace from File...):
+  //
+  //       { "name": "My model",     "path": "../MyRoadModel" },
   //
   // WHY BESIDE AND NOT INSIDE - this matters, and it is easy to get wrong:
   //

@@ -125,13 +125,26 @@ MyRoadModel\
 
 Which file the framework calls when: [`../orientation/how-a-run-works.md`](../orientation/how-a-run-works.md).
 
-## Step 2 — Open it
+## Step 2 — Add it to your VS Code window
 
-In VS Code: **File → Open Folder → `MyRoadModel`**.
+**This is the moment the model folder finally exists**, so it is the moment to put it beside the
+Assistant in one window.
 
-Better, if you want the Assistant's docs open beside your model: open
-[`../../assistant.code-workspace`](../../assistant.code-workspace) and add your model folder to it
-— the file has a commented recipe at the top.
+You already have the Assistant open — that is the window you have been typing commands into. Add
+your model to it:
+
+**File → Add Folder to Workspace…** → choose `MyRoadModel` → say yes if VS Code offers to save the
+workspace.
+
+**You should see** two folders in the Explorer on the left, `Assistant` and `MyRoadModel`. That is
+what lets your assistant read the guidance and edit your model without either of you switching
+windows, and it keeps the terminal where it is.
+
+> Opening the model on its own with **File → Open Folder → `MyRoadModel`** also works, and costs
+> you the docs and the terminal's folder. Prefer the two-folder window.
+>
+> The workspace file has a commented recipe at the top if you would rather edit it by hand —
+> [`../../assistant.code-workspace`](../../assistant.code-workspace). You do not need to.
 
 **You should see** no red squiggles, and hovering `DomainModelBase` in `Objects\MyRoadModel.cs`
 should show its documentation. If it does not, give VS Code a few seconds to finish loading the
