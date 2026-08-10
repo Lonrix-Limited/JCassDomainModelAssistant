@@ -1343,6 +1343,35 @@
             Input header information. Key is column name, value is information on the column
             </summary>
         </member>
+        <member name="F:JCass_ModelCore.Models.ModelBase.TreatmentTypes">
+            <summary>
+            The treatment types defined in the model setup, keyed by treatment name.
+            </summary>
+            <remarks>
+            A domain model reads this; it never adds to it. The usual reason to reach for it is to
+            find a treatment's own budget category, or to check that a name a trigger is about to
+            use is actually defined - a <see cref="T:JCass_ModelCore.Treatments.TreatmentInstance"/> carrying a name with no
+            matching entry here does not fail where it was created, it fails later during costing
+            or export.
+            <para>Populated during setup, before the domain model's <c>SetupInstance</c> runs.</para>
+            </remarks>
+        </member>
+        <member name="F:JCass_ModelCore.Models.ModelBase.StrategiesSetupData">
+            <summary>
+            The multi-treatment strategies defined in the model setup, in the order the setup sheet
+            lists them. Empty in models that do not use strategies.
+            </summary>
+            <remarks>
+            A domain model reads this when it needs to know which strategies the project defines -
+            typically to decide, per element, which of them are worth offering. It does not create
+            the entries; they come from the setup data and are populated before <c>SetupInstance</c>
+            runs.
+            <para>Reading this is not the same as building strategies. In a benefit-cost model the
+            framework's own strategy generator rolls the candidates returned by
+            <c>GetTreatmentCandidates</c> forward into multi-period strategies. A domain model
+            returns candidates; it does not assemble a <see cref="T:JCass_ModelCore.Treatments.TreatmentStrategy"/>.</para>
+            </remarks>
+        </member>
         <member name="F:JCass_ModelCore.Models.ModelBase.Budget">
             <summary>
             The run's budget: what money is available in each category and each period, and how much of

@@ -95,6 +95,16 @@ reasoning you need before you tighten or loosen it:
 | Decide whether to proceed, flag, or stop and escalate | [`conventions/when-to-stop.md`](conventions/when-to-stop.md) |
 | Write the escalation | [`support-request-template.md`](support-request-template.md) |
 | | |
+| **Write any recurring piece of a model** | [`patterns/`](patterns/README.md) — ten canonical shapes, each with a compiling example |
+| Read a number from `lookups.xlsx` | [`patterns/constants-from-lookups.md`](patterns/constants-from-lookups.md) — **the universal one; every other pattern links back to it** |
+| Load fitted coefficients from a CSV | [`patterns/setup-data-from-supporting-csv.md`](patterns/setup-data-from-supporting-csv.md) |
+| **Construct a `TreatmentInstance`** | [`patterns/treatment-instances.md`](patterns/treatment-instances.md) — one constructor, eight parameters, name every one |
+| Split one treatment's cost across two budgets | [`patterns/multi-budget-cost-split.md`](patterns/multi-budget-cost-split.md) — **read it before improvising; the idiom is not guessable** |
+| Decide what the optimiser chooses between | [`patterns/candidate-strategies.md`](patterns/candidate-strategies.md) — you return candidates; the framework builds the strategies |
+| Rank candidates, or maintenance | [`patterns/treatment-suitability-scoring.md`](patterns/treatment-suitability-scoring.md) — both properties are silent at zero |
+| Model stochastic deterioration, a logistic probability, or a curve | [`patterns/distribution-simulators.md`](patterns/distribution-simulators.md) · [`patterns/logistic-coefficients.md`](patterns/logistic-coefficients.md) · [`patterns/piecewise-linear-models.md`](patterns/piecewise-linear-models.md) |
+| Model work outside the capital budget | [`patterns/routine-maintenance.md`](patterns/routine-maintenance.md) |
+| | |
 | **Do any of this end to end** | [`workflow/`](workflow/README.md) — the whole path, as procedures a human can follow |
 | **Start a new model** | [`workflow/10-scaffold-and-build.md`](workflow/10-scaffold-and-build.md) |
 | **Pick up a model somebody else wrote** | [`workflow/05-adopt-an-existing-model.md`](workflow/05-adopt-an-existing-model.md) — `check` first, always |

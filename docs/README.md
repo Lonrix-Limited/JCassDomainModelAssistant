@@ -13,11 +13,13 @@ routes; it carries almost no content of its own.
 | [`orientation/`](orientation/) | What you are building, how a run works, prerequisites, the C# you need, reading errors | **Present** |
 | [`conventions/`](conventions/) | The rules that fail silently — where numbers live, the four names, when to stop | **Present** |
 | [`workflow/`](workflow/) | Scaffold, build, upload, debug, publish, run. The walking skeleton, end to end | **Present** |
-| [`patterns/`](patterns/) | The canonical shape of each recurring piece of a real model | Not written yet |
+| [`patterns/`](patterns/) | The canonical shape of each recurring piece of a real model, each with a compiling example | **Present** |
 | [`framework/`](framework/) | The generated framework API reference and concepts mirror | **Present** — generated, never edited by hand |
 
-Two things outside this folder are part of the same set:
+Three things outside this folder are part of the same set:
 
 - [`../reference-model/DomainModelSample/README.md`](../reference-model/DomainModelSample/README.md)
   — a complete, small, working model, written to be read.
+- [`../examples/ExamplesLibrary/`](../examples/ExamplesLibrary/) — the compiling code behind every
+  page in [`patterns/`](patterns/). Built in CI, so it cannot drift from the framework.
 - `.\tools\jcass-dm.exe --help` — the tool that enforces what these pages describe.

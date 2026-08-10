@@ -114,6 +114,30 @@ public int NPeriods;
 
 Number of Modelling Periods
 
+### StrategiesSetupData
+
+```csharp
+public List<StrategySetupInfo> StrategiesSetupData;
+```
+
+The multi-treatment strategies defined in the model setup, in the order the setup sheet lists them. Empty in models that do not use strategies.
+
+**Remarks.** A domain model reads this when it needs to know which strategies the project defines - typically to decide, per element, which of them are worth offering. It does not create the entries; they come from the setup data and are populated before `SetupInstance` runs.
+
+Reading this is not the same as building strategies. In a benefit-cost model the framework's own strategy generator rolls the candidates returned by `GetTreatmentCandidates` forward into multi-period strategies. A domain model returns candidates; it does not assemble a `JCass_ModelCore.Treatments.TreatmentStrategy`.
+
+### TreatmentTypes
+
+```csharp
+public Dictionary<string, TreatmentType> TreatmentTypes;
+```
+
+The treatment types defined in the model setup, keyed by treatment name.
+
+**Remarks.** A domain model reads this; it never adds to it. The usual reason to reach for it is to find a treatment's own budget category, or to check that a name a trigger is about to use is actually defined - a `JCass_ModelCore.Treatments.TreatmentInstance` carrying a name with no matching entry here does not fail where it was created, it fails later during costing or export.
+
+Populated during setup, before the domain model's `SetupInstance` runs.
+
 ## Methods
 
 ### GetInputDataNumber

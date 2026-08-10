@@ -23,6 +23,9 @@ tickets against. Recalibration is not an occasional event — moving a trigger f
 looking at the result, and trying age 13 *is* the work. A model that makes each of those a
 developer request does not get recalibrated; it gets abandoned or, worse, trusted while stale.
 
+**The pattern page is [`../patterns/constants-from-lookups.md`](../patterns/constants-from-lookups.md)**,
+and it carries a compiling example plus the reasoning behind each part of the shape.
+
 **The worked example is [`Constants.cs`](../../reference-model/DomainModelSample/Objects/Constants.cs)
 in the reference model.** How `lookups.xlsx` is structured, how a value is addressed by
 (set name, key), why `Convert.ToDouble` is not optional, and why you guard before you index, are all
@@ -155,6 +158,7 @@ release. It also resolves to a different folder under F5.
 
 The full comparison and the folder layout are in [`naming-and-folders.md`](naming-and-folders.md).
 The loading pattern — `CSVHelper` at setup, with a guard naming the file before every read — is
-`patterns/setup-data-from-supporting-csv.md`, and until that lands the API is
-[`../framework/api/authoring/CSVHelper.md`](../framework/api/authoring/CSVHelper.md) and
-[`../framework/api/authoring/jcDataSet.md`](../framework/api/authoring/jcDataSet.md).
+[`../patterns/setup-data-from-supporting-csv.md`](../patterns/setup-data-from-supporting-csv.md),
+with a compiling example. The two shapes engineers most often arrive with have their own pages:
+[`../patterns/logistic-coefficients.md`](../patterns/logistic-coefficients.md) and
+[`../patterns/distribution-simulators.md`](../patterns/distribution-simulators.md).

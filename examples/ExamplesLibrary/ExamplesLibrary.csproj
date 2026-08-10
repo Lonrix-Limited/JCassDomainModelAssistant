@@ -1,0 +1,44 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    THIS IS A LIBRARY OF EXAMPLES. IT IS NOT A TEMPLATE.
+
+    Do not copy this folder and rename it. To start a model, run
+
+      .\tools\jcass-dm.exe scaffold MyModel  (with the from-sample and output switches)
+
+    which emits a correctly-named project with all four names aligned. Nothing here is
+    named for a real model and nothing here implements a complete one - each file shows
+    ONE pattern, in a fictional water-pipe network, so that the shape can be read without
+    the surrounding model getting in the way.
+
+    It exists to be COMPILED. An example that does not compile rots, and a rotted example
+    is worse than no example at all because it gets quoted with confidence. CI builds this
+    project on every push, so a framework change that breaks a documented pattern fails
+    the build here rather than in a client's model.
+
+    Warnings are errors on purpose. The docs tell engineers that a clean build means
+    something; that has to be true of the code the docs ship.
+  -->
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <RootNamespace>ExamplesLibrary</RootNamespace>
+    <AssemblyName>ExamplesLibrary</AssemblyName>
+  </PropertyGroup>
+
+  <!--
+    Framework references come from the Assistant's own refs\ folder, two levels up. A real
+    model has its own refs\ beside its .csproj instead - see the scaffolded project's
+    .csproj for why that is a wildcard rather than a list of named assemblies.
+  -->
+  <ItemGroup>
+    <Reference Include="..\..\refs\*.dll">
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+</Project>

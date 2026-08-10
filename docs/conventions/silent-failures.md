@@ -30,6 +30,7 @@ loud, because nothing will raise them for you.
 | [8](#8-a-refs-folder-inside-the-upload-zip) | F5 fails with `BadImageFormatException` | `jcass-dm package` |
 | [9](#9-a-budget-category-passed-to-assignbudgetcategoryfractions-that-does-not-exist) | Run dies mid-way, `KeyNotFoundException` naming nothing | Nothing |
 | [10](#10-a-privately-constructed-random-instead-of-rando) | The same run gives different answers | Nothing |
+| [11](#11-a-treatment-with-no-arm-in-the-reset-switch) | A treatment is funded and reported, and changes nothing | `jcass-dm check` — when the reset is a `switch`. Loud in a scaffolded model; silent in some inherited ones |
 
 ---
 
@@ -246,6 +247,41 @@ same answer twice.
 
 **Nothing catches this.** Use `Rando`; never construct a `Random`. See
 [`../framework/api/authoring/DomainModelBase.md`](../framework/api/authoring/DomainModelBase.md).
+
+---
+
+## 11. A treatment with no arm in the reset switch
+
+**Symptom.** The treatment triggers, is funded, is charged to a budget and appears in the outputs as
+delivered — and the element it was applied to carries on deteriorating exactly as if nothing had
+happened. The forecast shows the cost and none of the benefit.
+
+**Cause.** `Reset` is where a treatment's effect on the element is written. A treatment name that
+falls through the switch changes nothing. The trigger still fires, so the treatment is visibly
+*there* in the outputs — which is why this is the one of the five places in
+[`../workflow/30-make-a-change.md`](../workflow/30-make-a-change.md#add-a-treatment) with no other
+symptom.
+
+**In a scaffolded model this is loud, not silent.** The `default:` arm throws, naming the treatment,
+the first time one is selected with no arm. That is the whole reason it throws.
+
+**It is silent in an inherited model that does it differently** — a `default:` that does nothing, an
+if/else chain with no final `else`, or a dictionary lookup with a fallback. That is the adoption
+case ([`../workflow/05-adopt-an-existing-model.md`](../workflow/05-adopt-an-existing-model.md)), and
+it is where this entry earns its place on the list.
+
+**`jcass-dm check` catches it** by comparing the bundle's `treatment_name` column against the case
+arms it can find in the source. It reports `SKIPPED` rather than passing when the reset uses an
+if/else chain or a dictionary instead of a `switch`, since it cannot read those — a valid way to
+write it, and one you then have to check by hand.
+
+**Two habits that go with the check:**
+
+- **Make the `default` arm throw**, and if you are adopting a model whose default does not, change
+  it. [`../patterns/routine-maintenance.md`](../patterns/routine-maintenance.md) has the shape.
+- **Give a deliberately-does-nothing treatment an empty case, not a fall-through.** Routine
+  maintenance usually changes nothing structural. Writing the empty case says so; letting it fall
+  through says nothing and is indistinguishable from the bug.
 
 ---
 

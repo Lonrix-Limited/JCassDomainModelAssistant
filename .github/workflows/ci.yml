@@ -63,6 +63,19 @@ jobs:
           -c Debug --no-incremental -warnaserror
 
       # ---------------------------------------------------------------------
+      # The pattern library compiles. Every example in docs/patterns/ is a real
+      # file in this project, so a framework change that invalidates a documented
+      # pattern fails here rather than in a client's model - and an example that
+      # no longer compiles is worse than no example, because it gets quoted with
+      # confidence. The project already sets TreatWarningsAsErrors; -warnaserror
+      # is belt and braces in case somebody removes it.
+      # ---------------------------------------------------------------------
+      - name: Build examples library
+        run: >
+          dotnet build examples/ExamplesLibrary/ExamplesLibrary.csproj
+          -c Debug --no-incremental -warnaserror
+
+      # ---------------------------------------------------------------------
       # jcass-dm's tests run on every push, on Linux, against a copy of the
       # reference model's bundle. They are the only thing standing between a
       # change here and a tool that quietly corrupts somebody's bundle - the

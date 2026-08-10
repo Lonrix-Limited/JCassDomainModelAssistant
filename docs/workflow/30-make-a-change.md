@@ -88,6 +88,14 @@ reason, and the numbers that legitimately *do* stay in C#:
    > Adding the method and forgetting the call is the commonest version of this mistake. The model
    > builds, runs, and simply never proposes the treatment.
 
+   The construction has one constructor and eight parameters, two of them consecutive `double`s —
+   **name every argument**: [`../patterns/treatment-instances.md`](../patterns/treatment-instances.md).
+   Set `TreatmentSuitabilityScore` while you are there, or the candidate is never preferred over a
+   scored one and nothing says so:
+   [`../patterns/treatment-suitability-scoring.md`](../patterns/treatment-suitability-scoring.md).
+   Whether to offer this treatment *alongside* an existing one, so the optimiser has a real choice:
+   [`../patterns/candidate-strategies.md`](../patterns/candidate-strategies.md).
+
 4. **`Objects\Resetter.cs`** — add the `case`:
    ```csharp
    case TreatmentNames.Reseal:
@@ -95,7 +103,10 @@ reason, and the numbers that legitimately *do* stay in C#:
        break;
    ```
    The `default:` arm throws, so a treatment with no arm fails **loudly** the first time it is
-   applied. This is the one place in the five where forgetting is not silent.
+   applied. This is the one place in the five where forgetting is not silent — **in a scaffolded
+   model**. An inherited model whose default does nothing has no such protection, and there the
+   treatment is funded, reported and has no effect:
+   [`../conventions/silent-failures.md` § 11](../conventions/silent-failures.md#11-a-treatment-with-no-arm-in-the-reset-switch).
 
 5. **`inputs\lookups.xlsx`** — add the `unit_rates` row keyed `reseal`, and any thresholds the
    trigger reads. Upload it on **Files → Inputs**, or edit it on the **Tuning** page.
@@ -245,7 +256,13 @@ Nobody hand-edits forty lookup rows after a refit — they do it wrongly or they
 **Raise this yourself when you see the shape**, rather than waiting to be asked; by the time the
 eighth coefficient has been pasted into `lookups.xlsx` the shape is set and nobody goes back. The
 rule is [`../conventions/where-numbers-live.md` § the third tier](../conventions/where-numbers-live.md#the-third-tier--a-set-of-coefficients-belongs-in-a-csv);
-the implementation pattern is in [`../patterns/`](../patterns/).
+the implementation pattern, with a compiling example, is
+[`../patterns/setup-data-from-supporting-csv.md`](../patterns/setup-data-from-supporting-csv.md).
+
+If what you have is specifically a fitted logistic model or a set of Monte Carlo distribution
+definitions, go straight to [`../patterns/logistic-coefficients.md`](../patterns/logistic-coefficients.md)
+or [`../patterns/distribution-simulators.md`](../patterns/distribution-simulators.md) — both carry
+the storage pattern plus the trap particular to that shape.
 
 ---
 
