@@ -37,6 +37,22 @@ You need a paid AI coding assistant that runs inside your editor and can run com
 their output. A browser chat window is not enough. Claude is the recommended and supported choice;
 others work but are untested.
 
+**The requirement is a capability, not a brand.** The assistant has to be able to do three things:
+read the files in your project, run a command in the terminal, and **read what that command
+printed**. Three tiers, and the third is the one to watch for:
+
+| | What you get |
+|---|---|
+| **Supported** — VS Code with Claude Code | Everything, including the Claude skills under `.claude\` |
+| **Works, untested** — VS Code with Copilot agent mode, Cursor, Codex CLI, or any other editor-based agent with terminal access | Everything except the skills. The agent reads `docs\` and calls `jcass-dm` directly, which is exactly what the skills do for it |
+| **Not sufficient** — a chat window in a browser, with copy and paste | The documentation is readable and nothing else works. No build, no `jcass-dm check`, no scaffold |
+
+**That last row is the trap**, and it is an easy one to fall into: the pages in this repository read
+perfectly well in a browser, so it feels like it is working. It is not. `dotnet build` and
+`jcass-dm check` are the feedback loops that catch confidently-wrong C# before it reaches a
+forecast, and an assistant that cannot run them and read the result is guessing — while sounding
+exactly as certain as one that is not.
+
 **The subscription is yours.** Lonrix does not pay for it and does not procure it on your behalf —
 you choose a provider and you hold the account.
 

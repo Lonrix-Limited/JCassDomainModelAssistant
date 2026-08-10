@@ -95,51 +95,46 @@ reasoning you need before you tighten or loosen it:
 | Decide whether to proceed, flag, or stop and escalate | [`conventions/when-to-stop.md`](conventions/when-to-stop.md) |
 | Write the escalation | [`support-request-template.md`](support-request-template.md) |
 | | |
-| **Start a new model** | `jcass-dm scaffold` — see [Doing the work](#doing-the-work) below |
-| Pick up a model somebody else wrote | `jcass-dm check` first, always — see [Doing the work](#doing-the-work) |
-| **Add a treatment** | [`DomainModelSample/README.md` § 6](../reference-model/DomainModelSample/README.md#add-a-treatment) — five places, and missing one is silent |
-| **Add an input column** | [`DomainModelSample/README.md` § 6](../reference-model/DomainModelSample/README.md#add-an-input-column) — **both** factory methods |
-| **Add a model parameter** | [`DomainModelSample/README.md` § 6](../reference-model/DomainModelSample/README.md#add-a-model-parameter) — bundle row, `SetParameterValues`, factory read-back |
-| Change a threshold or a rate | [`DomainModelSample/README.md` § 6](../reference-model/DomainModelSample/README.md#change-a-threshold-or-a-rate) — usually no code change at all |
-| Build, package and upload to the Debug Model page | [`DomainModelSample/README.md` § 4](../reference-model/DomainModelSample/README.md#4-build-it) and [§ 9](../reference-model/DomainModelSample/README.md#9-debugging-it-in-the-browser) |
+| **Do any of this end to end** | [`workflow/`](workflow/README.md) — the whole path, as procedures a human can follow |
+| **Start a new model** | [`workflow/10-scaffold-and-build.md`](workflow/10-scaffold-and-build.md) |
+| **Pick up a model somebody else wrote** | [`workflow/05-adopt-an-existing-model.md`](workflow/05-adopt-an-existing-model.md) — `check` first, always |
+| **Add a treatment** | [`workflow/30-make-a-change.md`](workflow/30-make-a-change.md#add-a-treatment) — five places, and missing one is silent in four of them |
+| **Add an input column** | [`workflow/30-make-a-change.md`](workflow/30-make-a-change.md#add-an-input-column) — **both** factory methods |
+| **Add a model parameter** | [`workflow/30-make-a-change.md`](workflow/30-make-a-change.md#add-a-model-parameter) — bundle row, `SetParameterValues`, factory read-back |
+| Change a threshold or a rate | [`workflow/30-make-a-change.md`](workflow/30-make-a-change.md#change-a-threshold-or-a-rate) — usually no code change at all |
+| Build, package and upload to the Debug Model page | [`workflow/20-upload-and-debug.md`](workflow/20-upload-and-debug.md) |
+| **Publish** — and know what it overwrites | [`workflow/40-publish.md`](workflow/40-publish.md) — **read it before you press anything** |
+| Bring a browser-side fix back to the local project | [`workflow/60-get-your-code-back.md`](workflow/60-get-your-code-back.md) |
 | See a complete, small, working model | [`../reference-model/DomainModelSample/README.md`](../reference-model/DomainModelSample/README.md) |
 | Look up what a `jcass-dm` verb does | `.\tools\jcass-dm.exe --help`, and [`../tools/README.md`](../tools/README.md) |
 
 ---
 
-> **The five task rows above point into the reference model**, because that is where those
-> procedures are written today. They are correct, but they use *that* project's file names —
-> `SampleElement.cs`, `ElementFactory.cs`, `TreatmentTrigger.cs`. Translate them to the names in the
-> engineer's own project as you go; a scaffolded model calls the last of those `TreatmentsTrigger.cs`
-> and splits the element class across several files. See
-> [`orientation/how-a-run-works.md`](orientation/how-a-run-works.md) for the mapping.
-
----
-
 ## Doing the work
 
-The end-to-end procedure — scaffold, build, package, upload, debug, publish — is
-[`workflow/`](workflow/). Until that lands, the two entry points are:
+**[`workflow/`](workflow/README.md) is the end-to-end path** — scaffold, build, check, package,
+upload, debug, publish, run — written as numbered procedures a human can follow. In a guided
+session, walk the engineer through the relevant page rather than improvising a lesson.
 
-**A new model.** One name becomes all four names that have to agree:
+Two things from it that shape everything else, so they are here rather than one click away:
+
+**Prove the pipeline before you model anything.**
 
 ```powershell
 .\tools\jcass-dm.exe scaffold MyRoadModel --from-sample --output ..\MyRoadModel
 ```
 
-`--from-sample` carries the reference model's working logic, so the engineer can prove the whole
-pipeline — build, upload, F5, publish, run — before writing a line of their own engineering. Then
-they replace sample logic with their own, file by file, with a working build at every step.
+`--from-sample` produces a correctly-named project carrying the reference model's working logic.
+Take *that* all the way through — build, upload, F5, publish, run — before writing a line of the
+engineer's own engineering. If their own model is the first thing that fails at F5, they cannot
+tell whether the C# is wrong or the setup is; prove the pipeline first and every later failure is
+attributable. It is the project they keep — no throwaway, no rename.
 
-**A model they have inherited.** Diagnose before you touch anything:
-
-```powershell
-.\tools\jcass-dm.exe check --project ..\TheirModel
-```
-
-Inherited models commonly have names that already disagree; `jcass-dm rename` fixes all four at
-once. And this is by definition the takeover case — **publishing overwrites the client's live
-model**, which is already running their production forecasts. Warn them before they press it.
+**Publishing overwrites the client's live model.** A custom domain model has exactly one version.
+Never publish unless the engineer asks for it explicitly, in that turn; always run **Check bundle**
+first and refuse on failures; and if the model was *inherited* rather than scaffolded, a practice
+publish takes their production model out —
+[`workflow/40-publish.md`](workflow/40-publish.md#-before-a-first-publish-on-a-client-that-already-runs-a-custom-model).
 
 ---
 

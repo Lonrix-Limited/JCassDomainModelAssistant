@@ -12,7 +12,7 @@ routes; it carries almost no content of its own.
 | (this folder) | [`00-start-here.md`](00-start-here.md), the single entry point, and [`support-request-template.md`](support-request-template.md) | **Present** |
 | [`orientation/`](orientation/) | What you are building, how a run works, prerequisites, the C# you need, reading errors | **Present** |
 | [`conventions/`](conventions/) | The rules that fail silently — where numbers live, the four names, when to stop | **Present** |
-| [`workflow/`](workflow/) | Scaffold, build, upload, debug, publish. The walking skeleton, end to end | Not written yet |
+| [`workflow/`](workflow/) | Scaffold, build, upload, debug, publish, run. The walking skeleton, end to end | **Present** |
 | [`patterns/`](patterns/) | The canonical shape of each recurring piece of a real model | Not written yet |
 | [`framework/`](framework/) | The generated framework API reference and concepts mirror | **Present** — generated, never edited by hand |
 
