@@ -106,17 +106,21 @@ appears. Not in the outputs, not in the costs, not in the budget.
 **Cause.** The framework only accepts a treatment whose period is within the modelling horizon.
 Beyond it, the treatment is discarded. The guard is correct and necessary — the budget is
 dimensioned to the number of periods, so an out-of-range period would otherwise crash the run —
-but the discard was historically completely silent.
+but the discard itself is silent.
 
-**Detection: the run log.** The framework now writes a warning naming the treatment, the period it
-was asked for, the element and the model's own horizon. It is shown once and then suppressed,
-because it can otherwise fire once per element per period.
-
-**No static check can catch it, and there will not be one.** The offending period is computed at
-run time from the client's own data, which `jcass-dm` never sees. So the defence in the code is
-yours: **compare a scheduled period against `model.NPeriods` before you schedule it**, and decide
+**The defence is in your code, and it is the one to rely on.** No static check can catch this:
+the offending period is computed at run time from the client's own data, which `jcass-dm` never
+sees. So **compare a scheduled period against `model.NPeriods` before you schedule it**, and decide
 deliberately whether to clamp it, drop it, or let it go. `NPeriods` is on
 [`../framework/api/authoring/ModelBase.md`](../framework/api/authoring/ModelBase.md).
+
+**Secondary detection: the run log.** Recent framework builds write a warning naming the treatment,
+the period it was asked for, the element and the model's own horizon — shown once and then
+suppressed, since it can otherwise fire once per element per period. **Do not read the absence of
+that warning as proof it did not happen.** If you expect one and there is none, the framework
+running the job may be older than the build stamped in
+[`../../refs/FRAMEWORK-VERSION.txt`](../../refs/FRAMEWORK-VERSION.txt), in which case the discard is
+still completely silent and the check above is all you have.
 
 ---
 
