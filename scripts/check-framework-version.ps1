@@ -19,8 +19,20 @@
     Which refs\ folder to report on. Defaults to the one at the repository root, which is the
     canonical copy every other one is seeded from.
 
+.PARAMETER ServerVersion
+    The framework commit the web app is running, if you have been told it. Supply it and this
+    script answers the question directly instead of leaving you to compare two strings by eye.
+
+.PARAMETER StaleAfterDays
+    How old this snapshot may be before it is called out. Defaults to 90 days, which is roughly
+    one release cycle - long enough not to nag, short enough that a genuinely abandoned copy is
+    named as one.
+
 .EXAMPLE
     .\scripts\check-framework-version.ps1
+
+.EXAMPLE
+    .\scripts\check-framework-version.ps1 -ServerVersion 2de6b35
 
 .EXAMPLE
     .\scripts\check-framework-version.ps1 -RefsFolder .\reference-model\DomainModelSample\refs
@@ -28,7 +40,9 @@
 
 [CmdletBinding()]
 param(
-    [string]$RefsFolder
+    [string]$RefsFolder,
+    [string]$ServerVersion,
+    [int]$StaleAfterDays = 90
 )
 
 $ErrorActionPreference = 'Stop'
@@ -104,34 +118,125 @@ $frameworkSha = @($shas.Keys)[0]
 Write-Host "Framework commit : $frameworkSha" -ForegroundColor Green
 Write-Host ("Assemblies       : {0}, all from the same build" -f $assemblies.Count)
 
+$snapshotAgeDays = $null
+
 $stamp = Join-Path $RefsFolder 'FRAMEWORK-VERSION.txt'
 if (Test-Path -LiteralPath $stamp) {
     # @() around the whole pipeline, not just Get-Content: a single match comes back as a bare
     # string, and indexing a string gives you one character rather than the line.
     $refreshedOn = @(@(Get-Content -LiteralPath $stamp) | Where-Object { $_ -match '^Refreshed on' })
     if ($refreshedOn.Count -gt 0) {
-        Write-Host ("Snapshot taken   : " + ($refreshedOn[0] -replace '^Refreshed on\s*:\s*', ''))
+        $refreshedText = ($refreshedOn[0] -replace '^Refreshed on\s*:\s*', '').Trim()
+        Write-Host ("Snapshot taken   : " + $refreshedText)
+
+        # The stamp is written in a fixed, culture-independent format by the maintainer script.
+        # Parse it as such rather than with Get-Date, which would read it through whatever
+        # regional settings this machine happens to have and could silently swap month and day.
+        $parsed = [datetime]::MinValue
+        # [string[]] is load-bearing. A bare @(...) is an object[], which binds TryParseExact to
+        # the single-format overload instead of the multi-format one and silently returns false -
+        # so the age would never be reported and the script would claim there is no date stamp.
+        $formats = [string[]]@('yyyy-MM-dd HH:mm:ss', 'yyyy-MM-dd')
+        if ([datetime]::TryParseExact($refreshedText, $formats, [System.Globalization.CultureInfo]::InvariantCulture, [System.Globalization.DateTimeStyles]::None, [ref]$parsed)) {
+            $snapshotAgeDays = [int][math]::Floor(((Get-Date) - $parsed).TotalDays)
+            Write-Host ("Age              : {0} day(s)" -f $snapshotAgeDays)
+        }
     }
 }
 
+# ---------------------------------------------------------------------------
+# IS THIS OLDER THAN WHAT THE SERVER RUNS?
+#
+# That is the only question an engineer actually has, and it is worth answering in those words.
+# "SHA mismatch" is not an answer to it; it is a fact about two strings.
+#
+# Two ways of getting at it, because the web app does not yet display the framework version it
+# runs. Given -ServerVersion, the comparison is exact. Without it, the snapshot's own age is the
+# honest proxy: nobody can say from here whether the server has moved, but a reference taken
+# several months ago almost certainly is behind, and saying so is more use than saying nothing.
+# ---------------------------------------------------------------------------
+
 Write-Host ''
-Write-Host 'COMPARING THIS AGAINST WHAT THE SERVER RUNS'
+Write-Host 'IS YOUR REFERENCE OLDER THAN THE SERVER?'
 Write-Host ''
-Write-Host '  The web app does not currently display the framework version it is running, so there'
-Write-Host '  is no screen to read it off. Two things you can do instead:'
+
+$isStale = $false
+
+if ($ServerVersion) {
+    $serverSha = $ServerVersion.Trim().ToLowerInvariant()
+    $localSha = $frameworkSha.ToLowerInvariant()
+
+    if ($serverSha.Length -lt 7) {
+        Write-Host "  '$ServerVersion' is too short to identify a commit - 7 characters or more, please." -ForegroundColor Yellow
+        Write-Host ''
+    }
+    elseif ($localSha.StartsWith($serverSha) -or $serverSha.StartsWith($localSha)) {
+        Write-Host '  No. Your reference is the same framework build the web app runs.' -ForegroundColor Green
+        Write-Host '  Whatever you are chasing, it is not a version mismatch - look at your model, the'
+        Write-Host '  client inputs, or a lookup value that differs from the one you tested against.'
+        Write-Host ''
+    }
+    else {
+        $isStale = $true
+        Write-Host '  YES - almost certainly.' -ForegroundColor Red
+        Write-Host ''
+        Write-Host "    your reference : $localSha" -ForegroundColor Red
+        Write-Host "    the web app    : $serverSha" -ForegroundColor Red
+        Write-Host ''
+        Write-Host '  These are different framework builds, and the web app only ever moves forward, so'
+        Write-Host '  yours is the older one. Your framework reference is from an older release: ask Juno'
+        Write-Host '  for an updated Assistant before trusting the API reference in docs\framework\, and'
+        Write-Host '  before concluding anything from what IntelliSense does or does not offer you.'
+        Write-Host ''
+        Write-Host '  Email support@lonrix.com with both lines above. Nothing you have written is lost -'
+        Write-Host '  your model lives in its own folder BESIDE this repository and a newer Assistant'
+        Write-Host '  does not touch it.'
+        Write-Host ''
+    }
+}
+elseif ($null -eq $snapshotAgeDays) {
+    Write-Host '  Cannot tell - this folder has no readable date stamp, so there is nothing to age.' -ForegroundColor Yellow
+    Write-Host '  Re-download the Assistant; refs\FRAMEWORK-VERSION.txt is part of every release.' -ForegroundColor Yellow
+    Write-Host ''
+}
+elseif ($snapshotAgeDays -ge ($StaleAfterDays * 2)) {
+    $isStale = $true
+    Write-Host ("  PROBABLY, and by some distance - this reference was taken {0} days ago." -f $snapshotAgeDays) -ForegroundColor Red
+    Write-Host ''
+    Write-Host '  Your framework reference is from an older release. Ask Juno for an updated Assistant'
+    Write-Host '  before trusting the API reference in docs\framework\ - at this age it describes'
+    Write-Host '  signatures that may have changed and is missing anything added since.'
+    Write-Host ''
+    Write-Host '  Nothing you have written is lost. Your model lives in its own folder BESIDE this'
+    Write-Host '  repository and a newer Assistant does not touch it.'
+    Write-Host ''
+}
+elseif ($snapshotAgeDays -ge $StaleAfterDays) {
+    Write-Host ("  Possibly - this reference was taken {0} days ago, which is about a release cycle." -f $snapshotAgeDays) -ForegroundColor Yellow
+    Write-Host ''
+    Write-Host '  Worth asking Juno whether a newer Assistant is available before you spend long on'
+    Write-Host '  behaviour you cannot explain from your own code.'
+    Write-Host ''
+}
+else {
+    Write-Host ("  Probably not - this reference was taken {0} days ago, which is recent." -f $snapshotAgeDays) -ForegroundColor Green
+    Write-Host ''
+    Write-Host '  Rule out the ordinary causes first: your model, the client inputs, or a lookup value'
+    Write-Host '  that differs from the one you tested against. A version mismatch is the rarer'
+    Write-Host '  explanation.'
+    Write-Host ''
+}
+
+Write-Host '  If you know the framework commit the web app is running, this script can answer the'
+Write-Host '  question exactly rather than by age:'
 Write-Host ''
-Write-Host '  1. Check whether a newer release of this Assistant is available, and download it if'
-Write-Host '     so. refs\ is part of the release, so a newer framework arrives with it. Your own'
-Write-Host '     model lives in its own folder BESIDE this repository and is not touched.'
+Write-Host '    .\scripts\check-framework-version.ps1 -ServerVersion <commit-sha>'
 Write-Host ''
-Write-Host '  2. If you suspect a mismatch is causing behaviour you cannot explain, email'
-Write-Host '     support@lonrix.com quoting the commit SHA above, your model name, and what your'
-Write-Host '     model does locally versus in the web app. That SHA is what makes the question'
-Write-Host '     answerable in one reply instead of three.'
+Write-Host '  There is no screen in the web app that shows it yet; support@lonrix.com will tell you.'
+Write-Host '  Quote the commit above when you ask - it makes the question answerable in one reply'
+Write-Host '  instead of three.'
 Write-Host ''
-Write-Host '  Before assuming a version mismatch, rule out the ordinary causes: your model, the'
-Write-Host '  client inputs, or a lookup value that differs from the one you tested against. A'
-Write-Host '  mismatch is the rarer explanation.'
-Write-Host ''
+
+if ($isStale) { exit 3 }
 
 exit 0

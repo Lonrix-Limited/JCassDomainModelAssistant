@@ -43,8 +43,20 @@ Prints every assembly in `refs/`, whether its `.xml` documentation file is besid
 framework git commit SHA each was built from — read off the assemblies themselves rather than out
 of a note, so it cannot report a version the folder does not hold.
 
+Then it answers the question you actually had: **is this older than what the server runs?**
+
+```powershell
+.\scripts\check-framework-version.ps1 -ServerVersion 2de6b35
+```
+
+Given the framework commit the web app is running, the comparison is exact. Without it the script
+falls back to the snapshot's own age — nobody can tell from here whether the server has moved, but
+a reference taken several months ago almost certainly is behind, and saying so is more use than
+saying nothing. `-StaleAfterDays` (default 90, roughly one release cycle) sets where that starts.
+
 Exit `0` clean, `1` if the folder holds assemblies from more than one framework build (which the
-`refs/*.dll` wildcard would compile against all at once), `2` if there is nothing to report on.
+`refs/*.dll` wildcard would compile against all at once), `2` if there is nothing to report on,
+`3` if the reference looks older than what the server runs.
 
 Nobody refreshes `refs/` by hand. It ships with the Assistant, so a newer framework arrives with a
 newer download — which is also why there is no `populate-refs.ps1` here any more.
