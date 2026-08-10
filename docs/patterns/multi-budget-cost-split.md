@@ -87,10 +87,44 @@ this pattern depends on, not recalibrate anything. It belongs in C#, named, with
 > recognises and no way to tell a composite treatment from a mis-set rate. With the shape above the
 > exported quantity is obviously a currency amount and the rate is obviously a placeholder, so
 > neither invites a false reconciliation.
->
-> Two of the three working call sites use `unitRate: 1`. The third multiplies the cost-valued
-> quantity by a lookup rate as well, which means its instance total is the component sum **times**
-> that rate rather than equal to it. Use `1.0`.
+
+### If the composite treatment has a `unit_rates` row, read it and assert it
+
+The literal `1.0` above is the simplest correct form, and it is right **when the composite treatment
+has no row in `lkp_unit_rates`.**
+
+Very often it does have one — every other treatment does, so a modeller adding this one puts a rate
+beside it without thinking about it. And **every row in that sheet is editable on the Tuning page's
+Treatment Rates tab.** A modeller who escalates that rate by 10%, exactly as they would for any
+other treatment, gets nothing: the literal ignores the row entirely. Worse, if the code *does* read
+it, the whole composite cost is silently rescaled while the fractions stay correct — a wrong total
+with no symptom anywhere.
+
+So where the row exists, read it and **pin it**:
+
+```csharp
+double unitRate = constants.GetUnitRate(TreatmentNames.RelineWithRepairs);
+
+if (unitRate != SyntheticUnitRate)
+{
+    throw new Exception(
+        $"The unit rate for '{TreatmentNames.RelineWithRepairs}' in lookups.xlsx is {unitRate}, " +
+        $"and it must be {SyntheticUnitRate}. This treatment's cost is built from its components " +
+        "and split across budget categories, so its quantity is already the total cost. Any other " +
+        "rate would silently rescale it. To change what this treatment costs, change the reline " +
+        "and patch_repair rates instead.");
+}
+```
+
+**That message is the point of the guard**, not the comparison. It tells the modeller why the row is
+inert, and — the part that actually helps — which rows to edit instead.
+
+This is the same principle as the guard idiom everywhere else in this library, applied to a value
+that is *structurally required to be a particular number*: a lookup row that silently does nothing is
+worse than no row, so assert it rather than ignoring it.
+
+> Two of the three working call sites use the bare literal. The third reads the rate and asserts it
+> is `1.0`, which is the stronger shape and the one to prefer wherever the row exists.
 
 **Do not simplify this away.** Dropping the synthetic pair and passing the real length with the
 reline rate loses the repair cost entirely: the treatment is funded for less than it costs, the

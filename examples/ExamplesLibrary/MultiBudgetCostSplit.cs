@@ -43,6 +43,17 @@ public static class MultiBudgetCostSplit
     private const string RepairsBudget = "Repairs";
 
     /// <summary>
+    /// The unit rate a composite treatment must carry, so that <c>Quantity x UnitRate</c>
+    /// reproduces the component total this class computes.
+    ///
+    /// <para><b>Structural, not tunable.</b> Changing it would break the arithmetic this whole
+    /// pattern rests on rather than recalibrate anything, so it is a named constant in C# and not
+    /// a lookup row. It is also what <see cref="AssertUnitRateIsSynthetic"/> pins the spreadsheet
+    /// against.</para>
+    /// </summary>
+    private const double SyntheticUnitRate = 1.0;
+
+    /// <summary>
     /// Builds a relining treatment whose cost is split between the renewals and repairs budgets.
     ///
     /// <para><b>Step 1 - cost each component separately, at its own rate.</b> The two components
@@ -110,14 +121,18 @@ public static class MultiBudgetCostSplit
         // ---- Step 2: the synthetic pair, so Quantity x UnitRate reproduces the real total -----
 
         double syntheticQuantity = totalCost;
-        const double syntheticUnitRate = 1.0;   // structural: makes the product equal the total
+
+        // This treatment has a row in lkp_unit_rates like every other treatment, and every row in
+        // that sheet is editable on the Tuning page. Read it and pin it, rather than writing the
+        // literal and leaving an editable row that silently does nothing.
+        AssertUnitRateIsSynthetic(constants);
 
         TreatmentInstance treatment = new TreatmentInstance(
             segment.ElementIndex,
             TreatmentNames.RelineWithRepairs,
             period,
             quantity: syntheticQuantity,
-            unitRate: syntheticUnitRate,
+            unitRate: SyntheticUnitRate,
             force: false,
             reason: $"Condition {Math.Round(segment.ConditionGrade, 1)} in the relinable band",
             comment: $"Lining {Math.Round(liningCost, 0)} + repairs {Math.Round(repairCost, 0)}");
@@ -135,6 +150,42 @@ public static class MultiBudgetCostSplit
 
         treatment.TreatmentSuitabilityScore = suitabilityScore;
         return treatment;
+    }
+
+    /// <summary>
+    /// Pins the composite treatment's lookup rate at <see cref="SyntheticUnitRate"/>.
+    ///
+    /// <para><b>Why a lookup row exists at all for a rate that is not tunable.</b> Every other
+    /// treatment has one, so a modeller adding this treatment puts a rate beside it without
+    /// thinking - and every row in <c>lkp_unit_rates</c> is editable on the Tuning page's Treatment
+    /// Rates tab. Ignoring the row leaves a control that appears to work and does nothing; reading
+    /// it without checking lets a routine 10% escalation silently rescale the whole composite cost
+    /// while the fractions stay correct, which is a wrong total with no symptom.</para>
+    ///
+    /// <para><b>The message is the point, not the comparison.</b> It has to say why the row is
+    /// inert and which rows to edit instead, or the modeller simply sets it back and tries again.</para>
+    ///
+    /// <para><b>Exact equality is deliberate here - do not replace it with a tolerance.</b> The
+    /// value came from a spreadsheet cell a person typed, so it is either 1 or it is a number
+    /// somebody chose; there is no accumulated floating-point error to absorb. A tolerance would
+    /// let 1.0001 through and rescale every composite cost by 0.01%, which is exactly the silent
+    /// wrongness this guard exists to stop.</para>
+    /// </summary>
+    /// <param name="constants">Rates read from <c>lookups.xlsx</c>.</param>
+    public static void AssertUnitRateIsSynthetic(PipeConstants constants)
+    {
+        double unitRate = constants.GetUnitRate(TreatmentNames.RelineWithRepairs);
+
+        if (unitRate != SyntheticUnitRate)
+        {
+            throw new Exception(
+                $"The unit rate for '{TreatmentNames.RelineWithRepairs}' in lookups.xlsx is {unitRate}, " +
+                $"and it must be {SyntheticUnitRate}. This treatment's cost is built from its " +
+                "components and split across budget categories, so its quantity is already the total " +
+                "cost and any other rate would silently rescale it. To change what this treatment " +
+                $"costs, change the '{TreatmentNames.Reline}' and '{TreatmentNames.PatchRepair}' rates " +
+                "instead.");
+        }
     }
 
     /// <summary>
