@@ -97,8 +97,22 @@ reasoning you need before you tighten or loosen it:
 | | |
 | **Start a new model** | `jcass-dm scaffold` — see [Doing the work](#doing-the-work) below |
 | Pick up a model somebody else wrote | `jcass-dm check` first, always — see [Doing the work](#doing-the-work) |
+| **Add a treatment** | [`DomainModelSample/README.md` § 6](../reference-model/DomainModelSample/README.md#add-a-treatment) — five places, and missing one is silent |
+| **Add an input column** | [`DomainModelSample/README.md` § 6](../reference-model/DomainModelSample/README.md#add-an-input-column) — **both** factory methods |
+| **Add a model parameter** | [`DomainModelSample/README.md` § 6](../reference-model/DomainModelSample/README.md#add-a-model-parameter) — bundle row, `SetParameterValues`, factory read-back |
+| Change a threshold or a rate | [`DomainModelSample/README.md` § 6](../reference-model/DomainModelSample/README.md#change-a-threshold-or-a-rate) — usually no code change at all |
+| Build, package and upload to the Debug Model page | [`DomainModelSample/README.md` § 4](../reference-model/DomainModelSample/README.md#4-build-it) and [§ 9](../reference-model/DomainModelSample/README.md#9-debugging-it-in-the-browser) |
 | See a complete, small, working model | [`../reference-model/DomainModelSample/README.md`](../reference-model/DomainModelSample/README.md) |
 | Look up what a `jcass-dm` verb does | `.\tools\jcass-dm.exe --help`, and [`../tools/README.md`](../tools/README.md) |
+
+---
+
+> **The five task rows above point into the reference model**, because that is where those
+> procedures are written today. They are correct, but they use *that* project's file names —
+> `SampleElement.cs`, `ElementFactory.cs`, `TreatmentTrigger.cs`. Translate them to the names in the
+> engineer's own project as you go; a scaffolded model calls the last of those `TreatmentsTrigger.cs`
+> and splits the element class across several files. See
+> [`orientation/how-a-run-works.md`](orientation/how-a-run-works.md) for the mapping.
 
 ---
 
