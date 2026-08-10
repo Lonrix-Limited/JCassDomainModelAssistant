@@ -51,7 +51,7 @@ public class RenameTests
         Assert.Equal(ExitCode.Ok, model.Run("check", "--project", model.Folder).ExitCode);
     }
 
-    [Fact]
+    [WindowsOnlyFact("a read-only file is still replaceable on POSIX")]
     public void An_interrupted_rename_leaves_the_model_exactly_as_it_was()
     {
         using TemporaryModel model = FixtureModels.Copy("names-disagree");
@@ -60,6 +60,12 @@ public class RenameTests
         // The bundle is the LAST thing rename writes, so making it unwritable fails the run after
         // the source edits and the file moves have already happened. That is the state the
         // all-or-nothing promise is actually about.
+        //
+        // Windows-only, and not by preference. BundleFile.Save writes a temp file and calls
+        // File.Replace; POSIX governs a replace by the containing directory's write permission,
+        // not the file's, so the read-only bit is never consulted and the rename SUCCEEDS on
+        // Linux. See WindowsOnlyFactAttribute for why making the directory unwritable instead
+        // does not work, and for what this costs in CI.
         string bundle = model.PathTo("domain_model_setup.xlsx");
         File.SetAttributes(bundle, FileAttributes.ReadOnly);
 
@@ -77,12 +83,16 @@ public class RenameTests
         Assert.Equal(before, model.Fingerprint());
     }
 
-    [Fact]
+    [WindowsOnlyFact("a read-only file is still replaceable on POSIX")]
     public void An_interrupted_rename_says_so_rather_than_reporting_a_tool_bug()
     {
         // A restore that throws out of Dispose replaces "the model has been put back" with a
         // stack trace and exit 9, which reads as "jcass-dm is broken" at the exact moment
         // somebody needs to be told their model is fine.
+        //
+        // Windows-only for the same reason as the test above: the read-only attribute does not
+        // make a file unwritable on POSIX, so this rename succeeds there and never reaches the
+        // rollback path it exists to check.
         using TemporaryModel model = FixtureModels.Copy("names-disagree");
 
         string bundle = model.PathTo("domain_model_setup.xlsx");
