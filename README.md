@@ -4,10 +4,10 @@ A self-contained VS Code project that lets a civil engineer, working alongside a
 assistant, design, build, debug, publish and maintain a **Custom Domain Model** for
 [Juno Cassandra](https://junocassandra.com) — without being a software developer.
 
-> **Status: complete, not yet released.** Everything an engineer needs is in place — the reference
+> **Status: beta.** Everything an engineer needs is in place — the reference
 > model, the `jcass-dm` tool, the framework API reference, the conventions, the end-to-end workflow,
-> the pattern library and the Claude skills. What is still outstanding is on Lonrix's side: a full
-> end-to-end acceptance pass and a published release process. Expect the occasional rough edge, and
+> the pattern library and the Claude skills. What has not happened yet is a full end-to-end
+> acceptance pass on Lonrix's side. Expect the occasional rough edge, and
 > send it to **support@lonrix.com**.
 
 ---
