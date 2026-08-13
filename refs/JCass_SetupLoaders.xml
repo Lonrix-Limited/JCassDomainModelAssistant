@@ -19,6 +19,19 @@
             in the UI
             </summary>
         </member>
+        <member name="M:JCass_SetupLoaders.Desktop.ModelConfigHelper.GetConfigurationDataSet(JCass_Excel.IExcelWorkbook,System.String)">
+            <summary>
+            Builds the effective settings for one config sheet: the base_config rows,
+            with the value replaced for every setting the config sheet also lists.
+            </summary>
+            <remarks>
+            The base_config data set is read here, per config sheet, and never shared
+            between them. The merge writes into the base rows, and jcDataSet.Row
+            returns the stored dictionary by reference, so one shared instance would
+            accumulate every sheet's overrides down the caller's loop. Kept in step
+            with the WebFolder sibling, which is the live path.
+            </remarks>
+        </member>
         <member name="P:JCass_SetupLoaders.Desktop.WorkBench.DomainModelDllFile">
             <summary>
             Domain model dll filename (not full path) for the case where a C# Domain Model is used. This DLL will be expected to be
@@ -401,6 +414,30 @@
             sheet (e.g. ad-hoc admin tooling). Currently unused on the web run path
             — kept as parity with the desktop sibling.
             </summary>
+        </member>
+        <member name="M:JCass_SetupLoaders.WebFolder.WebFolderModelConfigHelper.GetMergedConfigurationDataSet(JCass_Excel.IExcelWorkbook,System.String)">
+            <summary>
+            Builds the effective settings for one <c>config_&lt;tag&gt;</c> sheet:
+            the <c>base_config</c> rows, with the value replaced for every setting the
+            tag sheet also lists.
+            </summary>
+            <remarks>
+            <b>The <c>base_config</c> data set is read here, per tag, and never shared
+            between tags.</b> The merge writes into the base rows, and
+            <see cref="M:JCass_Data.Objects.jcDataSet.Row(System.Int32)"/> hands back the stored dictionary by
+            reference, so a single instance reused across the caller's loop would
+            accumulate every tag's overrides: the second tag would silently inherit
+            the first tag's values for any setting it did not itself specify, the
+            third would inherit both, and nothing would error. Re-reading the sheet is
+            the cheap fix — the workbook is already open, and the alternative is
+            deep-copying rows, which needs the base row set to stay genuinely
+            untouched forever after.
+            <para>
+            A setting present only on the tag sheet is ignored, because the loop walks
+            the base rows. That is pre-existing behaviour and is deliberately left
+            alone here; it is documented in the Model configurations help article.
+            </para>
+            </remarks>
         </member>
         <member name="T:JCass_SetupLoaders.WebFolder.WebFolderProjectSettings">
              <summary>

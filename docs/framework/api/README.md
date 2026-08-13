@@ -20,7 +20,7 @@ The framework types a domain model actually touches, with **every overload and e
 documentation, so it describes the framework you are compiling against and not a
 remembered version of it.
 
-**Framework build:** Framework commit : 2de6b35d6b9d57976f2e89c20eeecb515027f928
+**Framework build:** Framework commit : 4219f2013cdd1c3fde8be4b822e09da24c087ba4
 
 ---
 

@@ -27,13 +27,15 @@ It should be noted that - although the BCA model uses a more sophisticated appro
 
 The basis for the BCA model is the definition of an Objective Parameter to minimise or maximise relative to either a 'Do-Nothing' scenario or a 'Maintenance-Only' scenario. You can define your own Objective Parameter in your domain model. You need to inform the model as to which model parameter is your Objective Parameter. This is done in the Model Configuration, and specifically the Setting 'Objective Parameter'.
 
+The **Model Configuration** referred to throughout this page is the `configurations.xlsx` workbook that lives in your project's `inputs` folder. It carries one row per setting - a setting name and its value - and each of the settings named below is one of those rows. Juno Cassandra documents every available setting, its accepted values and its default, inside the application itself.
+
 You can specify whether your Objective Function is to be minimised or maximised by modifying the Model Configuration setting 'Minimise BCA Objective' (if 'TRUE', then the Objective is minimised).
 
 ## BCA Strategy Generation
 
 **In Juno Cassandra, a strategy is defined as a sequence of treatments separated by periods of 'do-nothing' or routine maintenance**. The BCA model requires the model to create - for each viable element - a set of candidate strategies. In a specific modelling period, candidate strategies are only generated on element for which one or more treatments have been triggered.
 
-For each triggered treatment, Cassandra will use a recursive rollout algorithm in conjunction with the trigger logic in your domain model to create and evaluate all possible future treatment scenarios over the look-ahead period (specified in the Model Configuration). 
+For each triggered treatment, Cassandra will use a recursive rollout algorithm in conjunction with the trigger logic in your domain model to create and evaluate all possible future treatment scenarios over the look-ahead period (specified in the Model Configuration by the setting **'Number of Look-Ahead Periods'**).
 
 For example, if - for a specific element - your Domain Model triggers two candidate treatments 'replace' and 'repair' in period 1, then the rollout strategies may conceptually look as follows for a look-ahead period of 20:
 

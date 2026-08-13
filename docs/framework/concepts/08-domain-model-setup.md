@@ -294,7 +294,7 @@ Similarly, if you want to include a priority based on Traffic (ADT), you can hav
 
 > **Note**
 >
-> The cost that is used in the MCDA optimisation will be automatically scaled using a scaling value in the input data, as specified by setting *'Cost Scaling Parameter'* in the Model Configuration. Typically, the value used for scaling will be length or area for each element. The scaled cost is calculated as the cost divided by the value in the scaling parameter. Thus, if the raw cost is calculated as 100 and the scaling parameter is 'length', then for a length value of 50 the scaled cost will be 50.
+> The cost that is used in the MCDA optimisation will be automatically scaled using a scaling value in the input data, as specified by setting *'Cost Scaling Parameter'* in the Model Configuration - the `configurations.xlsx` workbook in your project's `inputs` folder, which carries one row per setting. Typically, the value used for scaling will be length or area for each element. The scaled cost is calculated as the cost divided by the value in the scaling parameter. Thus, if the raw cost is calculated as 100 and the scaling parameter is 'length', then for a length value of 50 the scaled cost will be 50.
 > **If you do not want to apply cost scaling, then set the value for *'Cost Scaling Parameter'* in the Model Configuration to 'none'.**
 
 **Example of MCDA Setup Template:**
