@@ -42,7 +42,7 @@ public DomainModelBase()
 
 Creates the domain model. The framework instantiates your class through its parameterless constructor when it loads your assembly, so your own constructor must not require arguments.
 
-**Remarks.** Do no work here.`JCass_ModelCore.DomainModels.DomainModelBase.model` is not assigned until the framework calls `SetupBase` afterwards, so anything in a constructor that touches inputs, lookups or configuration fails with a null reference. `JCass_ModelCore.DomainModels.DomainModelBase.SetupInstance` is the place for it.
+**Remarks.** Do no work here. `JCass_ModelCore.DomainModels.DomainModelBase.model` is not assigned until the framework calls `SetupBase` afterwards, so anything in a constructor that touches inputs, lookups or configuration fails with a null reference. `JCass_ModelCore.DomainModels.DomainModelBase.SetupInstance` is the place for it.
 
 ## Fields
 

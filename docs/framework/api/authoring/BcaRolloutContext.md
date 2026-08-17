@@ -142,7 +142,7 @@ Decides where a model parameter read should be answered from while this rollout 
 
 - `System.InvalidOperationException` — Thrown when no correct answer exists - see the remarks. This is deliberate: the alternative is the uninitialised zeros the caller would otherwise be handed without a word.
 
-**Remarks.** The rule, in one line:an epoch the strategy has already passed comes from the strategy; anything earlier comes from the real data; anything later exists nowhere.
+**Remarks.** The rule, in one line: an epoch the strategy has already passed comes from the strategy; anything earlier comes from the real data; anything later exists nowhere.
 
 - Any element, epoch before `JCass_ModelCore.ModelObjects.BcaRolloutContext.BasePeriod` - real data. This is history the main run has already computed, and it is the same for every strategy.
 - The element being rolled out, from `JCass_ModelCore.ModelObjects.BcaRolloutContext.BasePeriod` up to the last period this rollout has completed - the strategy's own timeline. Two sibling strategies legitimately give different answers here, which is the point.
