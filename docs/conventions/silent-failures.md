@@ -11,7 +11,7 @@ command:
 .\tools\jcass-dm.exe check --project ..\TheirModel --lookups <path to their inputs\lookups.xlsx>
 ```
 
-Four entries are **not** mechanically detectable and are marked so. Those are the ones to raise out
+Five entries are **not** mechanically detectable and are marked so. Those are the ones to raise out
 loud, because nothing will raise them for you.
 
 ---
@@ -31,6 +31,7 @@ loud, because nothing will raise them for you.
 | [9](#9-a-budget-category-passed-to-assignbudgetcategoryfractions-that-does-not-exist) | Run dies mid-way, `KeyNotFoundException` naming nothing | Nothing |
 | [10](#10-a-privately-constructed-random-instead-of-rando) | The same run gives different answers | Nothing |
 | [11](#11-a-treatment-with-no-arm-in-the-reset-switch) | A treatment is funded and reported, and changes nothing | `jcass-dm check` — when the reset is a `switch`. Loud in a scaffolded model; silent in some inherited ones |
+| [12](#12-reading-a-model-parameter-at-or-above-the-period-you-were-handed) | A look-back calculation quietly reads zero | Nothing, outside a benefit-cost rollout. Inside one it throws |
 
 ---
 
@@ -285,6 +286,77 @@ write it, and one you then have to check by hand.
 
 ---
 
+## 12. Reading a model parameter at or above the period you were handed
+
+**Symptom.** A rule that looks back — *how much has this element deteriorated since last period*,
+*what was its condition before the last treatment* — comes out as though the element had a value of
+zero back then. Nothing errors. The run completes in a normal time, every output column is populated,
+and the forecast is simply wrong in a way that looks like modelling.
+
+**Cause.** An **epoch is the end of a period**, and when the framework calls your domain model for
+period `iPeriod`, that period has not been stepped yet. So:
+
+> **The highest epoch you may read is `iPeriod - 1`.**
+
+That holds for **every element, not only the one you were called about**, and it holds in every model
+type — forecast, Monte Carlo, MCDA, benefit-cost — whether the run is serial or parallel. Epoch
+`iPeriod` and above is storage the framework has allocated and not yet written. Numeric parameters
+read back as `0.0` and text parameters as `""`.
+
+```csharp
+// Called for period iPeriod.
+double previous = model.GetParameterValueNumber(iElem, ParameterNames.Condition, iPeriod - 1);  // correct
+double current  = model.GetParameterValueNumber(iElem, ParameterNames.Condition, iPeriod);      // zero, silently
+```
+
+The three readers behave identically here: `GetParameterValueNumber`, `GetParameterValueText` and
+`GetParameterValues`. All three are on
+[`../framework/api/authoring/ModelBase.md`](../framework/api/authoring/ModelBase.md), where the rule
+is written out in full.
+
+**Nothing catches this outside a benefit-cost run.** There is no setup rule, no log line and no
+exception — `jcass-dm` cannot see it either, because the epoch is computed at run time. The guard
+described below is deliberately scoped to strategy rollouts only, so **for every other model type
+this page is the only thing standing between you and the zeros.**
+
+**The values you were passed are almost always the right answer.** The framework hands `Increment`
+and `Reset` the current parameter values already. Reach for a reader when you genuinely need history
+the call did not give you, and then only at `iPeriod - 1` or earlier.
+
+**Inside a benefit-cost strategy rollout it is enforced instead**, and the exception is worth
+recognising because it names everything:
+
+```
+Cannot read model parameter data for element 41 at epoch 12 during a BCA strategy rollout
+on element 41 (base period 9, look-ahead period 4, modelling period 12). The strategy has
+only reached epoch 11 ...
+```
+
+That is the guard doing its job, not a framework fault. A rollout is a what-if about **one** element,
+so during it:
+
+- **the element being rolled out** can be read back to any epoch the strategy has already passed —
+  including epochs past the end of the model — and the answer comes from *that strategy's own*
+  timeline. Two sibling strategies giving different answers for the same epoch is correct and is the
+  entire point;
+- **its own current or later epoch** is refused, because the strategy has not decided it yet;
+- **any other element at or beyond the rollout's base period** is refused, because the main run has
+  not stepped that far and there is nothing but zeros there.
+
+**Note the asymmetry with treatments**, because the two rules look alike and end opposite ways. A
+*treatment* question about another element during a rollout is answered from the real network, and
+that is right — the real treatment set is merely **sparse**, and a period with no treatment in it
+genuinely has no treatment in it. A *parameter* question about another element is refused, because
+the real parameter array ahead of the main run is **empty**, and empty reads back as a number. Do not
+infer one rule from the other.
+
+**One thing that is not the rule**, and is worth saying because it is the plausible-sounding version
+somebody will reach for: *"only read element indexes below your own"* is **wrong**. Elements are
+stepped with `Parallel.For` when the run is configured for it, so index order guarantees nothing
+about what has been computed. `iPeriod - 1` is the whole rule and it needs no ordering assumption.
+
+---
+
 ## What `jcass-dm check` does not cover
 
 `check` is a **local subset**, and it says so in its own output. It reads the project folder — the
@@ -303,6 +375,6 @@ The web app's **Check Setup** page is authoritative and sees the client's actual
 wholesale at every update, so a local edit is lost; a reported one reaches every other client.
 
 Say plainly whether anything detects it. **An entry with no detection mechanism is an entry that
-gets forgotten** — four on this list have none, and those are the ones to raise in conversation
+gets forgotten** — five on this list have none, and those are the ones to raise in conversation
 rather than trust a checklist to surface. If a new one looks mechanically checkable, say so: that
 is a gap in `jcass-dm` and it can be closed.

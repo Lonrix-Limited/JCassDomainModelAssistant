@@ -44,6 +44,18 @@ The run's configuration - periods, rates, model type, and `WorkFolder`, which is
 
 **Remarks.** Read it; do not write to it mid-run. See `JCass_ModelCore.ModelObjects.ModelConfiguration`.
 
+### CurrentRollout
+
+```csharp
+public BcaRolloutContext CurrentRollout { get; }
+```
+
+Where the current domain model call sits inside a BCA strategy rollout, or null when the model is not inside one.
+
+**Remarks.** Most domain models never need this. The period passed to `Increment`, `Reset`, `GetTreatmentCandidates` and `GetTriggeredMaintenance` is the real modelling period in a rollout exactly as in the main run, so period-based logic is correct without consulting it. See `JCass_ModelCore.ModelObjects.BcaRolloutContext` for the two cases that differ.
+
+Set only by `TreatmentStrategyGenerator`, which rolls elements out one at a time on the calling thread. If strategy generation is ever parallelised across elements this must become thread-local, or two rollouts will overwrite each other's context.
+
 ### Lookups
 
 ```csharp
@@ -224,6 +236,54 @@ Reads a text value from the model's lookups.
 
 **Remarks.** A domain model inheriting `DomainModelBase` can call the equivalent helper on itself instead. Both do the same thing.
 
+### GetParameterValueNumber
+
+```csharp
+public double GetParameterValueNumber(int ielem, string name, int iEpoch)
+```
+
+Reads a numeric model parameter for one element at one epoch. Model parameters are the values that evolve as the model runs.
+
+| # | Parameter | Type | Description |
+|---|---|---|---|
+| 1 | `ielem` | `int` | Zero-based element index. |
+| 2 | `name` | `string` | Parameter name, as defined in the model setup. |
+| 3 | `iEpoch` | `int` | Epoch to read. Epoch 0 is the initial state; epoch N is the end of period N. |
+
+**Returns.** The value.
+
+**Throws.**
+
+- `System.Collections.Generic.KeyNotFoundException` — Thrown if no parameter of that name is defined.
+
+**Remarks.** An epoch marks the END of a period, and there is one more epoch than there are periods. Reading "the value at the start of period N" means reading epoch N-1. Getting that off by one shifts every forecast by a period and produces results that look entirely plausible.
+
+Never read an epoch at or above the period you were handed. When the framework calls your domain model for period `iPeriod`, that period has not been stepped yet, so the highest epoch holding real data is `iPeriod - 1` - for every element, not just the one you were called about. Epoch `iPeriod` and above is uninitialised array, and outside a BCA rollout it is returned as zeros, silently. There is no warning and no exception: the run completes and the numbers are wrong.
+
+Inside a BCA strategy rollout this is resolved for you, and enforced. For the element being rolled out, an epoch the strategy has already passed is answered from that strategy's own timeline, so "what was my condition three periods ago" is correct at any rollout depth, including periods past the end of the model. Everything the rollout cannot answer correctly throws rather than returning zeros. See `JCass_ModelCore.ModelObjects.BcaRolloutContext.TryResolveStrategyEpoch(System.Int32,System.Int32,System.Int32@)`.
+
+### GetParameterValueText
+
+```csharp
+public string GetParameterValueText(int ielem, string name, int iEpoch)
+```
+
+Reads a text model parameter for one element at one epoch.
+
+| # | Parameter | Type | Description |
+|---|---|---|---|
+| 1 | `ielem` | `int` | Zero-based element index. |
+| 2 | `name` | `string` | Parameter name, as defined in the model setup. |
+| 3 | `iEpoch` | `int` | Epoch to read. See `JCass_ModelCore.Models.ModelBase.GetParameterValueNumber(System.Int32,System.String,System.Int32)` for what an epoch is. |
+
+**Returns.** The value.
+
+**Throws.**
+
+- `System.Collections.Generic.KeyNotFoundException` — Thrown if no parameter of that name is defined.
+
+**Remarks.** The epoch rules are the same as for `JCass_ModelCore.Models.ModelBase.GetParameterValueNumber(System.Int32,System.String,System.Int32)`, including the silent zeros above `iPeriod - 1` and the rollout resolution. Read that first.
+
 ### GetParameterValues
 
 ```csharp
@@ -240,6 +300,8 @@ Gets dictionaries of all parameter values for an element at an epoch - both nume
 **Returns.** Two dictionaries, numeric first then text, each keyed by parameter name.
 
 **Remarks.** Both dictionaries use ordinal string comparison, so parameter names are matched case-sensitively and exactly.
+
+The epoch rules matter and are easy to get wrong. See `JCass_ModelCore.Models.ModelBase.GetParameterValueNumber(System.Int32,System.String,System.Int32)`: never read an epoch at or above the period you were handed, because outside a BCA rollout you get zeros with no warning. Inside a rollout this resolves against the strategy's own timeline and refuses what it cannot answer.
 
 ### GetSpecialPlaceholderValues
 
@@ -263,3 +325,5 @@ Builds the framework's reserved placeholder values for one element in one period
 Absence is expressed as a sentinel, not as null. Where there is no next treatment, `next_treatment_period` and `periods_to_next_treatment` are 999 and the text placeholders are the literal string `"none"`; where there is no current treatment, `this_treatment_cost` is `0`. Comparisons still behave sensibly, but anything that averages or sums `periods_to_next_treatment` across elements silently takes 999 as a real number. Test for the sentinel before doing arithmetic on it.
 
 `previous_treatments` is the only entry that can genuinely be null.
+
+Inside a BCA strategy rollout the treatment keys describe the strategy, not the network.`previous_treatments` reports what the strategy being evaluated has done to the element so far, over the model's real history before the strategy's base period, so a "periods since last treatment" calculation is right inside a rollout as well as outside one. The `next_treatment_*` keys are unaffected: the only treatments ahead of the current period are committed ones, and the strategy's own future has not been decided yet. See `JCass_ModelCore.Treatments.RolloutTreatmentLookup`.

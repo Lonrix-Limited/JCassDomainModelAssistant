@@ -40,14 +40,16 @@ Creates a parameter definition from a row of the setup's parameters sheet. Calle
 
 | # | Parameter | Type | Description |
 |---|---|---|---|
-| 1 | `setupRow` | `Dictionary<string, object>` | The row. Must contain `parameter_name`, `data_type`, `minimum` and `maximum`; `decimals` is optional and defaults to 2. |
+| 1 | `setupRow` | `Dictionary<string, object>` | The row. Must contain `parameter_name`, `data_type`, `minimum` and `maximum`. The `decimals` column is optional - a sheet without it, or with the cell left blank, gets 2. |
 | 2 | `index` | `int` | Zero-based position of this parameter in the model's parameter list. |
 
 **Throws.**
 
-- `System.Exception` — Thrown, naming the column, if a required column is absent.
+- `System.Exception` — Thrown, naming the column, if one of the four required columns is absent.
 
 **Remarks.** A blank `minimum` or `maximum` cell is not an error and does not default to "unbounded" - it defaults to zero. See `JCass_ModelCore.ModelObjects.ModelParameter.Minimum`.
+
+The four required columns are the same four `UtilsSetupData.SetModelParameters` validates before it gets here, and `decimals` is deliberately not among them. Keep the two lists in step: a column read as required here but not validated there fails after the check has passed, with no sheet name and no parameter name in the message.
 
 ## Properties
 

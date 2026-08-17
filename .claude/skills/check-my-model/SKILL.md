@@ -17,7 +17,7 @@ description: Run jcass-dm check on a domain model and explain the result in mode
 
 ## 1. Read
 
-- [`docs/conventions/silent-failures.md`](../../../docs/conventions/silent-failures.md) — what each rule is defending against, and the four failures nothing detects.
+- [`docs/conventions/silent-failures.md`](../../../docs/conventions/silent-failures.md) — what each rule is defending against, and the five failures nothing detects.
 - [`tools/README.md`](../../../tools/README.md) § `check` is an explicit subset — and the exit codes.
 
 ## 2. Run
@@ -46,7 +46,7 @@ Read it back rule by rule, in modelling terms. Three things to get right:
 
 ## 4. Say what it did not look at
 
-Four entries on the silent-failures list have **no detection mechanism at all**, so nothing will
+Five entries on the silent-failures list have **no detection mechanism at all**, so nothing will
 raise them for you. Raise them in conversation instead, whenever the model has just changed in a way
 that touches one:
 
@@ -56,6 +56,7 @@ that touches one:
 | [3](../../../docs/conventions/silent-failures.md#3-reading-nelements-nperiods-or-nparameters-during-setup) | Does anything read the element counts during setup? |
 | [5](../../../docs/conventions/silent-failures.md#5-an-input-column-or-parameter-added-to-one-factory-method-but-not-the-other) | Does every property appear in **both** factory methods? |
 | [10](../../../docs/conventions/silent-failures.md#10-a-privately-constructed-random-instead-of-rando) | Is there a `new Random()` anywhere? |
+| [12](../../../docs/conventions/silent-failures.md#12-reading-a-model-parameter-at-or-above-the-period-you-were-handed) | Does any parameter read use an epoch at or above the period it was handed? |
 
 ## 5. Never
 

@@ -435,6 +435,141 @@
             </summary>
             <param name="treatments">Final set of selected treatments</param>
         </member>
+        <member name="T:JCass_ModelCore.ModelObjects.BcaRolloutContext">
+            <summary>
+            Where a domain model call sits inside a BCA strategy rollout, for the rare case where knowing
+            that changes what the domain model should do.
+            </summary>
+            <remarks>
+            <b>Most domain models should ignore this and never read it.</b> Every period a domain model is
+            given - in a rollout exactly as in the main run - is the real modelling period, so period-based
+            logic works without consulting this. It exists for the two cases that genuinely differ:
+            <list type="bullet">
+            <item><description>Deciding not to do something that can never be placed, because the rollout
+            looks past the end of the model. <see cref="P:JCass_ModelCore.ModelObjects.BcaRolloutContext.AbsolutePeriod"/> beyond <c>model.NPeriods</c> says
+            so.</description></item>
+            <item><description>Logic that needs to know how far into the look-ahead it is rather than which
+            calendar period it is in - <see cref="P:JCass_ModelCore.ModelObjects.BcaRolloutContext.RelativePeriod"/>.</description></item>
+            </list>
+            <para>
+            Read it through <c>model.CurrentRollout</c>, which is null whenever the model is not inside a
+            rollout. A domain model that wants to behave identically in both contexts simply does not look.
+            </para>
+            <para>
+            <b>Do not cache the instance.</b> It is replaced on every step of every rollout, and set back to
+            null when the rollout ends.
+            </para>
+            </remarks>
+        </member>
+        <member name="P:JCass_ModelCore.ModelObjects.BcaRolloutContext.BasePeriod">
+            <summary>
+            The modelling period the strategy is based in - the period whose treatment would actually be
+            placed if this strategy were selected.
+            </summary>
+        </member>
+        <member name="P:JCass_ModelCore.ModelObjects.BcaRolloutContext.RelativePeriod">
+            <summary>
+            Position within the look-ahead, counting from 1 at <see cref="P:JCass_ModelCore.ModelObjects.BcaRolloutContext.BasePeriod"/>.
+            </summary>
+        </member>
+        <member name="P:JCass_ModelCore.ModelObjects.BcaRolloutContext.AbsolutePeriod">
+            <summary>
+            The real modelling period, equal to <see cref="P:JCass_ModelCore.ModelObjects.BcaRolloutContext.BasePeriod"/> + <see cref="P:JCass_ModelCore.ModelObjects.BcaRolloutContext.RelativePeriod"/> - 1.
+            This is the value passed to the domain model as <c>iPeriod</c>, and it can exceed the model's
+            period count near the end of a run.
+            </summary>
+        </member>
+        <member name="P:JCass_ModelCore.ModelObjects.BcaRolloutContext.ElementIndex">
+            <summary>
+            Zero-based index of the element being rolled out.
+            </summary>
+        </member>
+        <member name="P:JCass_ModelCore.ModelObjects.BcaRolloutContext.TreatmentLookup">
+            <summary>
+            What this strategy has done to the element so far, laid over what the model has actually
+            placed. This is what the framework's placeholder helpers read during the rollout.
+            </summary>
+            <remarks>
+            A domain model does not normally touch this - it gets the same answers through
+            <c>model.GetSpecialPlaceholderValues</c>, which resolves it automatically. See
+            <see cref="T:JCass_ModelCore.Treatments.RolloutTreatmentLookup"/> for what is and is not visible through it.
+            </remarks>
+        </member>
+        <member name="P:JCass_ModelCore.ModelObjects.BcaRolloutContext.ParameterData">
+            <summary>
+            This strategy branch's own parameter timeline, indexed by period <b>relative</b> to
+            <see cref="P:JCass_ModelCore.ModelObjects.BcaRolloutContext.BasePeriod"/>. This is what the framework's parameter helpers read during the
+            rollout.
+            </summary>
+            <remarks>
+            A domain model does not normally touch this - it gets the same answers through
+            <c>model.GetParameterValues</c> and friends, which resolve it automatically. See
+            <see cref="M:JCass_ModelCore.ModelObjects.BcaRolloutContext.TryResolveStrategyEpoch(System.Int32,System.Int32,System.Int32@)"/> for the rule.
+            <para>
+            Held <b>by reference</b>. The generator fills it in as the rollout proceeds, so each period's
+            values become visible here as soon as the domain model has written them.
+            </para>
+            </remarks>
+        </member>
+        <member name="M:JCass_ModelCore.ModelObjects.BcaRolloutContext.TryResolveStrategyEpoch(System.Int32,System.Int32,System.Int32@)">
+            <summary>
+            Decides where a model parameter read should be answered from while this rollout is running,
+            and refuses the read outright when nothing can answer it correctly.
+            </summary>
+            <param name="iElem">Zero-based index of the element whose parameter is being read.</param>
+            <param name="iEpoch">Epoch being read, absolute - the same epoch numbering the model uses outside a rollout.</param>
+            <param name="strategyEpoch">Set to the matching relative epoch in <see cref="P:JCass_ModelCore.ModelObjects.BcaRolloutContext.ParameterData"/> when the return value is true; zero otherwise.</param>
+            <returns>
+            <see langword="true"/> to read <see cref="P:JCass_ModelCore.ModelObjects.BcaRolloutContext.ParameterData"/> at <paramref name="strategyEpoch"/>,
+            <see langword="false"/> to read the model's real parameter data at <paramref name="iEpoch"/>.
+            </returns>
+            <exception cref="T:System.InvalidOperationException">
+            Thrown when no correct answer exists - see the remarks. This is deliberate: the alternative is
+            the uninitialised zeros the caller would otherwise be handed without a word.
+            </exception>
+            <remarks>
+            <b>The rule, in one line:</b> <i>an epoch the strategy has already passed comes from the
+            strategy; anything earlier comes from the real data; anything later exists nowhere.</i>
+            <list type="bullet">
+            <item><description>Any element, epoch before <see cref="P:JCass_ModelCore.ModelObjects.BcaRolloutContext.BasePeriod"/> - real data. This is
+            history the main run has already computed, and it is the same for every strategy.</description></item>
+            <item><description>The element being rolled out, from <see cref="P:JCass_ModelCore.ModelObjects.BcaRolloutContext.BasePeriod"/> up to the last
+            period this rollout has completed - the strategy's own timeline. Two sibling strategies
+            legitimately give different answers here, which is the point.</description></item>
+            <item><description>Anything else - refused. For the rolled-out element that means its own
+            current or future period, which the strategy has not decided yet. For any other element it
+            means a period the main run has not stepped, so the real array holds zeros rather than data.
+            A strategy is a what-if about one element; no other element has a hypothetical timeline.</description></item>
+            </list>
+            <para>
+            <b>Note the asymmetry with <see cref="T:JCass_ModelCore.Treatments.RolloutTreatmentLookup"/>.</b> There, a query about
+            another element is passed straight through to the real treatment set and that is correct,
+            because the real set is merely sparse. Here it is refused, because the real parameter array is
+            <i>empty</i> ahead of the main run. Same-looking rule, opposite conclusion.
+            </para>
+            </remarks>
+        </member>
+        <member name="M:JCass_ModelCore.ModelObjects.BcaRolloutContext.BuildRefusalMessage(System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Builds the message for a refused parameter read. Kept separate so the two cases - own element
+            and another element - can each say the thing that actually helps.
+            </summary>
+            <param name="iElem">Zero-based index of the element whose parameter was being read.</param>
+            <param name="iEpoch">Epoch that was being read.</param>
+            <param name="lastCompletedEpoch">Last epoch this rollout has finished writing.</param>
+            <returns>The exception message.</returns>
+        </member>
+        <member name="M:JCass_ModelCore.ModelObjects.BcaRolloutContext.#ctor(System.Int32,System.Int32,System.Int32,System.Int32,JCass_ModelCore.Treatments.ITreatmentLookup,JCass_ModelCore.ModelObjects.StrategyParameterData)">
+            <summary>
+            Creates a context. <b>Called by the framework's strategy generator.</b>
+            </summary>
+            <param name="elementIndex">Zero-based index of the element being rolled out.</param>
+            <param name="basePeriod">The modelling period the strategy is based in.</param>
+            <param name="relativePeriod">Position within the look-ahead, counting from 1 at the base period.</param>
+            <param name="absolutePeriod">The real modelling period.</param>
+            <param name="treatmentLookup">The strategy's treatment view - see <see cref="P:JCass_ModelCore.ModelObjects.BcaRolloutContext.TreatmentLookup"/>.</param>
+            <param name="parameterData">The strategy branch's parameter timeline - see <see cref="P:JCass_ModelCore.ModelObjects.BcaRolloutContext.ParameterData"/>.</param>
+        </member>
         <member name="T:JCass_ModelCore.ModelObjects.Budget">
             <summary>
             The money available to the run: an amount per budget category per period, reduced as treatments
@@ -588,6 +723,50 @@
             Use <see cref="M:JCass_ModelCore.ModelObjects.Budget.GetBudgetBalances(System.Int32)"/> instead unless you specifically need the live object.
             That one returns a copy and cannot corrupt the run by accident.
             </remarks>
+        </member>
+        <member name="M:JCass_ModelCore.ModelObjects.DataObject.GetDoubleValueFromRow(System.Collections.Generic.Dictionary{System.String,System.Object},System.String,System.Double)">
+            <summary>
+            Reads a numeric value from a setup row where the <b>column must exist</b> but the cell may
+            be blank.
+            </summary>
+            <param name="row">The setup row, keyed by column name.</param>
+            <param name="key">Column to read.</param>
+            <param name="defaultValue">Value to use when the cell is present but empty.</param>
+            <returns>The value, or <paramref name="defaultValue"/> for a blank cell.</returns>
+            <exception cref="T:System.Exception">Thrown, naming the column, if the column is not in the row at all.</exception>
+            <remarks>
+            <b>Blank cell and absent column are not the same thing here.</b> A blank cell is a
+            legitimate omission and gets the default; an absent column means the sheet is missing
+            something the framework requires, and that is worth stopping for. Use
+            <see cref="M:JCass_ModelCore.ModelObjects.DataObject.GetOptionalDoubleValueFromRow(System.Collections.Generic.Dictionary{System.String,System.Object},System.String,System.Double)"/> where the column itself is optional - and check
+            which of the two the setup's own required-column list actually says, because the two must
+            agree.
+            </remarks>
+        </member>
+        <member name="M:JCass_ModelCore.ModelObjects.DataObject.GetOptionalDoubleValueFromRow(System.Collections.Generic.Dictionary{System.String,System.Object},System.String,System.Double)">
+            <summary>
+            Reads a numeric value from a setup row where the <b>column itself is optional</b>: an
+            absent column and a blank cell both yield the default.
+            </summary>
+            <param name="row">The setup row, keyed by column name.</param>
+            <param name="key">Column to read.</param>
+            <param name="defaultValue">Value to use when the column is absent or the cell is empty.</param>
+            <returns>The value, or <paramref name="defaultValue"/>.</returns>
+            <remarks>
+            Use this only for a column the setup's required-column check does not demand. A column that
+            is read with this but validated as required elsewhere is the mismatch this method exists to
+            stop: the check passes and the constructor throws afterwards, with no sheet name and no row
+            in the message.
+            </remarks>
+        </member>
+        <member name="M:JCass_ModelCore.ModelObjects.DataObject.ReadOrDefault(System.Collections.Generic.Dictionary{System.String,System.Object},System.String,System.Double)">
+            <summary>
+            Converts a present cell to a number, treating null and empty as absent.
+            </summary>
+            <param name="row">The setup row, keyed by column name.</param>
+            <param name="key">Column to read. Must be present.</param>
+            <param name="defaultValue">Value to use when the cell is empty.</param>
+            <returns>The value, or <paramref name="defaultValue"/> for a blank cell.</returns>
         </member>
         <member name="M:JCass_ModelCore.ModelObjects.InputSet.GetDeepClone">
             <summary>
@@ -794,7 +973,7 @@
         </member>
         <member name="P:JCass_ModelCore.ModelObjects.ModelConfiguration.BCALookAheadPeriods">
             <summary>
-            Number of look-ahead periods to use for BCA optimisation. Should not be more than the number of years in the budget.
+            Number of look-ahead periods over which each candidate treatment strategy is rolled out and evaluated in a BCA model. Must be between 1 and 35. Values of 5 to 20 are recommended: evaluating strategies decades ahead is not realistic given the uncertainty in long-range forecasts, and a longer look-ahead multiplies the number of strategies generated, so run times rise steeply. Values below 5 are normally only useful for debugging, because they leave no room for a follow-up treatment. It is normal and correct for a rollout near the end of a run to evaluate periods beyond the last modelled one - no treatment is placed there.
             </summary>
         </member>
         <member name="P:JCass_ModelCore.ModelObjects.ModelConfiguration.RoutineMaintenanceTreatmentName">
@@ -869,6 +1048,20 @@
         <member name="P:JCass_ModelCore.ModelObjects.ModelConfiguration.BCABenefitIsRelativeToMaintenanceOnly">
             <summary>
             Flag to indicate if the Benefit-Cost Analysis benefit and cost calculations are relative to maintenance only (true) or relative to doing nothing (false).
+            </summary>
+        </member>
+        <member name="P:JCass_ModelCore.ModelObjects.ModelConfiguration.BCAMaximumStrategiesPerElement">
+            <summary>
+            Largest number of treatment strategies that will be generated for a single element in a single period. Strategy
+            generation stops adding branches once an element reaches this number, and the run continues with the strategies
+            already generated rather than failing. Each candidate treatment is guaranteed a share of this budget, so what is
+            dropped is variations of an option rather than the option itself - provided the value is large enough to hold the
+            two baselines plus one strategy for every candidate treatment, which a separate warning checks. Fewer variations
+            of each are compared. A warning is logged whenever it happens.
+            Raise this to compare more strategies at the cost of a slower run; lower it to speed a run up. Allowed range is
+            10 to 500, and the default is 200. Raising it has sharply diminishing returns - strategies beyond the first few
+            for each candidate treatment are near-duplicates of one another - while the cost in run time is strictly
+            proportional, so prefer generating fewer strategies via 'BCA Strategy Periods to Skip' or a shorter look-ahead.
             </summary>
         </member>
         <member name="P:JCass_ModelCore.ModelObjects.ModelConfiguration.DebugStrategyElementIndex">
@@ -1038,12 +1231,18 @@
             Creates a parameter definition from a row of the setup's parameters sheet. <b>Called by the
             framework.</b>
             </summary>
-            <param name="setupRow">The row. Must contain <c>parameter_name</c>, <c>data_type</c>, <c>minimum</c> and <c>maximum</c>; <c>decimals</c> is optional and defaults to 2.</param>
+            <param name="setupRow">The row. Must contain <c>parameter_name</c>, <c>data_type</c>, <c>minimum</c> and <c>maximum</c>. The <c>decimals</c> column is optional - a sheet without it, or with the cell left blank, gets 2.</param>
             <param name="index">Zero-based position of this parameter in the model's parameter list.</param>
-            <exception cref="T:System.Exception">Thrown, naming the column, if a required column is absent.</exception>
+            <exception cref="T:System.Exception">Thrown, naming the column, if one of the four required columns is absent.</exception>
             <remarks>
             A blank <c>minimum</c> or <c>maximum</c> cell is <b>not</b> an error and does not default to
             "unbounded" - it defaults to zero. See <see cref="P:JCass_ModelCore.ModelObjects.ModelParameter.Minimum"/>.
+            <para>
+            The four required columns are the same four <c>UtilsSetupData.SetModelParameters</c> validates
+            before it gets here, and <c>decimals</c> is deliberately not among them. Keep the two lists in
+            step: a column read as required here but not validated there fails after the check has passed,
+            with no sheet name and no parameter name in the message.
+            </para>
             </remarks>
         </member>
         <member name="T:JCass_ModelCore.ModelObjects.ModelParameterData">
@@ -1093,6 +1292,131 @@
             logged - it is quietly replaced by the nearest bound. If a parameter's setup row leaves
             minimum and maximum blank, both are zero, and every value written here becomes zero for
             every element in every period. See <c>ModelParameter.Minimum</c>.
+            </remarks>
+        </member>
+        <member name="F:JCass_ModelCore.ModelObjects.ModelSetupChecker.MinimumBCALookAheadPeriods">
+            <summary>
+            The smallest look-ahead a BCA model will run with. Below this the setting is not merely
+            unwise, it is broken: zero leaves every strategy without a first treatment.
+            </summary>
+            <remarks>
+            <b>This bound is a contract across three surfaces</b> - this check, the web Configurations
+            editor's <c>setting-schema.js</c>, and the setting's own documentation on
+            <c>ModelConfiguration.BCALookAheadPeriods</c>, which is rendered into the in-app help.
+            <c>LookAheadBoundsTests</c> asserts the three agree; a divergence means the editor accepts a
+            value the run then refuses, and the user finds out at run time.
+            </remarks>
+        </member>
+        <member name="F:JCass_ModelCore.ModelObjects.ModelSetupChecker.MaximumBCALookAheadPeriods">
+            <summary>
+            The largest look-ahead a BCA model will run with.
+            </summary>
+            <remarks>
+            See <see cref="F:JCass_ModelCore.ModelObjects.ModelSetupChecker.MinimumBCALookAheadPeriods"/> - the same three-surface contract applies.
+            </remarks>
+        </member>
+        <member name="M:JCass_ModelCore.ModelObjects.ModelSetupChecker.CheckBCALookAheadPeriods">
+            <summary>
+            Checks that <c>Number of Look-Ahead Periods</c> is within the range a BCA model can run with.
+            </summary>
+            <remarks>
+            <b>Only applies to a BCA run.</b> The setting is required in every configuration but is read
+            by nothing else, so a forecast or MCDA model carrying an out-of-range value has no problem and
+            must not be blocked by one.
+            <para>
+            <b>The floor is correctness.</b> Zero makes every strategy's first treatment null and the run
+            dies later with a bare <c>NullReferenceException</c> inside the optimiser. One is degenerate
+            but arithmetically sound, and small values are the natural companion to
+            <c>Strategy Debug Element Index</c> - a three-period strategy tree can be read, a thirty-period
+            one cannot - so they are deliberately allowed rather than blocked.
+            </para>
+            <para>
+            <b>The ceiling is a guard against a typo, not against memory.</b> Look-ahead memory is linear
+            and already bounded by <c>BCA Maximum Strategies per Element</c>. What a long look-ahead
+            really costs is strategy count - more periods for triggers to fire in - which either hits
+            that cap, so strategies are truncated and the treatments chosen may be sub-optimal, or simply
+            makes the run far slower. Thirty-five is a starting point to be revisited on evidence from a
+            real network, not a derived limit.
+            </para>
+            <para>
+            Recommended practice is 5 to 20, and that guidance lives in the setting's own documentation
+            rather than here. It is a judgement about forecast credibility, which is not the framework's
+            to enforce.
+            </para>
+            </remarks>
+        </member>
+        <member name="F:JCass_ModelCore.ModelObjects.ModelSetupChecker.MinimumBCAMaximumStrategiesPerElement">
+            <summary>
+            The smallest strategy cap a BCA model will run with.
+            </summary>
+            <remarks>
+            Two of every element's strategies are the do-nothing and maintenance-only baselines, and each
+            candidate treatment then needs at least one of its own, so a very small cap starves the
+            comparison rather than merely trimming it. Ten leaves room for a handful of candidates and is
+            low enough to stay useful for debugging a single element.
+            <para>
+            <b>Zero or a negative value is the case that matters.</b> It would truncate every element to
+            nothing, so no treatment would ever be placed and the run would complete looking merely
+            unproductive rather than misconfigured.
+            </para>
+            </remarks>
+        </member>
+        <member name="F:JCass_ModelCore.ModelObjects.ModelSetupChecker.MaximumBCAMaximumStrategiesPerElement">
+            <summary>
+            The largest strategy cap a user may set. <b>Deliberately well below what the machine could
+            stand</b> - see the remarks before raising it.
+            </summary>
+            <remarks>
+            <b>This is a limit on the user, not a technical limit, and that is the point.</b> The setting
+            looks like a dial that trades run time for a better answer, so the natural reaction to the
+            truncation warning is to set it as high as it will go. Nothing about the returns justifies
+            that: strategies beyond the first few per candidate treatment are near-duplicates of each
+            other - only one strategy per element per first treatment reaches the optimiser at all, and
+            the rest only influence which sibling represents it - while the cost is strictly linear, one
+            domain model call per strategy per look-ahead period, on every element of every period. Five
+            hundred already buys far more comparison than the evidence says is useful, and a run that
+            takes a week is a worse outcome for the user than a run that truncates.
+            <para>
+            <b>Framework maintainers:</b> this number is the whole of the policy. It is not derived from
+            memory - a strategy's parameter timeline is a few kilobytes, so even ten thousand would be
+            only tens of megabytes for one element at a time - and it is not a correctness bound.
+            Anything the framework itself needs is enforced elsewhere: the cap can never be exceeded, and
+            every candidate treatment is guaranteed a share of it, whatever value is set here.
+            </para>
+            <para>
+            <b>Intended to become an administrator-managed application setting</b>, so a per-deployment
+            ceiling can be lifted for a client who has demonstrably earned it, rather than by every user
+            who reads the warning. Until then it is a constant, and it is meant to be revisited on
+            evidence from a real network - which does not exist yet.
+            </para>
+            </remarks>
+        </member>
+        <member name="M:JCass_ModelCore.ModelObjects.ModelSetupChecker.CheckBCAMaximumStrategiesPerElement">
+            <summary>
+            Checks that <c>BCA Maximum Strategies per Element</c> is within the range a BCA model can run
+            with.
+            </summary>
+            <remarks>
+            <b>Only applies to a BCA run</b>, for the same reason as <see cref="M:JCass_ModelCore.ModelObjects.ModelSetupChecker.CheckBCALookAheadPeriods"/>:
+            the setting is read by nothing else, so a forecast or MCDA setup carrying an out-of-range value
+            must not be blocked by one. Unlike the look-ahead the setting is optional, so a configuration
+            that omits it carries the default and can never fail this check.
+            </remarks>
+        </member>
+        <member name="M:JCass_ModelCore.ModelObjects.ModelSetupChecker.CheckBCAOptimisationMethod">
+            <summary>
+            Checks that <c>BCA-Optimisation Method</c> names a method the framework implements.
+            </summary>
+            <remarks>
+            <b>Only applies to a BCA run</b>, as with the other BCA settings: the value is read by nothing
+            else, so a forecast or MCDA setup carrying a stale one must not be blocked by it.
+            <para>
+            Without this a typo threw <c>NotImplementedException</c> in <b>period 1</b> - not at setup, but
+            after every element's strategies had been generated and evaluated. On a real network that is a
+            long wait for a spelling mistake. The accepted set lives on
+            <c>BCAOptimiser.SupportedOptimisationMethods</c>, beside the switch that dispatches on it, so
+            the two cannot be updated independently from different files.
+            </para>
             </remarks>
         </member>
         <member name="M:JCass_ModelCore.ModelObjects.ModelSetupChecker.CheckNumericParameterRanges">
@@ -1202,6 +1526,20 @@
             Create a clone without references to original data
             </summary>
             <returns></returns>
+        </member>
+        <member name="M:JCass_ModelCore.ModelObjects.StrategyParameterData.GetTextValue(System.String,System.Int32)">
+            <summary>
+            Reads a text parameter from this strategy's timeline at one relative epoch.
+            </summary>
+            <param name="paramName">Parameter name, as defined in the model setup.</param>
+            <param name="epochIndex">Relative epoch. Epoch 0 is the state entering the strategy's base period.</param>
+            <returns>The value, or an empty string for an epoch the rollout has not written.</returns>
+            <exception cref="T:System.ArgumentException">Thrown if the parameter is not a defined text parameter.</exception>
+            <remarks>
+            The empty-string fallback mirrors <c>ModelParameterData.GetTextValue</c>. It should not be
+            reachable through <c>ModelBase</c>, which refuses unwritten epochs before getting here - see
+            <c>BcaRolloutContext.TryResolveStrategyEpoch</c>.
+            </remarks>
         </member>
         <member name="F:JCass_ModelCore.Models.MCDAModelGrouped._groupIndexes">
             <summary>
@@ -1394,6 +1732,23 @@
             value is the lookup table as jcDataSet. See function 'JFuncLookupMultiColumn'
             </summary>
         </member>
+        <member name="P:JCass_ModelCore.Models.ModelBase.CurrentRollout">
+            <summary>
+            Where the current domain model call sits inside a BCA strategy rollout, or null when the
+            model is not inside one.
+            </summary>
+            <remarks>
+            <b>Most domain models never need this.</b> The period passed to <c>Increment</c>,
+            <c>Reset</c>, <c>GetTreatmentCandidates</c> and <c>GetTriggeredMaintenance</c> is the real
+            modelling period in a rollout exactly as in the main run, so period-based logic is correct
+            without consulting it. See <see cref="T:JCass_ModelCore.ModelObjects.BcaRolloutContext"/> for the two cases that differ.
+            <para>
+            Set only by <c>TreatmentStrategyGenerator</c>, which rolls elements out one at a time on the
+            calling thread. If strategy generation is ever parallelised across elements this must become
+            thread-local, or two rollouts will overwrite each other's context.
+            </para>
+            </remarks>
+        </member>
         <member name="P:JCass_ModelCore.Models.ModelBase.Configuration">
             <summary>
             The run's configuration - periods, rates, model type, and <c>WorkFolder</c>, which is the
@@ -1485,6 +1840,21 @@
             periods. Reading "the value at the start of period N" means reading epoch N-1. Getting that
             off by one shifts every forecast by a period and produces results that look entirely
             plausible.
+            <para>
+            <b>Never read an epoch at or above the period you were handed.</b> When the framework calls
+            your domain model for period <c>iPeriod</c>, that period has not been stepped yet, so the
+            highest epoch holding real data is <c>iPeriod - 1</c> - for every element, not just the one
+            you were called about. Epoch <c>iPeriod</c> and above is uninitialised array, and outside a
+            BCA rollout it is returned as <b>zeros, silently</b>. There is no warning and no exception:
+            the run completes and the numbers are wrong.
+            </para>
+            <para>
+            <b>Inside a BCA strategy rollout this is resolved for you, and enforced.</b> For the element
+            being rolled out, an epoch the strategy has already passed is answered from that strategy's
+            own timeline, so "what was my condition three periods ago" is correct at any rollout depth,
+            including periods past the end of the model. Everything the rollout cannot answer correctly
+            throws rather than returning zeros. See <see cref="M:JCass_ModelCore.ModelObjects.BcaRolloutContext.TryResolveStrategyEpoch(System.Int32,System.Int32,System.Int32@)"/>.
+            </para>
             </remarks>
         </member>
         <member name="M:JCass_ModelCore.Models.ModelBase.GetParameterValueText(System.Int32,System.String,System.Int32)">
@@ -1496,6 +1866,10 @@
             <param name="iEpoch">Epoch to read. See <see cref="M:JCass_ModelCore.Models.ModelBase.GetParameterValueNumber(System.Int32,System.String,System.Int32)"/> for what an epoch is.</param>
             <returns>The value.</returns>
             <exception cref="T:System.Collections.Generic.KeyNotFoundException">Thrown if no parameter of that name is defined.</exception>
+            <remarks>
+            The epoch rules are the same as for <see cref="M:JCass_ModelCore.Models.ModelBase.GetParameterValueNumber(System.Int32,System.String,System.Int32)"/>, including the
+            silent zeros above <c>iPeriod - 1</c> and the rollout resolution. Read that first.
+            </remarks>
         </member>
         <member name="M:JCass_ModelCore.Models.ModelBase.SetParameterValueNumber(System.Int32,System.String,System.Int32,System.Double)">
             <summary>
@@ -1537,6 +1911,12 @@
             <remarks>
             Both dictionaries use ordinal string comparison, so parameter names are matched
             case-sensitively and exactly.
+            <para>
+            <b>The epoch rules matter and are easy to get wrong.</b> See
+            <see cref="M:JCass_ModelCore.Models.ModelBase.GetParameterValueNumber(System.Int32,System.String,System.Int32)"/>: never read an epoch at or above the period you were
+            handed, because outside a BCA rollout you get zeros with no warning. Inside a rollout this
+            resolves against the strategy's own timeline and refuses what it cannot answer.
+            </para>
             </remarks>
         </member>
         <member name="M:JCass_ModelCore.Models.ModelBase.GetInputValues(System.Int32)">
@@ -1638,6 +2018,15 @@
             real number. Test for the sentinel before doing arithmetic on it.
             </para>
             <para><c>previous_treatments</c> is the only entry that can genuinely be null.</para>
+            <para>
+            <b>Inside a BCA strategy rollout the treatment keys describe the strategy, not the network.</b>
+            <c>previous_treatments</c> reports what the strategy being evaluated has done to the element so
+            far, over the model's real history before the strategy's base period, so a "periods since last
+            treatment" calculation is right inside a rollout as well as outside one. The
+            <c>next_treatment_*</c> keys are unaffected: the only treatments ahead of the current period
+            are committed ones, and the strategy's own future has not been decided yet. See
+            <see cref="T:JCass_ModelCore.Treatments.RolloutTreatmentLookup"/>.
+            </para>
             </remarks>
         </member>
         <member name="T:JCass_ModelCore.MonteCarlo.DistributionSimulator">
@@ -1827,6 +2216,164 @@
             <param name="currentStateKey">Key of the current state. Must match one of the row keys defined in setup.</param>
             <returns>The row baseline leave-probability in [0, 1].</returns>
         </member>
+        <member name="F:JCass_ModelCore.Treatments.BCAOptimiser.SupportedOptimisationMethods">
+            <summary>
+            Every value <c>BCA-Optimisation Method</c> accepts, including the backward-compatible
+            spellings.
+            </summary>
+            <remarks>
+            <b>Must stay in step with the switch in <see cref="M:JCass_ModelCore.Treatments.BCAOptimiser.Optimise(System.Collections.Generic.List{JCass_ModelCore.Treatments.TreatmentStrategy},System.Int32,System.String)"/></b>, which is the real
+            dispatch. This array exists so the setup checker can reject a bad value before the run starts
+            rather than letting it throw in period 1 after every element's strategies have been
+            generated - which, on a real network, is a long way in.
+            <para>
+            Three canonical names, each with an underscore or abbreviated spelling kept so configurations
+            written against older releases keep working. Only the canonical three are offered by the web
+            Configurations editor.
+            </para>
+            </remarks>
+        </member>
+        <member name="M:JCass_ModelCore.Treatments.BCAOptimiser.CreateCandidatesList(System.Collections.Generic.List{JCass_ModelCore.Treatments.TreatmentStrategy},System.Int32)">
+            <summary>
+            Turns the strategies triggered in this period into the list of projects the optimiser competes
+            on, keeping exactly one strategy per element per first treatment.
+            </summary>
+            <param name="nonForcedStrategies">Strategies with a non-forced first treatment, in the order they were generated.</param>
+            <param name="iPeriod">The modelling period being optimised. Used only to locate a warning.</param>
+            <returns>One project per element per distinct first treatment, in the order the winning strategies appear in <paramref name="nonForcedStrategies"/>.</returns>
+            <remarks>
+            The rollout produces many strategies that share one first treatment - siblings that differ only
+            in what they do later in the look-ahead. Those siblings are <b>operationally identical</b>: only
+            the first treatment of a selected strategy is ever placed, so the rest of a sibling's timeline
+            never touches the model and the only thing distinguishing it is the benefit number attached to it.
+            <para>
+            Handing every sibling to the optimiser therefore offers it no extra choice, only noise - and the
+            noise does damage. Siblings share a first-treatment <see cref="P:JCass_Economics.BaseClasses.ProjectBase.Cost"/> <i>exactly</i>,
+            so the Pareto front retains the dominated ones and the incremental-benefit-cost walk then scores
+            the step from one sibling to another as an increment that buys benefit for no cost. Which sibling
+            spoke for the element was decided by the order the domain model happened to offer its candidates in.
+            </para>
+            <para>
+            So each group puts its best foot forward instead, and the ones it beats are dropped before the
+            front is ever built. See <see cref="M:JCass_ModelCore.Treatments.BCAOptimiser.GetRepresentativeStrategyIndexes(System.Collections.Generic.List{JCass_ModelCore.Treatments.TreatmentStrategy})"/> for the merit rule.
+            </para>
+            </remarks>
+        </member>
+        <member name="M:JCass_ModelCore.Treatments.BCAOptimiser.WarnIfCostIsNotPositive(System.Double,JCass_ModelCore.Treatments.TreatmentStrategy,System.Int32)">
+            <summary>
+            Warns once per run when a candidate's first treatment costs nothing, because such a candidate
+            silently drops out of the optimisation.
+            </summary>
+            <param name="cost">The first treatment's cost, as it will be given to the optimiser.</param>
+            <param name="strategy">The strategy the cost came from, used to locate the problem.</param>
+            <param name="iPeriod">The modelling period being optimised.</param>
+            <remarks>
+            <b>The exclusion itself is correct and is not a defect.</b> `ProjectBase.BCRatio` is zero at zero
+            cost, and the Pareto front only ever starts at a strictly positive ratio, so a costless candidate
+            can never join the front and can never be selected. That is the conservative outcome: a treatment
+            that consumes no budget would otherwise be applicable to its element in every period at no cost,
+            so accepting it would turn a data error into an unlimited free condition reset.
+            <para>
+            What was wrong is that it happened in silence. A zero cost means a zero quantity, a unit rate that
+            resolved to zero, or a genuine cost below half a cent rounding away in
+            <c>CalculateDiscountedAndInflatedCost</c> - all of them worth knowing about. The existing warning in
+            <see cref="M:JCass_ModelCore.Treatments.TreatmentStrategy.CalculateBenefitCostRatio(System.Double,System.Double)"/> does <i>not</i> cover this:
+            it fires on a zero <c>CostDelta</c> against the baseline, which is a different quantity, and a
+            strategy with a costless first treatment but costly follow-ups has a positive delta and warns about
+            nothing.
+            </para>
+            <para>
+            Keep the first 30 characters of the message constant and distinct from the other warnings in the BCA
+            path: that prefix is the de-duplication key for <c>showOnceOnly</c>, so a varying one logs per element
+            and a colliding one suppresses the other warning entirely.
+            </para>
+            </remarks>
+        </member>
+        <member name="M:JCass_ModelCore.Treatments.BCAOptimiser.GetRepresentativeStrategyIndexes(System.Collections.Generic.List{JCass_ModelCore.Treatments.TreatmentStrategy})">
+            <summary>
+            Picks the single strategy that represents each element's first treatment, and returns the
+            indexes of the winners.
+            </summary>
+            <param name="nonForcedStrategies">Strategies with a non-forced first treatment.</param>
+            <returns>Ascending indexes into <paramref name="nonForcedStrategies"/>, one per element per distinct first treatment.</returns>
+            <remarks>
+            The treatment name identifies the branch the strategy grew from: a root strategy key is
+            <c>treatmentName~1</c>, a duplicate key is a hard failure, and forced first treatments are
+            already excluded from this list - so within one element no two branches can share a name.
+            Grouping on the name rather than on cost is deliberate. Cost cannot do the job in either
+            direction: when the discount and inflation rates are equal the present-worth factor is exactly
+            one, so siblings whose follow-ups differ only in timing cost the same to the cent; and two
+            genuinely different treatment types can coincide on cost by chance.
+            <para>
+            Merit is benefit over <b>whole-of-life</b> cost, not over the first treatment's cost. Benefit is
+            already measured across the whole look-ahead, so the like-for-like denominator is the whole
+            strategy's cost: a sibling that reaches a high benefit only by spending heavily in later periods
+            should not speak for the first treatment. This does not change what the optimiser spends or
+            accounts for - <see cref="P:JCass_Economics.BaseClasses.ProjectBase.Cost"/> remains the first treatment's cost, which is what
+            the budget actually gives up.
+            </para>
+            <para>
+            The ratio is taken through <see cref="M:JCass_ModelCore.Treatments.TreatmentStrategy.CalculateBenefitCostRatio(System.Double,System.Double)"/>
+            so a zero whole-of-life cost - a treatment with a zero quantity or a unit rate that resolved to
+            zero - cannot produce an infinity or a <c>NaN</c> here. Ties fall back to raw benefit and then to
+            the strategy key, so the winner never depends on the order the candidates arrived in. That
+            order-independence is the point of the whole method, and the last tie-break is what guarantees it.
+            </para>
+            </remarks>
+        </member>
+        <member name="M:JCass_ModelCore.Treatments.BCAOptimiser.IsBetterRepresentative(JCass_ModelCore.Treatments.TreatmentStrategy,JCass_ModelCore.Treatments.TreatmentStrategy)">
+            <summary>
+            Decides whether one strategy is a better representative of its first treatment than another.
+            </summary>
+            <param name="contender">The strategy under consideration.</param>
+            <param name="incumbent">The best strategy found so far for the same element and first treatment.</param>
+            <returns>True when <paramref name="contender"/> should replace <paramref name="incumbent"/>.</returns>
+            <remarks>
+            Highest whole-of-life benefit-cost ratio wins; then highest raw benefit; then the lower strategy
+            key, which is arbitrary but stable and leaves no case decided by list order.
+            </remarks>
+        </member>
+        <member name="T:JCass_ModelCore.Treatments.ITreatmentLookup">
+            <summary>
+            Read-only view of what is done to an element over time: the treatment in a period, the next one
+            after a period, and the ones before it.
+            </summary>
+            <remarks>
+            There are two implementations and the difference between them is the whole point of this
+            interface. <see cref="T:JCass_ModelCore.Treatments.TreatmentSet"/> answers for the treatments the model has actually placed.
+            <see cref="T:JCass_ModelCore.Treatments.RolloutTreatmentLookup"/> answers for a single BCA strategy during its rollout, where
+            the treatments that matter are hypothetical and exist only inside the strategy generator.
+            <para>
+            <c>ModelBase.GetSpecialPlaceholderValues</c> resolves one of the two per call, which is what
+            makes <c>previous_treatments</c> mean "what this strategy has done so far" inside a rollout and
+            "what the model has done so far" everywhere else.
+            </para>
+            </remarks>
+        </member>
+        <member name="M:JCass_ModelCore.Treatments.ITreatmentLookup.GetTreatmentInPeriod(System.Int32,System.Int32)">
+            <summary>
+            Returns the treatment on an element in one period, or null if there is none.
+            </summary>
+            <param name="iPeriod">Modelling period, 1-based.</param>
+            <param name="iElem">Zero-based element index.</param>
+            <returns>The treatment, or null.</returns>
+        </member>
+        <member name="M:JCass_ModelCore.Treatments.ITreatmentLookup.GetNextTreatment(System.Int32,System.Int32)">
+            <summary>
+            Returns the first treatment on an element after a period, or null if there is none.
+            </summary>
+            <param name="iAfterPeriod">The period to search from, exclusive.</param>
+            <param name="iElem">Zero-based element index.</param>
+            <returns>The next treatment, or null.</returns>
+        </member>
+        <member name="M:JCass_ModelCore.Treatments.ITreatmentLookup.GetPreviousTreatments(System.Int32,System.Int32)">
+            <summary>
+            Returns every treatment on an element before a period, most recent first.
+            </summary>
+            <param name="iBeforePeriod">The period to search back from, exclusive.</param>
+            <param name="iElem">Zero-based element index.</param>
+            <returns>The treatments, most recent first. Empty if there are none - never null.</returns>
+        </member>
         <member name="F:JCass_ModelCore.Treatments.MCDASetup.TreatmentSuitabilityScoreWeight">
             <summary>
             Weight associated with the Treatment Suitability Score that reflects the suitability of the treatment.     
@@ -1909,6 +2456,79 @@
             did not catch the bad value first. The column ordering MUST match
             <see cref="M:JCass_ModelCore.Treatments.MCDASetup.GetTreatmentsSetAttributeData(System.Collections.Generic.List{JCass_ModelCore.Treatments.TreatmentInstance},System.Int32)"/>.
             </summary>
+        </member>
+        <member name="T:JCass_ModelCore.Treatments.RolloutTreatmentLookup">
+            <summary>
+            The treatment view a domain model gets while one BCA strategy is being rolled out: the
+            strategy's own hypothetical treatments laid over the treatments the model has actually placed.
+            </summary>
+            <remarks>
+            A strategy rollout is a what-if. Its treatments are never placed unless the strategy is selected,
+            so they are not in <see cref="T:JCass_ModelCore.Treatments.TreatmentSet"/> and a domain model asking the framework "when was
+            this element last treated?" during a rollout used to be told about the real network and not about
+            the strategy it was being asked to evaluate. A strategy that resurfaced an element could then
+            resurface it again the following period, because as far as the domain model could see nothing had
+            been done.
+            <para>
+            <b>The merge rule:</b> a period the strategy has already reached comes from the strategy; every
+            other period comes from the real treatment set. "Already reached" is the important half. A rollout
+            marches forward one period at a time, so at any moment the strategy has decided its own past and
+            nothing of its own future - which means:
+            </para>
+            <list type="bullet">
+            <item><description><c>previous_treatments</c> gains the strategy's own treatments back to its
+            base period, and keeps the model's real history before that.</description></item>
+            <item><description><c>next_treatment_*</c> is unchanged. The only treatments ahead of the current
+            period are committed ones, which are real, and which the rollout does apply when it reaches them.
+            The strategy's own future is genuinely undecided at the time of the call and there is nothing to
+            reveal.</description></item>
+            </list>
+            <para>
+            Only the element being rolled out is affected. A query about any other element is passed straight
+            through, because no other element has a hypothetical timeline.
+            </para>
+            </remarks>
+        </member>
+        <member name="M:JCass_ModelCore.Treatments.RolloutTreatmentLookup.#ctor(JCass_ModelCore.Treatments.ITreatmentLookup,System.Collections.Generic.IReadOnlyDictionary{System.Int32,JCass_ModelCore.Treatments.TreatmentInstance},System.Int32,System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Creates the view for one strategy on one element.
+            </summary>
+            <param name="actualTreatments">The treatments the model has actually placed, normally the model's <see cref="T:JCass_ModelCore.Treatments.TreatmentSet"/>.</param>
+            <param name="strategyTreatments">The strategy's own timeline, keyed by period <b>relative</b> to <paramref name="basePeriod"/> counting from 1, with a null value for a period in which the strategy does nothing. Held by reference: the strategy generator fills it in as the rollout proceeds and this view sees each entry as it is added.</param>
+            <param name="elementIndex">Zero-based index of the element being rolled out.</param>
+            <param name="basePeriod">The modelling period the strategy is based in - the period whose treatment would actually be placed if the strategy were selected.</param>
+            <param name="lookAheadPeriods">Number of periods the strategy is rolled out over.</param>
+            <param name="lastModelledPeriod">The model's last period, normally <c>ModelBase.NPeriods</c>. A rollout near the end of a run looks past this, and committed treatments cannot exist beyond it.</param>
+        </member>
+        <member name="M:JCass_ModelCore.Treatments.RolloutTreatmentLookup.GetTreatmentInPeriod(System.Int32,System.Int32)">
+            <summary>
+            Returns the treatment on an element in one period, or null if there is none.
+            </summary>
+            <param name="iPeriod">Modelling period, 1-based and absolute - not relative to the strategy's base period.</param>
+            <param name="iElem">Zero-based element index.</param>
+            <returns>The strategy's treatment for the period if it has reached that period, otherwise the real one.</returns>
+            <remarks>
+            A period the strategy has reached and decided to do nothing in returns null without consulting
+            the real set. That is deliberate: within its look-ahead the strategy's account of itself is
+            complete, and falling back to the real set there would report a treatment the strategy did not
+            apply.
+            </remarks>
+        </member>
+        <member name="M:JCass_ModelCore.Treatments.RolloutTreatmentLookup.GetNextTreatment(System.Int32,System.Int32)">
+            <summary>
+            Returns the first treatment on an element after a period, or null if there is none.
+            </summary>
+            <param name="iAfterPeriod">The period to search from, exclusive.</param>
+            <param name="iElem">Zero-based element index.</param>
+            <returns>The next treatment, or null.</returns>
+        </member>
+        <member name="M:JCass_ModelCore.Treatments.RolloutTreatmentLookup.GetPreviousTreatments(System.Int32,System.Int32)">
+            <summary>
+            Returns every treatment on an element before a period, most recent first.
+            </summary>
+            <param name="iBeforePeriod">The period to search back from, exclusive.</param>
+            <param name="iElem">Zero-based element index.</param>
+            <returns>The treatments, most recent first. Empty if there are none - never null.</returns>
         </member>
         <member name="T:JCass_ModelCore.Treatments.StrategySetupInfo">
             <summary>
@@ -2334,6 +2954,34 @@
             All treatments for this model (committed and triggered). First key is the model period, second key is the element index.
             </summary>
         </member>
+        <member name="M:JCass_ModelCore.Treatments.TreatmentSet.GetTreatmentInPeriod(System.Int32,System.Int32)">
+            <summary>
+            Returns the treatment placed on an element in one period, or null if there is none.
+            </summary>
+            <param name="iPeriod">Modelling period, 1-based.</param>
+            <param name="iElem">Zero-based element index.</param>
+            <returns>The treatment, or null.</returns>
+            <remarks>
+            Periods outside the modelled range return null rather than throwing, so a caller looking
+            past the end of the model - as a BCA rollout does - does not have to guard the call.
+            </remarks>
+        </member>
+        <member name="M:JCass_ModelCore.Treatments.TreatmentSet.GetNextTreatment(System.Int32,System.Int32)">
+            <summary>
+            Returns the first treatment placed on an element after a period, or null if there is none.
+            </summary>
+            <param name="iAfterPeriod">The period to search from, exclusive.</param>
+            <param name="iElem">Zero-based element index.</param>
+            <returns>The next treatment, or null.</returns>
+        </member>
+        <member name="M:JCass_ModelCore.Treatments.TreatmentSet.GetPreviousTreatments(System.Int32,System.Int32)">
+            <summary>
+            Returns every treatment placed on an element before a period, most recent first.
+            </summary>
+            <param name="iBeforePeriod">The period to search back from, exclusive.</param>
+            <param name="iElem">Zero-based element index.</param>
+            <returns>The treatments, most recent first. Empty if there are none - never null.</returns>
+        </member>
         <member name="M:JCass_ModelCore.Treatments.TreatmentSet.GetTreatmentExportTable(System.String[],System.Int32)">
             <summary>
             Creates a jcDataSet containing the Treatment export table. This is the treatments with one row for each treatment instance. It show 
@@ -2362,9 +3010,96 @@
             <param name="initialCalendarEpoch">Initial Calendar Epoch</param>
             <returns></returns>
         </member>
+        <member name="M:JCass_ModelCore.Treatments.TreatmentStrategy.Evaluate(JCass_ModelCore.Models.ModelBase,System.Double,System.Double,JCass_ModelCore.Treatments.TreatmentStrategy,System.Boolean)">
+            <summary>
+            Works out this strategy's benefit, lifecycle cost delta and benefit-cost ratio against a
+            baseline strategy.
+            </summary>
+            <param name="model">The framework model, used only for warnings.</param>
+            <param name="objectiveValueSum">Sum of the objective parameter over the look-ahead - the area under the curve.</param>
+            <param name="costSum">Sum of every treatment cost in the strategy, present-worth adjusted.</param>
+            <param name="baseStrategyForCostAndBenefitDelta">The baseline to difference against - do-nothing or maintenance-only. Null when this strategy <i>is</i> a baseline, in which case benefit, delta and ratio are all zero.</param>
+            <param name="minimise">True when a lower objective value is better, so the benefit is the baseline's sum minus this one's.</param>
+            <remarks>
+            The ratio is the strategy's <b>merit</b> - "if you pick this treatment as the first of this
+            strategy, the strategy has this ratio". It is not what the optimiser selects on; see
+            <see cref="M:JCass_ModelCore.Treatments.TreatmentStrategy.CalculateBenefitCostRatio(System.Double,System.Double)"/> and the review document's finding 5.3.
+            </remarks>
+        </member>
+        <member name="M:JCass_ModelCore.Treatments.TreatmentStrategy.CalculateBenefitCostRatio(JCass_ModelCore.Models.ModelBase)">
+            <summary>
+            Turns this strategy's benefit and cost delta into the ratio published as <c>bc_ratio</c>,
+            without ever dividing by a non-positive cost delta.
+            </summary>
+            <param name="model">The framework model, used only for warnings.</param>
+            <returns>The ratio, or <see cref="F:System.Double.MaxValue"/> for a strategy that dominates the baseline.</returns>
+            <remarks>
+            This wraps <see cref="M:JCass_ModelCore.Treatments.TreatmentStrategy.CalculateBenefitCostRatio(System.Double,System.Double)"/>, which holds the rule
+            itself, and adds the warnings. The rule is separate so it can be tested without a model.
+            <b>A negative cost delta is not an error.</b> A strategy can genuinely cost less over its life
+            than the baseline - treat early, and years of routine maintenance are avoided. Against a
+            maintenance-only baseline that is the expected outcome for a good treatment, not an exotic one.
+            Such a strategy has more benefit <i>and</i> lower lifecycle cost, so it strictly dominates.
+            <para>
+            A plain division mishandles all three of the non-positive cases, and the last two silently:
+            </para>
+            <list type="bullet">
+            <item><description>Zero delta gives <c>±∞</c>, or <c>NaN</c> when the benefit is zero too.</description></item>
+            <item><description>Negative delta with positive benefit gives a <b>negative</b> ratio for the
+            best strategies on the element, sorting them to the bottom of the export.</description></item>
+            <item><description>Negative delta with negative benefit gives a <b>positive</b> ratio - two
+            sign errors cancelling - so a strategy worse than the baseline reads as attractive.</description></item>
+            </list>
+            <para>
+            So the ratio is only computed where the denominator is a real cost premium. Where it is not,
+            a strategy that is genuinely better is reported as maximally attractive and anything else as
+            zero. The magnitude of <see cref="F:System.Double.MaxValue"/> means nothing; its job is to sort where it
+            belongs. <see cref="P:JCass_ModelCore.Treatments.TreatmentStrategy.CostDelta"/> and <see cref="P:JCass_ModelCore.Treatments.TreatmentStrategy.BenefitOverDoNothing"/> are untouched, so the
+            honest numbers are still in the export beside it.
+            </para>
+            </remarks>
+        </member>
+        <member name="M:JCass_ModelCore.Treatments.TreatmentStrategy.CalculateBenefitCostRatio(System.Double,System.Double)">
+            <summary>
+            The <c>bc_ratio</c> rule on its own: benefit over cost delta where the delta is a real cost
+            premium, and a sentinel where it is not. Never returns <c>NaN</c> or an infinity.
+            </summary>
+            <param name="benefit">Objective-value gain over the baseline. May be negative.</param>
+            <param name="costDelta">Lifecycle cost over the baseline. May be zero or negative.</param>
+            <returns>
+            <paramref name="benefit"/> / <paramref name="costDelta"/> when the delta is positive;
+            <see cref="F:System.Double.MaxValue"/> when the strategy dominates - more benefit at no extra lifecycle
+            cost; zero otherwise.
+            </returns>
+            <remarks>
+            A negative ratio is still produced, deliberately, for a strategy that costs more <i>and</i>
+            delivers less: that combination is meaningful and reads correctly. What is suppressed is the
+            case where two sign errors cancel - a negative benefit divided by a negative delta - which
+            would otherwise present a strategy worse than the baseline as an attractive one.
+            </remarks>
+        </member>
         <member name="T:JCass_ModelCore.Treatments.TreatmentStrategyGenerator">
             <summary>
             Class that generates all possible treatment strategies for a specific element over the BC&amp;A look-ahead period
+            </summary>
+        </member>
+        <member name="F:JCass_ModelCore.Treatments.TreatmentStrategyGenerator._maximumStrategiesPerElement">
+            <summary>
+            Largest number of strategies this element may generate, from
+            <c>BCA Maximum Strategies per Element</c>.
+            </summary>
+        </member>
+        <member name="F:JCass_ModelCore.Treatments.TreatmentStrategyGenerator._strategyCeiling">
+            <summary>
+            Ceiling on <c>_strategyTreatments.Count</c> for the first treatment currently being rolled
+            out. Each first treatment gets its own share of <see cref="F:JCass_ModelCore.Treatments.TreatmentStrategyGenerator._maximumStrategiesPerElement"/>,
+            so no one of them can consume the element's whole budget - see
+            <see cref="M:JCass_ModelCore.Treatments.TreatmentStrategyGenerator.SetCeilingForNextFirstTreatment(System.Int32)"/>.
+            </summary>
+        </member>
+        <member name="F:JCass_ModelCore.Treatments.TreatmentStrategyGenerator._wasTruncated">
+            <summary>
+            True once any branch on this element has been dropped because a ceiling was reached.
             </summary>
         </member>
         <member name="M:JCass_ModelCore.Treatments.TreatmentStrategyGenerator.#ctor(JCass_ModelCore.Models.ModelBase,System.Int32,System.Int32,System.Collections.Generic.Dictionary{System.String,System.Double},System.Collections.Generic.Dictionary{System.String,System.String},System.Collections.Generic.Dictionary{System.String,System.Double},System.Collections.Generic.Dictionary{System.String,System.String})">
@@ -2379,6 +3114,18 @@
             <param name="numModParamValues">Values for Numeric Model Parameters as they were in the previous epoch. Keys are parameter names</param>
             <param name="textModParamValues">Values for Text Model Parameters as they were at the previous epoch. Keys are parameter names</param>
         </member>
+        <member name="P:JCass_ModelCore.Treatments.TreatmentStrategyGenerator.WasTruncated">
+            <summary>
+            True when this element hit its strategy cap and branches were dropped, so the strategies
+            compared are fewer than the domain model's triggers would have produced.
+            </summary>
+            <remarks>
+            The element's own warning is logged from
+            <see cref="M:JCass_ModelCore.Treatments.TreatmentStrategyGenerator.GenerateAllStrategyRollouts(System.Collections.Generic.List{JCass_ModelCore.Treatments.TreatmentInstance},System.Boolean)"/> and is suppressed after the first occurrence in a
+            run. This property exists so the caller can report <i>how many</i> elements were affected,
+            which the suppressed warning cannot say.
+            </remarks>
+        </member>
         <member name="M:JCass_ModelCore.Treatments.TreatmentStrategyGenerator.GenerateAllStrategyRollouts(System.Collections.Generic.List{JCass_ModelCore.Treatments.TreatmentInstance},System.Boolean)">
             <summary>
             Controller for generating all possible treatment strategies for the element
@@ -2386,6 +3133,17 @@
             <param name="treatments">Number of First Treatments</param>
             <param name="minimise">Flag to indicate if the Objective is to be minimised (if false, model will maximise Objective Function)</param>
             <returns></returns>
+            <remarks>
+            <b>The element's strategy budget is shared out across first treatments, not spent
+            depth-first.</b> The rollout below explores one first treatment's entire subtree before
+            starting the next, so a single exploding first treatment would otherwise consume the whole
+            cap and the treatments after it would never be rolled out at all - removing them from the
+            optimiser's choice, silently, on the order the domain model happened to return them in.
+            That matters more than it looks: only one strategy per element per first treatment reaches
+            the optimiser (see <c>BCAOptimiser.GetRepresentativeStrategyIndexes</c>), so losing sibling
+            branches costs a slightly worse-chosen representative, while losing a whole first treatment
+            costs a real option.
+            </remarks>
         </member>
         <member name="M:JCass_ModelCore.Treatments.TreatmentStrategyGenerator.Rollout(JCass_ModelCore.Treatments.TreatmentInstance,System.Int32,System.String,JCass_ModelCore.ModelObjects.StrategyParameterData)">
             <summary>
@@ -2400,11 +3158,59 @@
             additional treatment.</param>
             <exception cref="T:System.Exception"></exception>
         </member>
+        <member name="T:JCass_ModelCore.Treatments.TreatmentStrategyGenerator.StrategyRolloutException">
+            <summary>
+            A rollout failure that already carries enough context to act on, and must therefore travel to
+            the caller unchanged.
+            </summary>
+            <remarks>
+            <see cref="M:JCass_ModelCore.Treatments.TreatmentStrategyGenerator.Rollout(JCass_ModelCore.Treatments.TreatmentInstance,System.Int32,System.String,JCass_ModelCore.ModelObjects.StrategyParameterData)"/> is recursive, so without a way to tell "already described" from "raw"
+            every level added another wrapper. Two kinds of failure carry their own context: the branch
+            that first went wrong, wrapped once with its strategy key; and the duplicate-candidate error
+            (finding 5.7), whose message names the element, period, treatment and what to do instead.
+            Neither is improved by an ancestor restating it.
+            </remarks>
+        </member>
+        <member name="M:JCass_ModelCore.Treatments.TreatmentStrategyGenerator.StrategyRolloutException.#ctor(System.String)">
+            <summary>Creates one with a message only.</summary>
+            <param name="message">The actionable message.</param>
+        </member>
+        <member name="M:JCass_ModelCore.Treatments.TreatmentStrategyGenerator.StrategyRolloutException.#ctor(System.String,System.Exception)">
+            <summary>Creates one wrapping the failure it describes.</summary>
+            <param name="message">The actionable message.</param>
+            <param name="innerException">The exception that actually failed, kept so its stack survives.</param>
+        </member>
+        <member name="M:JCass_ModelCore.Treatments.TreatmentStrategyGenerator.GetDuplicateCandidateMessage(System.String,System.Int32,JCass_ModelCore.Treatments.TreatmentInstance)">
+            <summary>
+            Builds the message for a domain model that offered the same treatment twice for one period.
+            </summary>
+            <param name="key">The strategy key that was produced twice.</param>
+            <param name="firstTreatmentPeriodRelative">Relative period of the duplicated treatment.</param>
+            <param name="treatment">The duplicate candidate, null only for the two baseline rollouts.</param>
+            <returns>The exception message.</returns>
+            <remarks>
+            <b>Two candidates sharing a treatment name in one period is not a supported model.</b> Only one
+            treatment is ever applied to an element in a period, so a second candidate of the same name is
+            not an alternative the optimiser can arbitrate - the strategy key cannot tell the two apart,
+            and whichever the domain model happened to return first would silently win.
+            <para>
+            The two legitimate shapes are named in the message: pick one variant and give it the right
+            unit rate from lookups, or - where the variants reset condition differently - define them as
+            separate treatment types.
+            </para>
+            </remarks>
+        </member>
         <member name="M:JCass_ModelCore.Treatments.TreatmentStrategyGenerator.CheckForAndApplyResetForCommittedTreatment(System.String,System.Int32,System.Int32,System.Collections.Generic.Dictionary{System.String,System.Double},System.Collections.Generic.Dictionary{System.String,System.String},System.Action{System.String,System.Double},System.Action{System.String,System.String})">
             <summary>
             Checks if there is a committed treatment for this period that requires a reset, and if so applies the reset
             </summary>
             <returns>True if there is a committed and a Reset was applied, False if there is no committed and thus no reset was applied</returns>
+            <remarks>
+            <c>relativePeriod</c> counts from the strategy's base period and indexes the rollout's own
+            data; <c>absolutePeriod</c> is the real modelling period and is what the domain model and the
+            costing are given. Keep the two apart - handing the domain model the relative one is the
+            defect fixed on 2026-08-13.
+            </remarks>
         </member>
         <member name="M:JCass_ModelCore.Treatments.TreatmentStrategyGenerator.CheckForAndApplyRoutineMaintenanceIfNeeded(System.String,System.Int32,System.Int32,System.Collections.Generic.Dictionary{System.String,System.Double},System.Collections.Generic.Dictionary{System.String,System.String},System.Action{System.String,System.Double},System.Action{System.String,System.String})">
             <summary>
@@ -2412,6 +3218,13 @@
             and if so applies the reset. If no reset is triggered, does an increment instead. If no Routine Maintenance is triggered, does an increment only.
             </summary>    
             <returns>True if a Routine Maintenance was triggered (whether resetted or not), else false</returns>
+            <remarks>
+            <c>relativePeriod</c> counts from the strategy's base period and indexes the rollout's own
+            data; <c>absolutePeriod</c> is the real modelling period and is what the domain model and the
+            costing are given. The distinction matters most here: this is the call that fixes a
+            maintenance treatment's quantity and unit rate, so a domain model told the wrong period puts
+            a wrong cost into the rollout, not just a wrong condition.
+            </remarks>
         </member>
         <member name="M:JCass_ModelCore.Treatments.TreatmentStrategyGenerator.SetupStrategyTreatmentDictionaryForKey(System.String,System.Boolean,System.String)">
             <summary>
@@ -2425,6 +3238,61 @@
             copy treatments from the base key.</param>
             <param name="baseKey">The base key from which treatments will be copied, if applicable.  Specify "none" to create a new dictionary
             without copying treatments.</param>
+        </member>
+        <member name="M:JCass_ModelCore.Treatments.TreatmentStrategyGenerator.SetCeilingForNextFirstTreatment(System.Int32)">
+            <summary>
+            Works out how many strategies the next first treatment may generate, and sets the ceiling
+            the rollout enforces.
+            </summary>
+            <param name="firstTreatmentsRemaining">How many first treatments are still to be rolled out, including this one.</param>
+            <returns>False when the element's budget is exhausted and no further first treatment can be rolled out.</returns>
+            <remarks>
+            The share is what is left of the cap divided by the first treatments still to come,
+            recomputed as each one starts, so a first treatment that finishes under its share hands the
+            surplus to the ones after it and the whole budget stays available.
+            <para>
+            <b>Every first treatment gets at least one strategy, and the cap is never exceeded.</b>
+            Where the budget is at least as large as the number of first treatments remaining - which
+            the setup check and the warning in <see cref="M:JCass_ModelCore.Treatments.TreatmentStrategyGenerator.WarnIfCapCannotHoldEveryFirstTreatment(System.Int32)"/>
+            between them make the normal case - integer division cannot return zero, and it leaves
+            enough behind for one each of those that follow. Where it is not, the share is forced to one
+            and the loop stops as soon as nothing is left, so the treatments beyond that point are the
+            ones dropped.
+            </para>
+            </remarks>
+        </member>
+        <member name="M:JCass_ModelCore.Treatments.TreatmentStrategyGenerator.WarnIfCapCannotHoldEveryFirstTreatment(System.Int32)">
+            <summary>
+            Warns once per run when the cap is too small to give every candidate treatment a strategy of
+            its own, because that is the one case where truncation costs a whole option rather than a
+            variation of one.
+            </summary>
+            <param name="firstTreatmentCount">Number of candidate treatments the domain model offered for the base period.</param>
+            <remarks>
+            Kept distinct from <see cref="M:JCass_ModelCore.Treatments.TreatmentStrategyGenerator.WarnIfTruncated"/> because the remedy is different: ordinary
+            truncation is a tuning choice, whereas this is a setting that cannot do its job. The first
+            thirty characters of each message are constant and differ from each other, which is what
+            <c>showOnceOnly</c> de-duplicates on.
+            </remarks>
+        </member>
+        <member name="M:JCass_ModelCore.Treatments.TreatmentStrategyGenerator.WarnIfTruncated">
+            <summary>
+            Warns once per run when branches were dropped because the element reached its strategy cap.
+            </summary>
+            <remarks>
+            <b>This used to throw, and the change is deliberate.</b> The cap is a resource limit rather
+            than an authoring error - unlike a duplicate candidate (see
+            <see cref="M:JCass_ModelCore.Treatments.TreatmentStrategyGenerator.GetDuplicateCandidateMessage(System.String,System.Int32,JCass_ModelCore.Treatments.TreatmentInstance)"/>), which is a hard failure because the model being
+            evaluated is not the one its author described. Here the strategies already generated are
+            each complete and correctly evaluated; there are simply fewer of them. Aborting meant a run
+            could die at period 17 of 30 after hours of compute, which is the worst outcome available,
+            and it is the failure a real network is most likely to meet first.
+            <para>
+            Logged once per element rather than once per dropped branch, because a single element can
+            drop thousands. <c>showOnceOnly</c> then collapses the elements, and the caller reports how
+            many there were.
+            </para>
+            </remarks>
         </member>
         <member name="M:JCass_ModelCore.Treatments.TreatmentStrategyGenerator.EvaluateAllStrategies(System.Boolean)">
             <summary>
@@ -2450,14 +3318,46 @@
         </member>
         <member name="M:JCass_ModelCore.Treatments.TreatmentStrategyGenerator.SkipRolloutBranch(System.String,System.Int32,JCass_ModelCore.Treatments.TreatmentInstance)">
             <summary>
-            Checks if a rollout branch should be skipped based on existing strategies and on Configuration.BCAStrategyPeriodsToSkip. It
-            does this by subtracting the BCAStrategy Periods to Skip from the first treatment period and then using this adjusted period
-            to build the key. It then checks if any existing strategy starts with this key. If so, the branch is skipped.
+            Decides whether a rollout branch is too similar to one already generated on the same parent
+            branch, per <c>BCA Strategy Periods to Skip</c>.
             </summary>
-            <param name="baseKey"></param>
-            <param name="firstTreatmentPeriodRelative"></param>
+            <param name="baseKey">Key of the parent branch this one would fork from, or "none" for a root.</param>
+            <param name="firstTreatmentPeriodRelative">Relative period in which this branch's treatment occurs.</param>
             <param name="treatment">Treatment instance whose branch is being evaluated.</param>
-            <returns></returns>
+            <returns>True to drop this branch.</returns>
+            <remarks>
+            The setting means <i>"having taken this treatment, do not consider it again for the next N
+            periods"</i>, so the test is whether the same treatment already forked from this parent in
+            <b>any</b> of the N periods before this one.
+            <para>
+            <b>It used to probe a single period</b> - exactly <c>relative - skip</c> - which is equivalent
+            only at <c>skip = 1</c>. At 2 or more it produced clumps rather than an even spread, because a
+            branch skipped at period <i>p</i> leaves no key behind, so the probe at <i>p + skip</i> finds
+            nothing and fires again immediately. With a treatment triggering every period the branches
+            landed at relative 2, 3, 6, 7, 10, 11 instead of 2, 5, 8, 11 - and at <c>skip = 2</c> that is
+            <i>more</i> branches than <c>skip = 1</c> produces, from a setting whose entire purpose is to
+            produce fewer. Review finding 5.5.
+            </para>
+            <para>
+            Roots are never skipped: a root has no parent to be too similar to, and dropping one would
+            remove a candidate treatment from the element altogether.
+            </para>
+            </remarks>
+        </member>
+        <member name="M:JCass_ModelCore.Treatments.TreatmentStrategyGenerator.BranchAlreadyExists(System.String,System.String,System.Int32)">
+            <summary>
+            Tests whether a branch for one treatment already forked from a parent in a given relative period.
+            </summary>
+            <param name="baseKey">Key of the parent branch.</param>
+            <param name="treatmentName">Name of the treatment being looked for.</param>
+            <param name="relativePeriod">Relative period the branch would have forked in.</param>
+            <returns>True when such a branch was generated.</returns>
+            <remarks>
+            Both spellings of the key are tried, because <see cref="M:JCass_ModelCore.Treatments.TreatmentStrategyGenerator.GetStrategyKey(System.String,System.Int32,JCass_ModelCore.Treatments.TreatmentInstance)"/> appends a
+            <c>~force</c> suffix for a forced treatment. Probing only the unsuffixed form - as this check
+            used to - meant a forced branch was invisible to the skip rule, so it could neither suppress a
+            later branch of the same treatment nor be suppressed by an earlier one.
+            </remarks>
         </member>
         <member name="M:JCass_ModelCore.Treatments.TreatmentStrategyGenerator.TreatmentSameAsLastForcedTreatment(JCass_ModelCore.Treatments.TreatmentInstance,System.String)">
             <summary>
@@ -2594,6 +3494,16 @@
              - .NET runtime changes its per-process hashing behaviour.
             
              Returns a 64-bit FNV-1a hash encoded in uppercase hexadecimal.
+            
+             <para><b>Covers model parameter data only.</b> Treatments, costs and spending are not hashed
+             here, so a run can change what it treats and what it spends without moving the stamp - the
+             parameter trajectory only shifts if the change also alters which resets happen. Use
+             <c>OutputFingerprint</c> in the test project alongside this for those.</para>
+            
+             <para>Epochs run 0 to <c>NPeriods</c> inclusive: epoch 0 holds the initialised values and
+             epoch <c>NPeriods</c> the last modelled period, matching the <c>NPeriods + 1</c> epochs
+             allocated in <c>ModelBase.InitialiseModel</c>. The bound was exclusive until 2026-08-13,
+             which silently left the final period out of every stamp.</para>
              </summary>
         </member>
         <member name="M:JCass_ModelCore.Utilities.UtilsSetupData.GetLookupsSetFromDataSet(System.String)">

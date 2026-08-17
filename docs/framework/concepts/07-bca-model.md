@@ -65,7 +65,11 @@ With recursive rollout strategy generation, this danger of 'exploding strategy s
 
 ### Framework Model Constraints
 
-*Cassandra* will impose a hard limit of 200 candidate strategies per element during the analysis. If more than 200 candidate strategies are generated on any element, the model will throw an error. It is then your responsibility as modeller to constrain your Domain Model to reduce the number of potential strategies generated. The ways in which you can do this are discussed in the following paragraphs.
+*Cassandra* caps the number of candidate strategies generated for any one element in any one period. The cap is the Model Configuration setting **'BCA Maximum Strategies per Element'**, which defaults to 200 and may be set anywhere from 10 to 500.
+
+**Reaching the cap does not stop the run.** Strategy generation simply stops adding branches for that element and the model carries on with the strategies it already has, logging a warning that says how many elements were affected. Every candidate treatment is guaranteed a share of the cap, so what gets dropped is *variations* of an option rather than an option itself - the element is still compared across all the treatments your Domain Model triggered, just over fewer variants of each. The answer is degraded, not wrong.
+
+Raising the setting is therefore rarely the right response to that warning, and it has sharply diminishing returns: strategies beyond the first few for each candidate treatment are near-duplicates of one another, while the cost in run time is strictly proportional - one Domain Model call per strategy per look-ahead period, on every element of every period. It remains your responsibility as modeller to constrain your Domain Model so that fewer, better-differentiated strategies are generated. The ways in which you can do this are discussed in the following paragraphs.
 
 ### Limit Triggered Treatments
 

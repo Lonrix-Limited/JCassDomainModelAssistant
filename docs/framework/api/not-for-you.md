@@ -43,7 +43,7 @@ checking with Lonrix.
 
 ## What is on the list
 
-The 19 types in [`README.md`](README.md), with all their members. Everything else in
+The 20 types in [`README.md`](README.md), with all their members. Everything else in
 `JCass_*` — model controllers, optimisers, exporters, setup loaders, the web worker's
 plumbing — is framework internals. It is not hidden from you, and it is still not yours
 to call: the framework calls your domain model, not the other way round.

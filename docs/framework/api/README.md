@@ -20,7 +20,7 @@ The framework types a domain model actually touches, with **every overload and e
 documentation, so it describes the framework you are compiling against and not a
 remembered version of it.
 
-**Framework build:** Framework commit : 4219f2013cdd1c3fde8be4b822e09da24c087ba4
+**Framework build:** Framework commit : 05feae12f9040bbfa7ed718f5ed7f104b0b85eba
 
 ---
 
@@ -49,6 +49,7 @@ available here.
 | `TreatmentType` | You read these; you do not create them. They come from the model setup. | [`TreatmentType`](authoring/TreatmentType.md) |
 | `StrategySetupInfo` | Only in models that generate multi-treatment strategies for benefit-cost optimisation. | [`StrategySetupInfo`](authoring/StrategySetupInfo.md) |
 | `ModelBase` | **You call it, you never create it.** It is the framework model, reachable as the protected `model` field on `DomainModelBase`. | [`ModelBase`](authoring/ModelBase.md) |
+| `BcaRolloutContext` | **Almost never.** The period you are handed is already the real modelling period, in a strategy rollout exactly as in the main run, so period-based logic is correct without ever looking at this. | [`BcaRolloutContext`](authoring/BcaRolloutContext.md) |
 | `ModelConfiguration` | You read it. Never write to it. | [`ModelConfiguration`](authoring/ModelConfiguration.md) |
 | `Budget` | You read it — typically to ask whether a candidate can be afforded. The framework does the spending. | [`Budget`](authoring/Budget.md) |
 | `ModelParameter` | You read these. They are the model parameter definitions from the setup. | [`ModelParameter`](authoring/ModelParameter.md) |

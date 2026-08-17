@@ -18,90 +18,410 @@
             </summary>
             <seealso cref="P:JCass_Economics.BaseClasses.ProjectBase.IsDoNothing"/>
         </member>
-        <member name="T:JCass_Economics.BCAKnapSackSorter">
+        <member name="T:JCass_Economics.Optimisers.BCAOptimiseBase">
             <summary>
-            This is the main class 
+            Shared machinery for the three heuristic BCA optimisation methods: preparing each element's choices,
+            budget arithmetic, and repeating a selection pass until it settles.
             </summary>
+            <remarks>
+            The problem is a multiple-choice knapsack - at most one project per element, within a budget, maximising
+            benefit - and all three methods are heuristics for it. They are more alike than their names suggest: all
+            rank on the incremental benefit-cost ratio and all build from the bottom up, differing only in which
+            projects they may consider and in what order they walk them.
+            <para>
+            <b>Read docs/bca-optimisation-methods.md before changing anything here</b>, rather than reconstructing the
+            intent from the code. It covers what each method is for, how they differ, and what they will and will not
+            do. This class deliberately carries no second copy of that explanation.
+            </para>
+            <para>
+            A derived class supplies one selection pass as <see cref="M:JCass_Economics.Optimisers.BCAOptimiseBase.RunSelectionPass(System.Collections.Generic.List{JCass_Economics.BaseClasses.ProjectBase},System.Collections.Generic.Dictionary{System.String,System.Double},System.Boolean,System.String)"/> and calls
+            <see cref="M:JCass_Economics.Optimisers.BCAOptimiseBase.SetupCollections"/> from its constructor. It must not override
+            <see cref="M:JCass_Economics.Optimisers.BCAOptimiseBase.GetOptimalCandidates(System.Collections.Generic.Dictionary{System.String,System.Double},System.Boolean,System.String)"/>, which owns the repeat-until-settled loop.
+            </para>
+            </remarks>
         </member>
-        <member name="M:JCass_Economics.BCAKnapSackSorter.#ctor(System.Collections.Generic.List{JCass_Economics.BaseClasses.ProjectBase})">
+        <member name="F:JCass_Economics.Optimisers.BCAOptimiseBase.ElementProjects">
             <summary>
-            The constructor class for the knapsack 
+            Each element's candidate projects, trimmed to its front and ordered by ascending cost.
             </summary>
+            <remarks>
+            Index 0 of every list is the element's do-nothing, so an element's position in this list is also how
+            far up its ladder the selection has climbed. Assigned in <see cref="M:JCass_Economics.Optimisers.BCAOptimiseBase.SetupCollections"/>.
+            </remarks>
         </member>
-        <member name="M:JCass_Economics.BCAKnapSackSorter.RemapProjectIDs(System.Collections.Generic.List{JCass_Economics.BaseClasses.ProjectBase})">
+        <member name="F:JCass_Economics.Optimisers.BCAOptimiseBase.CheckedIndexes">
             <summary>
-             a method that remaps the project IDs so they are continous 
+            How far each element's walk has advanced, as an index into its <see cref="F:JCass_Economics.Optimisers.BCAOptimiseBase.ElementProjects"/> list.
             </summary>
-            <param name="projects"></param>
-            <returns></returns>
+            <remarks>
+            A walk offers the project at index + 1 and never rewinds within a pass, so an upgrade refused once is
+            not reconsidered until the next pass rewinds this to the project the element actually holds.
+            <see cref="T:JCass_Economics.Optimisers.BCAOptimiseConvexFront"/> does not use this at all. Assigned in
+            <see cref="M:JCass_Economics.Optimisers.BCAOptimiseBase.SetupCollections"/>.
+            </remarks>
         </member>
-        <member name="M:JCass_Economics.BCAKnapSackSorter.CalculateShrinkageFactor(System.Collections.Generic.List{JCass_Economics.Utilities.Treatment})">
-            <summary>
-             A Method that calculates the best factor to reduce costs and budgets by 
-            </summary>
-            <param name="treatments"></param>
-            <returns></returns>
+        <member name="F:JCass_Economics.Optimisers.BCAOptimiseBase.CandidatesAll">
+            <summary>Every candidate project supplied by the caller, before any grouping or trimming.</summary>
         </member>
-        <member name="M:JCass_Economics.BCAKnapSackSorter.AdjustBudgets(System.Int32)">
+        <member name="F:JCass_Economics.Optimisers.BCAOptimiseBase.UseDecreasingIBCRProjectsOnly">
             <summary>
-            A method to adjust the budgets by the shrink factor (make each budget smaller?)
+            Which front each element's projects are trimmed to: the decreasing-IBCR front when true, the Pareto
+            front when false.
             </summary>
-            <param name="shrinkF"></param>
+            <remarks>
+            Set by each derived class's constructor and not configurable. It is the single most consequential
+            difference between the methods, and it is easy to miss because it is a bare bool in a base call.
+            </remarks>
         </member>
-        <member name="M:JCass_Economics.BCAKnapSackSorter.InitializeArrays(System.Int32,System.Int32,System.Int32,System.Int32,System.Int32)">
+        <member name="F:JCass_Economics.Optimisers.BCAOptimiseBase.MaximumSelectionPasses">
             <summary>
-            Method to set up the arrays for processing
+            Hard ceiling on selection passes, so a convergence failure cannot hang a model run.
             </summary>
-            <param name="sectionCount"></param>
-            <param name="treatmentCount"></param>
-            <param name="totalBudget"></param>
-            <param name="categoryCount"></param>
-            <param name="shrinkfactor"></param>
+            <remarks>
+            Convergence is guaranteed by argument - see <see cref="M:JCass_Economics.Optimisers.BCAOptimiseBase.GetOptimalCandidates(System.Collections.Generic.Dictionary{System.String,System.Double},System.Boolean,System.String)"/> - and two or three
+            passes is typical. This exists only so that a mistake in that argument surfaces as a slightly
+            sub-optimal selection rather than as a run that never finishes.
+            </remarks>
         </member>
-        <member name="M:JCass_Economics.BCAKnapSackSorter.CalculateBudgetOffsets">
+        <member name="P:JCass_Economics.Optimisers.BCAOptimiseBase.SelectionPassesRun">
             <summary>
-            Calculate the budget offsets
+            Number of selection passes the last call to <see cref="M:JCass_Economics.Optimisers.BCAOptimiseBase.GetOptimalCandidates(System.Collections.Generic.Dictionary{System.String,System.Double},System.Boolean,System.String)"/> needed.
             </summary>
+            <remarks>
+            Exposed for tests, which assert that convergence happens well inside
+            <see cref="F:JCass_Economics.Optimisers.BCAOptimiseBase.MaximumSelectionPasses"/> rather than by hitting the ceiling.
+            </remarks>
         </member>
-        <member name="M:JCass_Economics.BCAKnapSackSorter.FindSelectedProjects">
+        <member name="M:JCass_Economics.Optimisers.BCAOptimiseBase.#ctor(System.Collections.Generic.List{JCass_Economics.BaseClasses.ProjectBase},System.Boolean)">
             <summary>
-            A method that returns the select Jcass Projects 
+            Records the candidates and the trimming choice. Does no work - a derived class must call
+            <see cref="M:JCass_Economics.Optimisers.BCAOptimiseBase.SetupCollections"/>.
             </summary>
-            <returns></returns>
+            <param name="candidates">Candidate projects across all elements. Mutated by setup, so not reusable.</param>
+            <param name="useDecreasingIBCRProjectsOnly">True to trim to the decreasing-IBCR front, false for the Pareto front.</param>
         </member>
-        <member name="M:JCass_Economics.BCAKnapSackSorter.Allocate(System.Int32)">
+        <member name="M:JCass_Economics.Optimisers.BCAOptimiseBase.GetOptimalCandidates(System.Collections.Generic.Dictionary{System.String,System.Double},System.Boolean,System.String)">
             <summary>
-            Allocate ??
+            Selects projects within the budget, repeating the selection pass until one changes nothing.
             </summary>
-            <param name="len"></param>
-            <returns></returns>
+            <param name="budget">Budget by treatment category, or the single monolithic entry.</param>
+            <param name="isMonolithicBudget">True when every category draws on one shared pot.</param>
+            <param name="monolithicBudgetCatKey">Key of that pot, or null when not monolithic.</param>
+            <returns>The selected projects, at most one per element.</returns>
+            <remarks>
+            <b>Why more than one pass.</b> All three optimisers walk each element's projects in ascending cost
+            and never rewind, so an upgrade refused for want of budget is never reconsidered. With per-category
+            budgets that loses money: when an element is upgraded from a treatment in one budget category to one
+            in another, it stops drawing on the first category and that money is <i>freed</i>. An upgrade on some
+            other element, refused earlier because the category was full, may now fit comfortably - and before
+            2026-08-17 nothing went back for it. See the review document's finding P4.2.
+            <para>
+            So a pass is repeated until it changes nothing, with each element's walk rewound to the project it
+            currently holds beforehand, which re-offers exactly the upgrades that were refused.
+            </para>
+            <para>
+            <b>This terminates.</b> A pass only ever adds a project to an element that had none, or replaces one
+            with a dearer project further along the same list, so any pass that changes the selection strictly
+            increases total benefit. There are finitely many selections, so no selection can recur, so the
+            sequence of changing passes is finite. <see cref="F:JCass_Economics.Optimisers.BCAOptimiseBase.MaximumSelectionPasses"/> is a backstop against
+            that argument being wrong, not part of it.
+            </para>
+            <para>
+            A single monolithic pot cannot free money between categories, so there is nothing to reclaim and the
+            second pass simply changes nothing. The cost of iterating in that case is one extra pass.
+            </para>
+            </remarks>
         </member>
-        <member name="M:JCass_Economics.BCAKnapSackSorter.RunDp(System.Int32)">
+        <member name="M:JCass_Economics.Optimisers.BCAOptimiseBase.RunSelectionPass(System.Collections.Generic.List{JCass_Economics.BaseClasses.ProjectBase},System.Collections.Generic.Dictionary{System.String,System.Double},System.Boolean,System.String)">
             <summary>
-            Run the knapsack sorting 
+            Runs one selection pass, adding to and upgrading <paramref name="selecteds"/> in place.
             </summary>
-            <param name="len"></param>
+            <param name="selecteds">Projects selected so far. Empty on the first pass; carries the previous pass's result afterwards.</param>
+            <param name="budget">Budget by treatment category, or the single monolithic entry.</param>
+            <param name="isMonolithicBudget">True when every category draws on one shared pot.</param>
+            <param name="monolithicBudgetCatKey">Key of that pot, or null when not monolithic.</param>
+            <remarks>
+            This is where the three methods differ. A pass must never remove an element's project without
+            putting a better one in its place, or the termination argument in
+            <see cref="M:JCass_Economics.Optimisers.BCAOptimiseBase.GetOptimalCandidates(System.Collections.Generic.Dictionary{System.String,System.Double},System.Boolean,System.String)"/> fails.
+            </remarks>
         </member>
-        <member name="M:JCass_Economics.BCAKnapSackSorter.Knapsack(System.Int32,System.Int32)">
+        <member name="M:JCass_Economics.Optimisers.BCAOptimiseBase.SnapshotSelectionByElement(System.Collections.Generic.List{JCass_Economics.BaseClasses.ProjectBase})">
             <summary>
-            Knapsack 
+            Records which project each element holds, so a pass's effect can be compared afterwards.
             </summary>
-            <param name="bId">b_id is 1 indexed budget id</param>
-            <param name="len">len is the number of sections to consider in knapsack,sections are 1 indexed</param>
+            <param name="selecteds">The current selection.</param>
+            <returns>Selected project by element index.</returns>
         </member>
-        <member name="M:JCass_Economics.BCAKnapSackSorter.RunKnapSack">
+        <member name="M:JCass_Economics.Optimisers.BCAOptimiseBase.SelectionIsUnchanged(System.Collections.Generic.Dictionary{System.Int32,JCass_Economics.BaseClasses.ProjectBase},System.Collections.Generic.List{JCass_Economics.BaseClasses.ProjectBase})">
             <summary>
-            Entry Point to run KnapSack Sorting Method 
+            Decides whether a pass left the selection exactly as it found it.
             </summary>
+            <param name="before">Selection recorded before the pass.</param>
+            <param name="after">Selection after it.</param>
+            <returns>True when every element holds the same project it held before.</returns>
+            <remarks>
+            Compares the projects themselves rather than totalling benefit, so convergence never turns on a
+            floating-point comparison.
+            </remarks>
         </member>
-        <member name="M:JCass_Economics.BCAKnapSackSorter.GetOptimalCandidates(System.Collections.Generic.Dictionary{System.String,System.Double},System.Boolean,System.String)">
+        <member name="M:JCass_Economics.Optimisers.BCAOptimiseBase.RewindCheckedIndexesToSelection(System.Collections.Generic.List{JCass_Economics.BaseClasses.ProjectBase})">
             <summary>
-            The Entry point from Jcass to run the KnapSackSorting 
+            Points each element's walk at the project it currently holds, ready for another pass.
             </summary>
-            <param name="budget"></param>
-            <param name="isMonolithicBudget"></param>
-            <param name="monolithicBudgetCatKey"></param>
-            <returns></returns>
+            <param name="selecteds">The current selection.</param>
+            <remarks>
+            An element holding nothing goes back to index 0, which is its do-nothing. Note this only affects the
+            optimisers that walk by index; <see cref="T:JCass_Economics.Optimisers.BCAOptimiseConvexFront"/> re-scans its own globally sorted
+            list each pass and does not consult <see cref="F:JCass_Economics.Optimisers.BCAOptimiseBase.CheckedIndexes"/> at all.
+            </remarks>
+        </member>
+        <member name="M:JCass_Economics.Optimisers.BCAOptimiseBase.SetupCollections">
+            <summary>
+            Builds the per-element project lists the selection works from. Derived classes must call this before
+            any selection happens.
+            </summary>
+            <remarks>
+            The order of the steps matters and none is interchangeable: group by element, trim each element to a
+            front, drop elements the trim emptied, then inject do-nothings, sort by cost and compute the
+            incremental ratios. Trimming before injecting is what stops a caller-supplied do-nothing being dropped
+            by the front and never replaced.
+            <para>
+            This writes <see cref="P:JCass_Economics.BaseClasses.ProjectBase.IBCR"/> and the deltas onto the caller's own project objects, so a
+            candidate list cannot be shared between two optimisers.
+            </para>
+            </remarks>
+        </member>
+        <member name="M:JCass_Economics.Optimisers.BCAOptimiseBase.GetBudgetForTreatmentCategory(System.Collections.Generic.Dictionary{System.String,System.Double},System.Boolean,System.String,JCass_Economics.BaseClasses.ProjectBase)">
+            <summary>
+            Gets the budget a project draws on.
+            </summary>
+            <param name="budget">Budget by treatment category, or the single monolithic entry.</param>
+            <param name="isMonolithicBudget">True when every category draws on one shared pot.</param>
+            <param name="monolithicBudgetCatKey">Key of that pot, or null when not monolithic.</param>
+            <param name="project">The project whose budget is wanted.</param>
+            <returns>The full budget for the period - <b>not</b> what is left of it.</returns>
+            <remarks>
+            This returns the budget as configured, and the dictionary passed in is never modified anywhere in this
+            class. Spending is not drawn down as projects are selected; it is recomputed from the current
+            selection by <see cref="M:JCass_Economics.Optimisers.BCAOptimiseBase.GetSpendingForBudgetCategory(System.Collections.Generic.List{JCass_Economics.BaseClasses.ProjectBase},System.String,System.Boolean)"/> each time it is needed. Anyone reading this
+            class reasonably assumes the opposite, so it is worth stating.
+            </remarks>
+        </member>
+        <member name="M:JCass_Economics.Optimisers.BCAOptimiseBase.CalculateDeltaCostsAndBenefits">
+            <summary>
+            Records, for every project on every element, what it costs and delivers over the project below it.
+            </summary>
+            <remarks>
+            <b>Nothing reads <see cref="P:JCass_Economics.BaseClasses.ProjectBase.DeltaCost"/> or <see cref="P:JCass_Economics.BaseClasses.ProjectBase.DeltaBenefit"/>.</b>
+            The values are written here and consumed nowhere in the framework, in any client domain model, or in
+            the tests - selection runs on <see cref="P:JCass_Economics.BaseClasses.ProjectBase.IBCR"/> instead. They are kept because they are
+            public on <see cref="T:JCass_Economics.BaseClasses.ProjectBase"/> and cost little.
+            <para>
+            The method is not dead, though: its ascending-cost check is a live guard against an element's projects
+            being handed to the selection out of order, which would silently corrupt every incremental ratio.
+            </para>
+            </remarks>
+        </member>
+        <member name="M:JCass_Economics.Optimisers.BCAOptimiseBase.AddDoNothingsAndSortOnCost(System.Collections.Generic.Dictionary{System.Int32,System.Boolean})">
+            <summary>
+            Gives every element a do-nothing option if it lacks one, orders its projects by ascending cost, and
+            computes each project's incremental benefit-cost ratio.
+            </summary>
+            <param name="hasDoNothingFlags">Which elements already carry an absolute do-nothing, by element index.</param>
+            <remarks>
+            The injected do-nothing is what lets an element be left untreated: it sits at index 0 after the sort,
+            which is where every walk starts. It is never returned as a selection.
+            <para>
+            Ordering by cost is not cosmetic - the incremental ratios computed here are slopes between
+            <i>adjacent</i> projects, so they are only meaningful against a cost-ordered list.
+            </para>
+            </remarks>
+        </member>
+        <member name="M:JCass_Economics.Optimisers.BCAOptimiseBase.GetDoNothingFlags">
+            <summary>
+            Finds which elements already offer a project costing nothing and delivering nothing.
+            </summary>
+            <returns>True per element index where such a project is present.</returns>
+            <remarks>
+            Called after the trim, deliberately. A caller-supplied do-nothing has a benefit-cost ratio of zero and
+            so is dropped by the front, at which point the element needs a fresh one injecting; asking before the
+            trim would see the original and inject nothing.
+            </remarks>
+        </member>
+        <member name="M:JCass_Economics.Optimisers.BCAOptimiseBase.TrimElementProjectsToParetoFrontOnly">
+            <summary>
+            Reduces each element's projects to its Pareto front - used by <c>bca-greedy</c> and <c>bca-egalitarian</c>.
+            </summary>
+            <remarks>
+            Keeps every project offering more benefit than anything cheaper, so the element retains its full ladder
+            of sensible choices including ones with diminishing slopes. Contrast
+            <see cref="M:JCass_Economics.Optimisers.BCAOptimiseBase.TrimElementProjectsToDecreasingIBCROnly"/>. See docs/bca-optimisation-methods.md section 2.
+            </remarks>
+        </member>
+        <member name="M:JCass_Economics.Optimisers.BCAOptimiseBase.RemoveElementKeysWithoutProjects">
+            <summary>
+            Drops elements whose trim left them with nothing to choose between.
+            </summary>
+            <remarks>
+            The test used to be <c>elemProjects is null</c>, which never fires: the trim assigns either the list
+            returned by <c>GetParetoFront</c> or <c>GetDecreasingIBCRFront(...) ?? new List&lt;ProjectBase&gt;()</c>,
+            so the value is never null - it is <b>empty</b>. The method therefore removed nothing at all.
+            <para>
+            Fixing it changes no selection. An element left with an empty list still gets an injected do-nothing,
+            still sits at index 0, and is immediately exhausted by every optimiser's <c>index &lt; Count - 1</c>
+            test, so it could never contribute a pick. What it saves is the pointless work of carrying it.
+            </para>
+            </remarks>
+        </member>
+        <member name="M:JCass_Economics.Optimisers.BCAOptimiseBase.TrimElementProjectsToDecreasingIBCROnly">
+            <summary>
+            Reduces each element's projects to its decreasing-IBCR front - used by <c>bca-ibcr</c> only.
+            </summary>
+            <remarks>
+            A strictly smaller set than the Pareto front: it keeps only the projects on the convex hull of the
+            element's options, the ones a buyer facing diminishing returns would ever stop at. See
+            docs/bca-optimisation-methods.md section 2.
+            </remarks>
+        </member>
+        <member name="M:JCass_Economics.Optimisers.BCAOptimiseBase.GetSpendingForBudgetCategory(System.Collections.Generic.List{JCass_Economics.BaseClasses.ProjectBase},System.String,System.Boolean)">
+            <summary>
+            Totals what the current selection spends against one budget.
+            </summary>
+            <param name="selecteds">The projects selected so far.</param>
+            <param name="budgetCategory">Category to total, ignored when the budget is monolithic.</param>
+            <param name="isMonolithicBudget">True when every category draws on one shared pot.</param>
+            <returns>Spending committed against that budget.</returns>
+            <remarks>
+            Recomputed from the selection on every call rather than tracked, which is why the budget dictionary is
+            never decremented anywhere in this class.
+            <para>
+            <b>Per-category spending is not monotone.</b> Upgrading an element from a treatment in one category to
+            one in another removes its cost from the first category's total, so a figure returned here can fall
+            between calls. That is what makes a single selection pass insufficient - see
+            <see cref="M:JCass_Economics.Optimisers.BCAOptimiseBase.GetOptimalCandidates(System.Collections.Generic.Dictionary{System.String,System.Double},System.Boolean,System.String)"/> and finding P4.2 in the review document.
+            </para>
+            </remarks>
+        </member>
+        <member name="M:JCass_Economics.Optimisers.BCAOptimiseBase.CanSwopProjectOnElement(JCass_Economics.BaseClasses.ProjectBase,JCass_Economics.BaseClasses.ProjectBase,System.Double,System.Double,System.Boolean)">
+            <summary>
+            Decides whether a candidate project can be taken for an element, given what has already been spent
+            and the budget the candidate draws on.
+            </summary>
+            <param name="currentCandidate">Project currently assigned to this element, or null when it has none yet.</param>
+            <param name="newCandidate">Project being considered in its place.</param>
+            <param name="currentSpend">Spending already committed against <paramref name="budgetForCategory"/>.</param>
+            <param name="budgetForCategory">Budget available to <paramref name="newCandidate"/>.</param>
+            <param name="isMonolithicBudget">True when every treatment category draws on one shared pot.</param>
+            <returns>True when the candidate fits.</returns>
+            <remarks>
+            Replacing a project frees the money it was consuming - but only if that money is part of
+            <paramref name="currentSpend"/> to begin with. That is the entire rule:
+            <list type="bullet">
+            <item><description>A <b>monolithic</b> budget is a single pot, so the outgoing project's cost is always
+            in the count, whatever category it carried.</description></item>
+            <item><description>With <b>per-category</b> budgets it is in the count only when the outgoing project
+            drew on the same category as the incoming one.</description></item>
+            </list>
+            <para>
+            Deciding this on the categories alone - as this method did until 2026-08-17 - is correct for
+            per-category budgets and wrong for a monolithic one, where it double-counts the project being removed
+            and refuses upgrades that fit comfortably. Greedy and egalitarian felt it on every upgrade, because for
+            them every upgrade is a swap. Nothing over-spends as a result, so no budget check can see it: the only
+            symptom is an under-spent budget, which reads as a modelling result rather than as a defect. See the
+            review document's finding P4.1.
+            </para>
+            </remarks>
+        </member>
+        <member name="T:JCass_Economics.Optimisers.BCAOptimiseConvexFront">
+            <summary>
+            The standard BCA optimisation: buy the steepest increments available anywhere on the network, in one pass
+            down a globally ranked list. Selected by the <c>bca-ibcr</c> setting.
+            </summary>
+            <remarks>
+            <b>Note the name mismatch</b> - the setup value is <c>bca-ibcr</c> but the class is
+            <c>BCAOptimiseConvexFront</c>. This is the method to reach for by default, and the closest of the three to
+            the textbook approach for a multiple-choice knapsack.
+            <para>
+            It differs from the other two in both respects that matter: it trims each element to the decreasing-IBCR
+            front rather than the full Pareto front, and it walks one globally sorted list once instead of
+            re-evaluating after every purchase. See docs/bca-optimisation-methods.md sections 2 and 3.
+            </para>
+            </remarks>
+        </member>
+        <member name="F:JCass_Economics.Optimisers.BCAOptimiseConvexFront.projects">
+            <summary>
+            Every element's front, flattened into one list ranked by descending incremental benefit-cost ratio.
+            </summary>
+            <remarks>
+            Built once in the constructor and walked from the top on every pass. Because one element's projects
+            appear here cheapest-first, a walk climbs each element's ladder naturally as it descends the ranking.
+            </remarks>
+        </member>
+        <member name="M:JCass_Economics.Optimisers.BCAOptimiseConvexFront.#ctor(System.Collections.Generic.List{JCass_Economics.BaseClasses.ProjectBase})">
+            <summary>
+            Prepares the element project lists, trimmed to the decreasing-IBCR front, then flattens them into one
+            list ranked by descending incremental benefit-cost ratio.
+            </summary>
+            <param name="candidates">Candidate projects across all elements. Mutated by setup, so not reusable.</param>
+            <remarks>
+            The ranked list is built once here rather than per pass, so a pass is a single walk down it.
+            </remarks>
+        </member>
+        <member name="M:JCass_Economics.Optimisers.BCAOptimiseConvexFront.RunSelectionPass(System.Collections.Generic.List{JCass_Economics.BaseClasses.ProjectBase},System.Collections.Generic.Dictionary{System.String,System.Double},System.Boolean,System.String)">
+            <summary>
+            One convex-front pass: walk every project once, in descending IBCR, taking each that fits.
+            </summary>
+            <param name="selecteds">Projects selected so far, added to and upgraded in place.</param>
+            <param name="budget">Budget by treatment category, or the single monolithic entry.</param>
+            <param name="isMonolithicBudget">True when every category draws on one shared pot.</param>
+            <param name="monolithicBudgetCatKey">Key of that pot, or null when not monolithic.</param>
+            <remarks>
+            This pass consults no walk position, so it re-runs correctly with no rewinding: reaching a project an
+            element already holds simply swaps it for itself.
+            </remarks>
+        </member>
+        <member name="T:JCass_Economics.Optimisers.BCAOptimiseEgalitarian">
+            <summary>
+            Optimisation that spreads treatment across as many elements as it can, rather than concentrating spend on
+            the elements with the steepest benefit curves. Selected by the <c>bca-egalitarian</c> setting.
+            </summary>
+            <remarks>
+            It ranks on the incremental benefit-cost ratio like the other two; what makes it egalitarian is the shape
+            of the search, not the ranking. Each round offers <b>every</b> element its next increment before any
+            element is considered for a second, so coverage wins over total benefit.
+            <para>
+            Choose it when treating more assets matters more than maximising benefit. See
+            docs/bca-optimisation-methods.md section 3.
+            </para>
+            </remarks>
+        </member>
+        <member name="M:JCass_Economics.Optimisers.BCAOptimiseEgalitarian.#ctor(System.Collections.Generic.List{JCass_Economics.BaseClasses.ProjectBase})">
+            <summary>
+            Prepares the element project lists, trimmed to the Pareto front.
+            </summary>
+            <param name="candidates">Candidate projects across all elements. Mutated by setup, so not reusable.</param>
+        </member>
+        <member name="M:JCass_Economics.Optimisers.BCAOptimiseEgalitarian.RunSelectionPass(System.Collections.Generic.List{JCass_Economics.BaseClasses.ProjectBase},System.Collections.Generic.Dictionary{System.String,System.Double},System.Boolean,System.String)">
+            <summary>
+            One egalitarian pass: each round offers every element its next candidate, so each gets a turn before
+            any element is upgraded twice.
+            </summary>
+            <param name="selecteds">Projects selected so far, added to and upgraded in place.</param>
+            <param name="budget">Budget by treatment category, or the single monolithic entry.</param>
+            <param name="isMonolithicBudget">True when every category draws on one shared pot.</param>
+            <param name="monolithicBudgetCatKey">Key of that pot, or null when not monolithic.</param>
+        </member>
+        <member name="M:JCass_Economics.Optimisers.BCAOptimiseEgalitarian.GetNextCandidateSetSorted">
+            <summary>
+            Collects the next increment available on every element, best ratio first.
+            </summary>
+            <returns>One project per element that still has one, sorted by descending IBCR, or null when every element is exhausted.</returns>
+            <remarks>
+            <b>This is where the egalitarian behaviour lives.</b> Returning a set rather than a single winner is
+            the whole difference from <see cref="T:JCass_Economics.Optimisers.BCAOptimiseGreedy"/>: the caller offers each in turn, so every
+            element gets a turn in a round before any element gets a second.
+            </remarks>
         </member>
         <member name="T:JCass_Economics.Optimisers.BCAOptimiseGreedy">
             <summary>
@@ -109,12 +429,30 @@
             in this video: https://youtu.be/xLgGgbRXbsc
             </summary>
         </member>
-        <member name="M:JCass_Economics.Optimisers.BCAOptimiseGreedy.GetBestNextCandidate(System.Collections.Generic.List{System.Int32})">
+        <member name="M:JCass_Economics.Optimisers.BCAOptimiseGreedy.#ctor(System.Collections.Generic.List{JCass_Economics.BaseClasses.ProjectBase})">
             <summary>
-            Scan the next possible candidate projects for each element and picks the ONE that has the highest IBCR
+            Prepares the element project lists, trimmed to the Pareto front.
             </summary>
-            <param name="elemeKeysToExclude">List of element keys (indexes) that cannot be considered</param>
-            <returns></returns>
+            <param name="candidates">Candidate projects across all elements. Mutated by setup, so not reusable.</param>
+        </member>
+        <member name="M:JCass_Economics.Optimisers.BCAOptimiseGreedy.RunSelectionPass(System.Collections.Generic.List{JCass_Economics.BaseClasses.ProjectBase},System.Collections.Generic.Dictionary{System.String,System.Double},System.Boolean,System.String)">
+            <summary>
+            One greedy pass: repeatedly take the highest-IBCR next increment available anywhere on the network.
+            </summary>
+            <param name="selecteds">Projects selected so far, added to and upgraded in place.</param>
+            <param name="budget">Budget by treatment category, or the single monolithic entry.</param>
+            <param name="isMonolithicBudget">True when every category draws on one shared pot.</param>
+            <param name="monolithicBudgetCatKey">Key of that pot, or null when not monolithic.</param>
+        </member>
+        <member name="M:JCass_Economics.Optimisers.BCAOptimiseGreedy.GetBestNextCandidate">
+            <summary>
+            Scan the next possible candidate project for each element and pick the ONE with the highest IBCR.
+            </summary>
+            <returns>The best next increment across all elements, or null once every element is exhausted.</returns>
+            <remarks>
+            This took a list of element keys to exclude until 2026-08-17. Nothing ever put anything in it, so every
+            call filtered against an empty list.
+            </remarks>
         </member>
         <member name="M:JCass_Economics.Optimisers.MooraRanker.GetMooraRanking(System.Double[0:,0:],System.Double[],System.Double[])">
             <summary>
@@ -137,37 +475,14 @@
         </member>
         <member name="M:JCass_Economics.Utilities.BCA_Helper.GetParetoFront(System.Collections.Generic.List{JCass_Economics.BaseClasses.ProjectBase},System.Double)">
             <summary>
-            Scans a list of candidate projects based on their Benefits and Costs and returns a list that contains only those 
-            projects that are on the Pareto Frontier. Use the BenefitCostItem Index or Key values to determine which items in your 
-            generic list the Pareto elements refer to.
+            Scans a list of candidate projects based on their Benefits and Costs and returns a list that contains only those
+            projects that are on the Pareto Frontier. Use each project's <see cref="P:JCass_Economics.BaseClasses.ProjectBase.GlobalIndex"/> or
+            <see cref="P:JCass_Economics.BaseClasses.ProjectBase.UserKey"/> to determine which items in your generic list the Pareto elements refer to.
             Solid Code. Unit Tested.
             </summary>
             <param name="candidates">List of candidates to consider, with the Benefit and Cost for each specified</param>
             <param name="minimumAcceptableBCRatio">Minimum Acceptable Benefit Cost Ratio. Default is zero</param>
             <returns></returns>
-        </member>
-        <member name="M:JCass_Economics.Utilities.BCA_Helper.GetSortedParetoSet(System.Collections.Generic.List{JCass_Economics.BaseClasses.ProjectBase},System.String)">
-            <summary>
-            Gets a sorted (best to worst) Pareto Front based on either Maximum Benefit Cost Ratio, or Maximum Benefit. 
-            Best project will be at index = 0
-            </summary>
-            <param name="unsortedParetoSet">Unsorted Pareto Front</param>
-            <param name="sortMethod">Method to sort Pareto Front on. Either 'max-bcr' or max-benefit'. Not case sensitive.</param>
-            <returns></returns>
-        </member>
-        <member name="M:JCass_Economics.Utilities.BCA_Helper.GetOptimalProject(System.Collections.Generic.List{JCass_Economics.BaseClasses.ProjectBase},System.String,System.Double)">
-            <summary>
-            Gets the optimal project based on a specified criteria (either max-bcr or max-benefit) using Incremental-Benefit-Cost-Ratio principles. 
-            If there is no valid project based on parameter 'minimumAcceptableBCRatio', then Null is returned. Solid Code. Unit Tested.
-            <para>First the list of candidate projects is reduced to only those on the Pareto Frontier using the IBCR technique</para>
-            <para>Next, the list of projects on the Pareto frontier is sorted based on the criteria specified in sortMethod and 
-            the best one is returned</para>
-            </summary>
-            <param name="candidates">List of candidates to consider, with the Benefit and Cost for each specified</param>
-            /// <param name="sortMethod">Method to sort Pareto Front on. Either 'max-bcr' or max-benefit'. Not case sensitive.</param>
-            <param name="minimumAcceptableBCRatio">Minimum Acceptable Benefit Cost Ratio. Default is zero</param>
-            <returns></returns>
-            <exception cref="T:System.Exception"></exception>
         </member>
         <member name="M:JCass_Economics.Utilities.BCA_Helper.GetDecreasingIBCRFront(System.Collections.Generic.List{JCass_Economics.BaseClasses.ProjectBase})">
             <summary>
@@ -177,16 +492,6 @@
             </summary>
             <param name="candidates">List of candidates to consider, with the Benefit and Cost for each specified</param>   
             <returns></returns>
-        </member>
-        <member name="T:JCass_Economics.Utilities.Item">
-            <summary>
-            Item class, I think that this repesents a section as far as I can tell.
-            </summary>
-        </member>
-        <member name="T:JCass_Economics.Utilities.Treatment">
-            <summary>
-            The treatment class 
-            </summary>
         </member>
     </members>
 </doc>

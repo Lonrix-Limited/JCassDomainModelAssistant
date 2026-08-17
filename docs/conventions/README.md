@@ -6,7 +6,7 @@ look plausible, and nothing anywhere says a word.
 
 | Read | When |
 |---|---|
-| [`silent-failures.md`](silent-failures.md) | **Before saying a model is finished.** Ten ways a model is wrong without complaining, each with the symptom, the cause, and what catches it. |
+| [`silent-failures.md`](silent-failures.md) | **Before saying a model is finished.** Twelve ways a model is wrong without complaining, each with the symptom, the cause, and what catches it. |
 | [`where-numbers-live.md`](where-numbers-live.md) | Before writing any number into C#. The three-tier split, the decidable test, and the boundaries on both sides of it. |
 | [`when-to-stop.md`](when-to-stop.md) | Before writing a framework call you are not certain exists. Proceed, flag, or stop and escalate. |
 | [`four-names.md`](four-names.md) | Renaming a model, or diagnosing *"class not found in the specified .dll"*. |

@@ -25,7 +25,7 @@ and running the verbs it names.
 ## 1. Read
 
 - [`docs/workflow/05-adopt-an-existing-model.md`](../../../docs/workflow/05-adopt-an-existing-model.md) — the procedure this skill runs, all six steps.
-- [`docs/conventions/silent-failures.md`](../../../docs/conventions/silent-failures.md) — **all eleven.** This is the page adoption exists to apply.
+- [`docs/conventions/silent-failures.md`](../../../docs/conventions/silent-failures.md) — **all twelve.** This is the page adoption exists to apply.
 - [`docs/conventions/four-names.md`](../../../docs/conventions/four-names.md) — before you offer a rename.
 
 ## 2. Diagnose before you change anything

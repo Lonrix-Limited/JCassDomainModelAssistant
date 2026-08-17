@@ -58,7 +58,15 @@ Flag to indicate if the Benefit-Cost Analysis benefit and cost calculations are 
 public int BCALookAheadPeriods { get; set; }
 ```
 
-Number of look-ahead periods to use for BCA optimisation. Should not be more than the number of years in the budget.
+Number of look-ahead periods over which each candidate treatment strategy is rolled out and evaluated in a BCA model. Must be between 1 and 35. Values of 5 to 20 are recommended: evaluating strategies decades ahead is not realistic given the uncertainty in long-range forecasts, and a longer look-ahead multiplies the number of strategies generated, so run times rise steeply. Values below 5 are normally only useful for debugging, because they leave no room for a follow-up treatment. It is normal and correct for a rollout near the end of a run to evaluate periods beyond the last modelled one - no treatment is placed there.
+
+### BCAMaximumStrategiesPerElement
+
+```csharp
+public int BCAMaximumStrategiesPerElement { get; set; }
+```
+
+Largest number of treatment strategies that will be generated for a single element in a single period. Strategy generation stops adding branches once an element reaches this number, and the run continues with the strategies already generated rather than failing. Each candidate treatment is guaranteed a share of this budget, so what is dropped is variations of an option rather than the option itself - provided the value is large enough to hold the two baselines plus one strategy for every candidate treatment, which a separate warning checks. Fewer variations of each are compared. A warning is logged whenever it happens. Raise this to compare more strategies at the cost of a slower run; lower it to speed a run up. Allowed range is 10 to 500, and the default is 200. Raising it has sharply diminishing returns - strategies beyond the first few for each candidate treatment are near-duplicates of one another - while the cost in run time is strictly proportional, so prefer generating fewer strategies via 'BCA Strategy Periods to Skip' or a shorter look-ahead.
 
 ### BCAOptimisationMethod
 
