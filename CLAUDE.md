@@ -18,6 +18,10 @@ Two things to know before you read it, because they change what you should do:
 The skills under `.claude/` are a convenience layer over the `jcass-dm` tool and the `docs/` folder.
 They hold no unique knowledge: delete `.claude/` and everything here still works, with more typing.
 
+**If you are changing the Assistant itself** — a document, a convention, a skill, or the `jcass-dm`
+tool — read [`docs/design-rules.md`](docs/design-rules.md) **first**. It carries the twenty-six
+design rules and, more importantly, the reasoning behind each one.
+
 This file deliberately carries no knowledge of its own — three copies of a fact become three
 different facts. `AGENTS.md` and `.github/copilot-instructions.md` say the same thing for other
 assistants.

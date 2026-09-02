@@ -130,6 +130,8 @@ reasoning you need before you tighten or loosen it:
 | Bring a browser-side fix back to the local project | [`workflow/60-get-your-code-back.md`](workflow/60-get-your-code-back.md) |
 | See a complete, small, working model | [`../reference-model/DomainModelSample/README.md`](../reference-model/DomainModelSample/README.md) |
 | Look up what a `jcass-dm` verb does | `.\tools\jcass-dm.exe --help`, and [`../tools/README.md`](../tools/README.md) |
+| | |
+| **Change how this Assistant itself behaves** — a document, a convention, a skill, the tool | [`design-rules.md`](design-rules.md) — the twenty-six design rules **and why each one exists**. Read it before you change anything here |
 
 ---
 

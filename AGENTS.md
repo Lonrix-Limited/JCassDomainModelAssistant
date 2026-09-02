@@ -18,3 +18,7 @@ Two things to know before you read it, because they change what you should do:
 Everything else — conventions, patterns, the `jcass-dm` tool, when to stop and escalate — is in
 `docs/`. This file deliberately carries no knowledge of its own: three copies of a fact become
 three different facts.
+
+**If you are changing the Assistant itself** — a document, a convention, a skill, or the `jcass-dm`
+tool — read [`docs/design-rules.md`](docs/design-rules.md) **first**. It carries the twenty-six
+design rules and, more importantly, the reasoning behind each one.
