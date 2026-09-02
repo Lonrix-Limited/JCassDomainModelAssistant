@@ -1,0 +1,20 @@
+﻿Juno Cassandra - Domain Model Assistant
+
+WHICH VERSION OF THE ASSISTANT IS THIS?
+
+release          : 2026-09-03
+assistant commit : 2b413fdb21d8aae82267d2b7b6d57483e5a6f829
+stamped on       : 2026-09-03
+framework commit : 05feae12f9040bbfa7ed718f5ed7f104b0b85eba
+
+Quote the release and the assistant commit when you email support@lonrix.com. They say
+exactly which documentation, tool and reference assemblies you are looking at, which is
+the difference between one reply and three.
+
+What changed between releases, and what to re-check in your own model, is in CHANGELOG.md
+beside this file. How to move to a newer version without losing anything is in
+docs/orientation/updating-the-assistant.md.
+
+Written by scripts/stamp-assistant-version.ps1 at release time. Do not hand-edit: a version
+file somebody typed is a version file that is wrong.
+
