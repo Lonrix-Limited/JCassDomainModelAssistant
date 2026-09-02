@@ -109,18 +109,36 @@ No git, no merge, no partial update, no branch.
 **Re-downloading replaces the Assistant only. It never touches their model.** That is worth saying
 out loud, unprompted, the first time an update comes up: a non-developer's first fear is losing
 their work. It is safe for a structural reason — **their model lives in a sibling folder, never
-inside this repository** — so the Assistant is entirely stateless with respect to their work and can
-be swapped wholesale.
+inside this repository.**
 
-Two things ride along with a new version:
+**It does not follow that the Assistant holds nothing of theirs, and reading it that way is how this
+went wrong.** The folder that gets replaced also holds `model-knowledge\`, which is where their
+assistant writes down what it has learned about their models; and the folder's **absolute path** is
+what their assistant's memory of every previous conversation is filed under. Neither survives a
+careless update, and neither failure produces an error message.
+
+**So an update is a short procedure rather than a straight swap:**
+[`updating-the-assistant.md`](updating-the-assistant.md). Walk them through it. The load-bearing
+instruction on it is *unpack the new folder to exactly the same absolute path* — get that right and
+almost nothing is lost; get it wrong and no amount of copying helps.
+
+Three things ride along with a new version:
 
 - **`refs\` is replaced too**, so the framework update comes with it. Each release is stamped with
-  the framework build it carries, in [`../../refs/FRAMEWORK-VERSION.txt`](../../refs/FRAMEWORK-VERSION.txt).
-  Compare what they have against what their model expects:
+  the framework build it carries, in [`../../refs/FRAMEWORK-VERSION.txt`](../../refs/FRAMEWORK-VERSION.txt),
+  and with its own release date and commit in
+  [`../../ASSISTANT-VERSION.txt`](../../ASSISTANT-VERSION.txt). Compare what they have against what
+  their model expects:
 
   ```powershell
   .\scripts\check-framework-version.ps1
   ```
 
+- **Their model's own `refs\` is *not* replaced, and has to be refreshed by hand.** It is a private
+  copy made at scaffold time and nothing updates it, so the model keeps compiling against the older
+  framework while the documentation describes the newer one. That is a step on the update page:
+  `.\scripts\refresh-model-refs.ps1 -Project ..\MyRoadModel`.
+
 - **A "what to re-check in your model" note in the changelog.** `jcass-dm check` catches what is
   mechanically checkable; a new *guidance* rule is prose, and nothing will surface it for them.
+  [`../../CHANGELOG.md`](../../CHANGELOG.md).

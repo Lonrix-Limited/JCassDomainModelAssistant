@@ -315,13 +315,31 @@ replaceable wholesale. Had the model lived inside the Assistant, re-download wou
 Say so in the documentation — a non-developer's first fear is losing their model, and *"this
 replaces the Assistant only, never your model"* has to be unmissable.
 
+**That is true of the model and it is not true of everything.** Rule 26 is the correction: the
+folder being replaced also holds `model-knowledge/`, and the folder's absolute path is what the
+agent's conversation history is keyed on. **Never state this rule without the qualifier** — an
+unqualified *"the Assistant is stateless with respect to your work"* shipped for three weeks and is
+exactly what made the loss invisible. The procedure that makes an update safe is
+[`orientation/updating-the-assistant.md`](orientation/updating-the-assistant.md), and the
+load-bearing instruction on it is *unpack to the identical absolute path*.
+
 Refactor mode needs no new machinery: it is the adoption path (rule 19) reused — `check` first,
 then recommend.
 
-Three consequences the release process must carry:
+Five consequences the release process must carry:
 
 - **`refs/` is replaced too**, so the framework update rides along, and each release is stamped with
   the framework version it carries.
+- **A model's own `refs/` is *not*, and needs a script.** `scaffold` copies the Assistant's `refs/`
+  into the model folder because the emitted `.csproj` references `refs\*.dll` relative to itself,
+  and nothing ever refreshed that copy — so a re-download left the engineer compiling against the
+  previous framework while the documentation described the current one, silently.
+  `scripts/refresh-model-refs.ps1` is that step, and it is clean-by-default because the reference is
+  a wildcard and a leftover assembly is compiled against rather than ignored.
+- **A release has to be identifiable.** `ASSISTANT-VERSION.txt` carries the commit and the release
+  date, because `refs/FRAMEWORK-VERSION.txt` identifies the *framework* and
+  `tools/jcass-dm.build.txt` only moves when the tool source does — it read the same commit for
+  every download over a month while the documentation around it changed repeatedly.
 - **The changelog needs a per-release *"what to re-check in your model"* section**, because `check`
   catches only what is mechanically checkable and a new *guidance* rule is prose that nothing will
   surface.

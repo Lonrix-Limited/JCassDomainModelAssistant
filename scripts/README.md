@@ -1,12 +1,16 @@
 # scripts/
 
-Maintenance scripts for this repository. These are not part of building a domain model — an
-engineer never needs to run them.
+Maintenance scripts for this repository. Most are maintainer-only, but **two of them an engineer
+runs**: [`check-framework-version.ps1`](check-framework-version.ps1), when they want to know whether
+their framework reference is behind the server, and
+[`refresh-model-refs.ps1`](refresh-model-refs.ps1), which is a **required step every time they update
+the Assistant** — [`../docs/orientation/updating-the-assistant.md`](../docs/orientation/updating-the-assistant.md).
 
 | Script | What it does |
 |---|---|
 | [`leak-scan.ps1`](leak-scan.ps1) | Fails if anything committed here names Juno Cassandra server or admin internals. Runs in CI on every push. |
-| [`check-framework-version.ps1`](check-framework-version.ps1) | Reports which framework build the assemblies in `refs/` came from. The one script here an engineer might actually want. |
+| [`check-framework-version.ps1`](check-framework-version.ps1) | Reports which framework build the assemblies in `refs/` came from, and answers *is this older than what the server runs?* Point it at a model's own `refs/` with `-RefsFolder`. |
+| [`refresh-model-refs.ps1`](refresh-model-refs.ps1) | Replaces a model project's own `refs/` folder with the one this Assistant ships. **A step on the update procedure** — nothing else refreshes it, and the staleness is silent. |
 
 ## leak-scan.ps1
 
@@ -60,3 +64,42 @@ Exit `0` clean, `1` if the folder holds assemblies from more than one framework 
 
 Nobody refreshes `refs/` by hand. It ships with the Assistant, so a newer framework arrives with a
 newer download — which is also why there is no `populate-refs.ps1` here any more.
+
+## refresh-model-refs.ps1
+
+```powershell
+.\scripts\refresh-model-refs.ps1 -Project ..\MyRoadModel
+```
+
+**A scaffolded model gets its own copy of `refs/`, and until this existed nothing ever refreshed
+it.** `jcass-dm scaffold` copies the Assistant's `refs/` into the new project because the emitted
+`.csproj` references `refs\*.dll` relative to itself — which it has to, since the web Debug Model
+workspace stages its own framework assemblies into exactly that folder. So an engineer who
+re-downloads a newer Assistant gets a newer `refs/` at the root and carries on compiling their model
+against the older one, while `docs/framework/` describes the newer. That is the failure the whole
+`refs/` staleness regime exists to prevent, reintroduced one level down.
+
+**It replaces rather than tops up, and that is the point.** The `.csproj` reference is a wildcard,
+so an assembly left behind from an older release is compiled against alongside its replacement — a
+partial copy is worse than no copy at all. The folder is emptied first.
+
+**It copies the `.xml` files and refuses to run without them**, on the same reasoning as CI's *Check
+refs folders* step: a `refs/` folder holding only DLLs builds perfectly and quietly costs the
+engineer every framework description, in IntelliSense and for the assistant reading them. It also
+carries `FRAMEWORK-VERSION.txt` across, so
+`check-framework-version.ps1 -RefsFolder ..\MyRoadModel\refs` can report the snapshot's age
+afterwards.
+
+**It validates everything before it deletes anything.** A missing source folder, a source missing its
+`.xml` files, a `-Project` path that does not exist or holds no `.csproj` — each refuses with the
+model untouched, rather than leaving an emptied folder behind. `-Project` is a path the engineer
+typed and `..\` resolves against a terminal folder they cannot see, so the `.csproj` requirement is
+what stops a typo emptying some other folder's `refs`.
+
+Exit `0` clean, `1` if the source is missing `.xml` files or the copy did not complete, `2` if it
+could not run at all.
+
+**This is not the only thing that overwrites a model's `refs/`.** The debug sidecar stages its own,
+larger set into it during a debug run — roughly ten times as many files, because it also stages NuGet
+transitives. Nothing in a model's `refs/` is the engineer's, none of it is ever uploaded, and none of
+it is worth preserving.

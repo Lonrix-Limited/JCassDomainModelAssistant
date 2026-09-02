@@ -88,6 +88,12 @@ one; this section is the short list you need before you download anything.
 it is what makes this repository safe to replace wholesale when a newer version is released:
 re-downloading the Assistant never touches your model.
 
+**One folder in here is yours, though, and an update replaces it along with everything else:**
+[`model-knowledge/`](model-knowledge/), where your assistant writes down what it learns about your
+models. Updating is a short procedure rather than a straight swap for that reason, and the step that
+matters most is not the copying —
+[`docs/orientation/updating-the-assistant.md`](docs/orientation/updating-the-assistant.md).
+
 New to the terminal? [`docs/orientation/running-commands.md`](docs/orientation/running-commands.md)
 covers opening a PowerShell terminal in VS Code, why the folder it is sitting in decides what the
 commands do, and how to check you can write where you are about to work.
@@ -180,6 +186,7 @@ draft you a support request rather than improvise —
 | [`tools/`](tools/) | `jcass-dm` — scaffolds, reads and writes the bundle, checks, packages | **Present** |
 | [`refs/`](refs/) | Framework reference assemblies to compile against, and their API documentation | **Present** |
 | [`scripts/`](scripts/) | Maintenance scripts | **Present** |
+| [`model-knowledge/`](model-knowledge/) | What your assistant has learned about **your** models, one file per model. The one folder here that is yours | **Present** — empty until your assistant writes in it, and [the one thing you carry across when you update](docs/orientation/updating-the-assistant.md) |
 | [`.claude/`](.claude/) | Claude skills — a convenience layer, never a holder of unique knowledge | **Present** — and optional: delete the folder and everything still works, with more typing |
 
 ## Getting help

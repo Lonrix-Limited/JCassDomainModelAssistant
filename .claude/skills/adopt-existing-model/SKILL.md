@@ -11,6 +11,11 @@ and running the verbs it names.
 
 ## 0. Before the first step
 
+- **Look for `model-knowledge/<ModelName>.md` before anything else, and ask for it if it is not
+  there** — [`docs/00-start-here.md` § 4](../../../docs/00-start-here.md). This is the entry path
+  where a previous session's notes are most likely to exist and most likely to be missing, because
+  an engineer arriving here with an inherited model has often just updated the Assistant. Ask before
+  the diagnosis, not after it.
 - **Read the takeover warning now, not at step 40.**
   [`docs/workflow/40-publish.md`](../../../docs/workflow/40-publish.md#-before-a-first-publish-on-a-client-that-already-runs-a-custom-model).
   An inherited model is by definition the takeover case: the client may have a production model that

@@ -12,6 +12,13 @@ and running the verb it names.
 
 ## 0. Before the first step
 
+- **If this conversation has not touched this model before and you did not scaffold it yourself
+  in this session, do the `model-knowledge` check first** —
+  [`docs/00-start-here.md` § 4](../../../docs/00-start-here.md). Read
+  `model-knowledge/<ModelName>.md` if it is there; if it is not, look for a sibling `*-old` or
+  `*-main` folder holding one, then **stop and ask them to copy it across before you start**.
+  Invoking this skill is not a way past that stop — half the answers you are about to ask them
+  for are often already in that file.
 - **Honour the verb** — [`docs/00-start-here.md` § 2](../../../docs/00-start-here.md). "Walk me
   through adding a treatment" means *they* make the five edits, one at a time, and this skill is not
   the way round that. An engineer who has never made this change cannot maintain the model.

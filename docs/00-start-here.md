@@ -83,6 +83,89 @@ This is **not** a ban on undocumented work, and reading it that way breaks it. F
 reasoning you need before you tighten or loosen it:
 [`conventions/when-to-stop.md`](conventions/when-to-stop.md).
 
+## 4. Per-model knowledge — read it, and ask for it when it is missing
+
+**`model-knowledge/<ModelName>.md` at the root of this repository is what a previous session learned
+about that engineer's model.** One file per model, the model name as the H1. It is also **the only
+place inside this repository you may write.**
+
+**When the engineer asks you about a domain model that already exists** — by name, or as *"my
+model"*, or by pointing you at its folder — your **first action, before reading their code**, is to
+look for `model-knowledge/<ModelName>.md`.
+
+**If it is there**, read it and use it. It is where the answers to half of what you were about to ask
+them already are.
+
+**If it is not there, this is a stop — and it has two steps. Do both.**
+
+**Step one: look next door before you say anything.** List the folder that *contains* this
+repository. If a sibling folder matches `JCassDomainModelAssistant*-old` or `*-main` and has a
+`model-knowledge` folder with files in it, you have found their notes and you can name the exact
+path. Do not skip this because it feels like a long shot — after an update it is the usual case, and
+naming the folder is the difference between an instruction they can follow in one move and a request
+they have to go and investigate.
+
+**Step two: say so, ask for it, and wait.** Not a note at the end of a long reply, and not something
+you mention after you have made the change. You stop, you ask, and the next turn is theirs:
+
+> I don't have any notes on `NelsonRoads`. It looks like they are still in your previous Assistant —
+> copy `C:\Work\JCassDomainModelAssistant-old\model-knowledge\NelsonRoads.md` into the
+> `model-knowledge` folder here and I will pick it up. That folder is the one thing an update does
+> not carry across for you, and it is where the answers you are about to give me are probably
+> already written down.
+>
+> If NelsonRoads is new to you as well, tell me and I will start a file for it.
+
+If step one found nothing, ask in general terms instead — *"if you worked on it with a previous
+version of the Assistant, copy your `model-knowledge` folder across from the old one now."*
+
+**Two things about how you say it.** Give the path in Windows form — `C:\Work\...` — even if the
+command you used to find it printed something else; they are going to paste it into File Explorer.
+And do not explain the stop by citing this file. *"Per the instructions in § 4, I need to stop"* is a
+machine talking to itself. Say what you found and what you want: *"there's a `NelsonRoads.md` in your
+old Assistant folder — copy it across and I'll pick it up."*
+
+**Stopping is the point, and it is why this reads as heavily as § 3's stop tier.** An empty
+`model-knowledge` folder on a machine where the engineer has worked for two months almost always
+means they have just updated the Assistant and left their notes in the old one. Carrying on is how
+those notes are never fetched: the work gets done, the engineer re-answers questions they answered
+in August, and nobody discovers the folder is still sitting in `-old` until it is deleted. **Finding
+no file is a finding, not a null result.**
+
+**One ask per model per conversation.** If they say the model is new, or that there are no notes,
+believe them, offer to start the file, and never raise it again in that session.
+
+**This fires when they ask about an existing model, and at no other time.** Starting a new model,
+adding a treatment, chasing a build error — none of those get this prompt. A check that fires on
+every session gets ignored, and is then not there on the one that matters
+([`conventions/when-to-stop.md`](conventions/when-to-stop.md) is the same reasoning applied to
+escalation).
+
+**Writing to it:**
+
+- **When the engineer says *"remember that…"* about their model, `model-knowledge/<ModelName>.md` is
+  where it goes — a file in this repository, written with an ordinary file edit.** Not your own
+  memory feature, not a project-memory store your tool keeps somewhere under your own configuration
+  folder, and not the root `CLAUDE.md`. **This is the instruction most likely to be missed**, because
+  several assistants have a built-in memory of their own that answers to exactly that phrasing and
+  will take the request without your deciding anything. Two things go wrong if it does: the note is
+  invisible to the engineer, who cannot read it, correct it or hand it to a colleague; and it is
+  invisible to the *next* assistant, which may not be the same product as you. If you have already
+  saved something that way, write it into `model-knowledge/<ModelName>.md` as well, and say which
+  file you put it in.
+- **Append; never rewrite the file wholesale.** A file rewritten from scratch loses history exactly
+  the way an update does.
+- **Write nowhere else in this repository** — not the root `CLAUDE.md`, not a scratch file in
+  `docs/`. Everything else here is replaced at the next update and goes without warning.
+- **A fact about the framework or about this Assistant does not belong here at all.** A signature
+  you had to work out, or a failure the documentation did not cover, goes to **support@lonrix.com** —
+  otherwise it is fixed for one engineer and every other one keeps rediscovering it.
+- **Say where you wrote it**, in one line, naming the file. The engineer has to be able to check
+  your work, and a note they do not know exists is a note they will never correct.
+
+What the folder is, in the engineer's terms:
+[`../model-knowledge/README.md`](../model-knowledge/README.md).
+
 ---
 
 ## Routing table
@@ -131,6 +214,8 @@ reasoning you need before you tighten or loosen it:
 | See a complete, small, working model | [`../reference-model/DomainModelSample/README.md`](../reference-model/DomainModelSample/README.md) |
 | Look up what a `jcass-dm` verb does | `.\tools\jcass-dm.exe --help`, and [`../tools/README.md`](../tools/README.md) |
 | | |
+| **Recall what a previous session knew about this engineer's model** | [`../model-knowledge/README.md`](../model-knowledge/README.md) — and § 4 above for when to ask for it |
+| Take an Assistant update across without losing anything | [`orientation/updating-the-assistant.md`](orientation/updating-the-assistant.md) |
 | **Change how this Assistant itself behaves** — a document, a convention, a skill, the tool | [`design-rules.md`](design-rules.md) — the twenty-six design rules **and why each one exists**. Read it before you change anything here |
 
 ---

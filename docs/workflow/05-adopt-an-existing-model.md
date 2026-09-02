@@ -103,17 +103,18 @@ the `.csproj` is already called, since that is the name a debug run derives its 
 
 ### If it does not build for want of `refs\`
 
-A downloaded or handed-over project usually has no `refs\` folder. Copy this repository's:
+A downloaded or handed-over project usually has no `refs\` folder, or has one from an older release.
+One command handles both:
 
 ```powershell
-Copy-Item -Recurse -Force .\refs\* ..\TheirModel\refs\
+.\scripts\refresh-model-refs.ps1 -Project ..\TheirModel
 ```
 
-If `..\TheirModel\refs\` does not exist yet, create it first with **File Explorer**, or:
-
-```powershell
-New-Item -ItemType Directory -Force ..\TheirModel\refs | Out-Null
-```
+It creates the folder if it is not there, and **replaces** it if it is. Replacing matters on an
+inherited model more than anywhere else: the `.csproj` references `refs\*.dll` with a wildcard, so a
+framework assembly left over from whenever this model was last worked on gets compiled against
+alongside its replacement, and you would be chasing a build error that has two answers. Copying the
+new files in over the old ones is worse than not copying them at all.
 
 Then:
 

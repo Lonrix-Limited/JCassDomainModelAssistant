@@ -17,10 +17,13 @@ routes; it carries almost no content of its own.
 | [`patterns/`](patterns/) | The canonical shape of each recurring piece of a real model, each with a compiling example | **Present** |
 | [`framework/`](framework/) | The generated framework API reference and concepts mirror | **Present** — generated, never edited by hand |
 
-Three things outside this folder are part of the same set:
+Four things outside this folder are part of the same set:
 
 - [`../reference-model/DomainModelSample/README.md`](../reference-model/DomainModelSample/README.md)
   — a complete, small, working model, written to be read.
 - [`../examples/ExamplesLibrary/`](../examples/ExamplesLibrary/) — the compiling code behind every
   page in [`patterns/`](patterns/). Built in CI, so it cannot drift from the framework.
 - `.\tools\jcass-dm.exe --help` — the tool that enforces what these pages describe.
+- [`../model-knowledge/README.md`](../model-knowledge/README.md) — per-model notes, one file per
+  domain model, and the **only** place in this repository an assistant writes to. When to read it
+  and when to ask for it: [`00-start-here.md`](00-start-here.md) § 4.

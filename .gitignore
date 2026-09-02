@@ -25,3 +25,21 @@ obj/
 # The .xml documentation files matter most of all: they are how an AI coding
 # assistant learns the framework API. Never ignore them.
 # ---------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------
+# model-knowledge/ IS THE ONE FOLDER AN ENGINEER'S ASSISTANT WRITES TO.
+#
+# It holds their notes about their own domain models — one .md per model. Only
+# the README ships; everything else in there belongs to whoever downloaded this
+# Assistant, and a maintainer testing the mechanism must not be able to commit a
+# model name into a public repository by accident.
+#
+# The engineer carries this folder across when they update — see
+# docs/orientation/updating-the-assistant.md.
+# ---------------------------------------------------------------------------
+model-knowledge/*
+!model-knowledge/README.md
+
+# Per-machine Claude Code permission grants. Written by the tool, never by hand,
+# and specific to whoever is sitting at the keyboard.
+.claude/settings.local.json
