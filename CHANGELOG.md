@@ -17,8 +17,94 @@ before you download.
 
 ## Unreleased
 
-**Headline: `jcass-dm check` now tells you when your model is compiling against an older framework
-than this Assistant documents.**
+**Headline: you no longer start a model from scratch — Lonrix sets up a starter model in your
+project and you begin from that, with your own setup files open beside it.**
+
+### Changed — the way you start, and it is a real change
+
+- **There is no "start from scratch" any more, and your assistant will not offer one.** A custom
+  domain model cannot exist in Juno Cassandra on its own: it needs a project around it with network
+  data, budget columns, configurations, lookups, a registry entry and a publish grant. Building all
+  of that is ours. So **Lonrix sets up a starter model for your client, publishes it, and runs it
+  online at least once** before you begin — and that one run is the point, because it proves the
+  input files, the budget columns and the configurations agree with each other. Every failure you
+  meet after that is attributable to a change you just made.
+- **You start by downloading two things**, and they are not interchangeable:
+  [`docs/workflow/02-the-starter-model.md`](docs/workflow/02-the-starter-model.md) is the new page.
+  The **model source** is a complete C# project we hand over; it builds, and it is what you edit. A
+  **project snapshot** — Postprocessing → *Snapshot / Archive Setup and Outputs* — is a read-only zip
+  of your client's real setup and input files. **The snapshot is not a build source**: it
+  deliberately strips `refs\` and `.vscode\`, so the copy of the source inside it does not compile.
+- **Your model no longer has to be a sibling folder.** Beside the Assistant is still the easy
+  default, because it is what makes `..\YourModel` work in every command on every page. But a model
+  we handed you, or a snapshot unpacked somewhere short to dodge Windows' path limit, can sit
+  anywhere you can reach — you type full paths instead. **The rule that has not changed is that your
+  model is never *inside* the Assistant folder.**
+
+### Added — your assistant can now read your setup files
+
+- **Give it your project snapshot and it will check your C# against what your model will actually
+  meet** — the lookup sets that exist, the budget columns that exist, the input columns that exist.
+  Half the ways a domain model fails are disagreements between the code and the spreadsheets, and
+  every one of them is invisible to somebody reading only the code. Until now it found them at your
+  first upload.
+- **`jcass-dm check --lookups <snapshot>\inputs\lookups.xlsx`** stops reporting `SKIPPED` on the rule
+  most worth having.
+- **What it will not do with them**, deliberately: it reads the *header row* of
+  `model_input_data.csv` and never the rows, and it will not tell you what condition your network is
+  in. That is engineering judgement about your assets, and the web app's **Analyse Input** page is
+  built for it and does it properly.
+  [`docs/conventions/input-files-in-scope.md`](docs/conventions/input-files-in-scope.md).
+
+### Changed — where a unit rate goes, and it is more specific than before
+
+- **A treatment's unit rate belongs in the `lkp_unit_rates` sheet of `inputs\lookups.xlsx`.** Not any
+  `lkp_` sheet — that one, by name. Every `lkp_*` sheet is merged before your code sees it, so from
+  the model's point of view the sheet genuinely does not matter; **the Tuning page's *Treatment
+  Rates* tab is the exception and reads that one sheet by name.** A rate anywhere else loads, costs
+  your treatments correctly, and is invisible on the page you were told to edit rates on. Nothing
+  errors. Group rates into several *sets* inside that sheet — the tab's dropdown is those set names.
+- **When the effective rate varies — by material, distress or traffic — vary the *quantity*, not the
+  rate.** One rate out of `lkp_unit_rates`, and a quantity your code works out, with the factors that
+  produce it in lookups like everything else. A rate computed in C# is a rate you can no longer
+  change, which is the whole point of the convention.
+- **A `(set, key)` pair has to be unique across the whole workbook.** The web app scans every `lkp_*`
+  sheet when it saves, and the same pair in two of them makes the save refuse rather than pick one.
+  So when you move a rate into `lkp_unit_rates`, move it — do not copy it.
+
+### Fixed
+
+- **When your assistant hits something it cannot do, it now writes you the email** — the body, in its
+  reply, ready to paste to `support@lonrix.com`, with the framework version stamp and the model name
+  filled in. It used to *offer* to write one, which left you holding nothing if the conversation
+  ended there.
+- **Asking your assistant to check or explain a model no longer makes it stop and ask for a notes
+  file first.** It answers the question, then tells you the notes are missing and asks for them
+  before it changes anything. A diagnosis cannot be wrong for lack of notes; an edit can.
+- **"Clone from Git" in the Debug workspace overlay is now named as unsupported.** The page described
+  the overlay's three choices and steered you past the first without saying it is not a supported
+  route, so it read like a real option. It is not one — zip in, zip out, both ways.
+- **`jcass-dm` now names the `lkp_unit_rates` sheet** in the scaffolded `Constants.cs`, in the
+  scaffolded README, and in what `add-treatment` prints. Those files previously said the sheet a
+  lookup row sits in is "only an organisational convenience", which is true of your code and
+  misleading about the Tuning page.
+
+### What to re-check in your model
+
+- **Look at where your treatment unit rates actually live.** Open `inputs\lookups.xlsx` and check the
+  rows are in a sheet called `lkp_unit_rates`. If they are in another `lkp_` sheet your model works
+  and your forecasts are correct — but those rates are not on the Tuning page's **Treatment Rates**
+  tab, which is probably not what you wanted. **Move the rows; do not copy them**, or the next save
+  from that tab will refuse as ambiguous.
+- **Check whether anything in your C# computes a unit rate.** If it does, consider moving the
+  variation into the quantity instead so the modeller keeps control of the rate.
+- **Nothing else in your model needs changing.** No C# convention changed, no bundle sheet changed,
+  and the `refs\` advice from the previous release still stands.
+
+### Also in this release — `jcass-dm check` and your model's `refs\` folder
+
+**`jcass-dm check` now tells you when your model is compiling against an older framework than this
+Assistant documents.**
 
 ### Added
 
@@ -41,13 +127,11 @@ than this Assistant documents.**
   now names `scripts\refresh-model-refs.ps1` and the project folder to pass it. This only ever
   appeared when `jcass-dm.exe` had been copied out of the Assistant on its own.
 
-### What to re-check in your model
+#### And re-check this too
 
 - **Run `.\tools\jcass-dm.exe check --project ..\YourModel` and read the `framework reference`
   line.** If it says your model is on a different build from this Assistant, run
   `.\scripts\refresh-model-refs.ps1 -Project ..\YourModel` and rebuild.
-- **Nothing else in your model needs changing.** No C# convention changed, and no bundle sheet
-  changed.
 
 ---
 
