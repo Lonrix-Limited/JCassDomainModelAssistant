@@ -61,6 +61,7 @@ internal static class CheckVerb
         }
 
         CheckLookups(facts, lookupsPath, report);
+        CheckFrameworkReference(project, report);
 
         report.Write(output);
         WriteScopeNote(output);
@@ -537,6 +538,91 @@ internal static class CheckVerb
     }
 
     /// <summary>
+    /// Whether the model is compiling against the same framework the Assistant documents.
+    ///
+    /// <para><b>A NOTE, never a PROBLEM.</b> A model with a stale <c>refs\</c> still builds and
+    /// still runs; what it loses is the guarantee that the API reference beside it describes the
+    /// framework it is compiled against. Refusing to check a model over something that is not
+    /// wrong yet would block work, and a check that blocks work gets switched off.</para>
+    ///
+    /// <para><b>Why this is in the tool and not in a paragraph.</b> Every scaffolded model keeps
+    /// a private copy of the reference assemblies, and nothing on the maintainer side can reach
+    /// it - so re-downloading the Assistant refreshes its own reference and leaves the model
+    /// compiling against the previous framework, silently. Until this check existed, the only
+    /// thing standing between an engineer and that state was their having read one step of an
+    /// update page they see twice a year. This fires on a command they already run.</para>
+    /// </summary>
+    private static void CheckFrameworkReference(ModelProject project, CheckReport report)
+    {
+        const string Rule = "framework reference";
+
+        string modelRefs = Path.Combine(project.Folder, "refs");
+        IReadOnlyList<string> modelCommits = FrameworkStamp.ReadCommits(modelRefs);
+
+        if (modelCommits.Count == 0)
+        {
+            report.Skip(Rule,
+                Directory.Exists(modelRefs)
+                    ? "refs\\ holds no framework assemblies that say which build they came from."
+                    : "this model has no refs\\ folder.",
+                "Your project references refs\\*.dll relative to itself, so without that folder it " +
+                "does not build at all. jcass-dm cannot tell which framework you are on without it.",
+                $"Run the Assistant's scripts\\refresh-model-refs.ps1 -Project \"{project.Folder}\" " +
+                "from your Assistant folder.");
+            return;
+        }
+
+        // Two releases in one folder is worse than being behind, and it is what a hand copy does.
+        if (modelCommits.Count > 1)
+        {
+            report.Note(Rule,
+                "refs\\ holds assemblies from " + modelCommits.Count + " different framework builds: " +
+                string.Join(", ", modelCommits.Select(FrameworkStamp.Short)) + ".",
+                "That is not harmless. The project references refs\\*.dll with a wildcard, so a " +
+                "leftover assembly from an older release is compiled against alongside its " +
+                "replacement rather than ignored. It usually means files were copied in over " +
+                "whatever was already there.",
+                $"Run the Assistant's scripts\\refresh-model-refs.ps1 -Project \"{project.Folder}\". " +
+                "It empties the folder first, which is the point of it.");
+            return;
+        }
+
+        string? assistantRefs = AssistantLayout.FindRefsFolder();
+        IReadOnlyList<string> assistantCommits = FrameworkStamp.ReadCommits(assistantRefs);
+
+        if (assistantCommits.Count != 1)
+        {
+            report.Skip(Rule,
+                $"this model is on framework {FrameworkStamp.Short(modelCommits[0])}, and there is " +
+                "nothing to compare it against.",
+                assistantRefs is null
+                    ? "jcass-dm could not find the Assistant's own refs\\ folder above its own " +
+                      "location, which usually means jcass-dm.exe was copied out on its own."
+                    : "the Assistant's own refs\\ folder does not say which build it came from.",
+                null);
+            return;
+        }
+
+        if (string.Equals(modelCommits[0], assistantCommits[0], StringComparison.OrdinalIgnoreCase))
+        {
+            report.Pass(Rule, $"framework {FrameworkStamp.Short(modelCommits[0])}, same as this Assistant");
+            return;
+        }
+
+        report.Note(Rule,
+            $"this model is on framework {FrameworkStamp.Short(modelCommits[0])}; this Assistant " +
+            $"carries {FrameworkStamp.Short(assistantCommits[0])}.",
+            "Your model keeps its own copy of the reference assemblies, made when it was " +
+            "scaffolded, and downloading a newer Assistant does not refresh it. Nothing breaks " +
+            "today: the model still builds and still runs. What is no longer true is that the API " +
+            "reference and the patterns in this Assistant describe the framework your code is " +
+            "compiled against - a signature that changed still compiles, and one that was added " +
+            "is simply missing from IntelliSense.",
+            $"Run the Assistant's scripts\\refresh-model-refs.ps1 -Project \"{project.Folder}\" " +
+            "and rebuild.");
+    }
+
+    /// <summary>
     /// The <c>lookup_set_name</c> values across every <c>lkp_</c> sheet, which is how the
     /// framework merges them: one flat table, addressed by (set name, key).
     /// </summary>
@@ -612,9 +698,16 @@ internal sealed class CheckReport
     public void Pass(string rule, string summary, string? detail = null)
         => this._findings.Add(new Finding(FindingLevel.Pass, rule, summary, detail, null));
 
-    /// <summary>A rule that could not be applied. Never counted as a pass.</summary>
-    public void Skip(string rule, string summary, string? detail = null)
-        => this._findings.Add(new Finding(FindingLevel.Skipped, rule, summary, detail, null));
+    /// <summary>
+    /// A rule that could not be applied. Never counted as a pass.
+    ///
+    /// <para>A skip may carry an action, because sometimes the reason a rule could not be applied
+    /// is itself fixable - a folder that is not there, a file that was not supplied - and the
+    /// reader would otherwise be told that something was not checked and left to work out how to
+    /// get it checked.</para>
+    /// </summary>
+    public void Skip(string rule, string summary, string? detail = null, string? action = null)
+        => this._findings.Add(new Finding(FindingLevel.Skipped, rule, summary, detail, action));
 
     /// <summary>Worth knowing, does not stop the model running.</summary>
     public void Note(string rule, string summary, string? detail, string? action)

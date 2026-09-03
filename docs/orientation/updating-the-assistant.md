@@ -158,6 +158,10 @@ as odd behaviour in the web app:
 dotnet build ..\MyRoadModel\MyRoadModel.csproj -c Debug --no-incremental
 ```
 
+**If you do skip it, `jcass-dm check` will tell you.** Its `framework reference` rule compares your
+model's copy against this Assistant's and reports a NOTE when they differ, naming both. That is a
+backstop, not a substitute: it only speaks when you happen to run `check`.
+
 ### 6. Reopen the workspace and re-add your model
 
 Double-click [`../../assistant.code-workspace`](../../assistant.code-workspace) in the new folder,

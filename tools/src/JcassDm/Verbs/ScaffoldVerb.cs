@@ -311,8 +311,9 @@ internal static class ScaffoldVerb
                 "location," + Environment.NewLine +
                 "           which usually means jcass-dm.exe was copied out on its own. The project " +
                 "will not build" + Environment.NewLine +
-                "           until framework reference assemblies are in refs\\. Copy them from the " +
-                "Assistant's refs/.";
+                "           until framework reference assemblies are in refs\\. From your Assistant " +
+                "folder, run" + Environment.NewLine +
+                "           .\\scripts\\refresh-model-refs.ps1 -Project \"" + folder + "\"";
         }
 
         int copied = 0;
@@ -393,8 +394,13 @@ internal static class ScaffoldVerb
         could not find the Domain Model Assistant's own `refs/` folder above the location of
         `jcass-dm.exe` - which usually means the exe was copied out of the Assistant on its own.
 
-        To fix it, copy every `.dll` and `.xml` from the Assistant's `refs/` folder into this one.
-        Do not mix assemblies from two framework releases: the reference in the `.csproj` is a
-        wildcard, so a leftover gets compiled against rather than ignored.
+        To fix it, open a PowerShell terminal in your Assistant folder and run the script that
+        does this properly, giving it the full path to this project's folder:
+
+            .\scripts\refresh-model-refs.ps1 -Project "C:\path\to\this\model"
+
+        Use the script rather than copying files in by hand. It empties this folder before it
+        fills it, and that matters: the reference in the `.csproj` is a wildcard, so an assembly
+        left behind from another framework release is compiled against rather than ignored.
         """;
 }

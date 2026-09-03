@@ -194,8 +194,17 @@ granularity: changed one at a time by judgement → `lookups.xlsx`; regenerated 
   owns.
 - **The five sheet names in `domain_model_setup.xlsx`.** All five must exist, spelled exactly,
   including `network_functions` with no rows in it.
-- **The `refs\` folder contents.** They arrive with the Assistant and are replaced wholesale when
-  you download a newer one.
+- **The `refs\` folder contents.** They were copied here from the Assistant when this project was
+  scaffolded. **This copy is yours and nothing refreshes it for you** - downloading a newer
+  Assistant replaces *its* `refs\`, not this one, and leaves you compiling against the older
+  framework with no error to notice. Refresh it from a PowerShell terminal in your Assistant
+  folder, and let the script replace the folder rather than copying files in over the old ones:
+
+    ```powershell
+    .\scripts\refresh-model-refs.ps1 -Project ..\FixtureModel
+    ```
+
+  `jcass-dm check` reports a NOTE when this folder and the Assistant's disagree.
 - **`Private=false` on the `<Reference>` item.** It stops framework DLLs being copied next to your
   own, which is what you want.
 

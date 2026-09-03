@@ -15,6 +15,42 @@ before you download.
 
 ---
 
+## Unreleased
+
+**Headline: `jcass-dm check` now tells you when your model is compiling against an older framework
+than this Assistant documents.**
+
+### Added
+
+- **`check` has a new `framework reference` rule.** It reads the framework build stamped on the
+  assemblies in your model's `refs\` folder and compares it with the Assistant's own, and says so
+  when they differ. Until now the only thing between you and a model quietly built against a
+  superseded framework was having read step 5 of the update page. It reports as a **NOTE**, not a
+  problem: a stale reference still builds and still runs, and refusing to check your model over it
+  would block work for something that is not wrong yet.
+- **It also catches a `refs\` folder holding two different framework builds**, which is what copying
+  files in over the old ones leaves behind. That one is not harmless — the project references
+  `refs\*.dll` with a wildcard, so the leftover is compiled against alongside its replacement.
+- **[`docs/conventions/silent-failures.md`](docs/conventions/silent-failures.md) § 13** describes
+  the failure and the fix.
+
+### Fixed
+
+- **`scaffold` printed the wrong instruction** when it could not find the Assistant's `refs\` folder
+  — it said to copy the files across by hand, which tops the folder up rather than replacing it. It
+  now names `scripts\refresh-model-refs.ps1` and the project folder to pass it. This only ever
+  appeared when `jcass-dm.exe` had been copied out of the Assistant on its own.
+
+### What to re-check in your model
+
+- **Run `.\tools\jcass-dm.exe check --project ..\YourModel` and read the `framework reference`
+  line.** If it says your model is on a different build from this Assistant, run
+  `.\scripts\refresh-model-refs.ps1 -Project ..\YourModel` and rebuild.
+- **Nothing else in your model needs changing.** No C# convention changed, and no bundle sheet
+  changed.
+
+---
+
 ## 2026-09-03
 
 **Headline: your assistant can now remember things about your model across an update, and there is a

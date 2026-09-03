@@ -32,6 +32,7 @@ loud, because nothing will raise them for you.
 | [10](#10-a-privately-constructed-random-instead-of-rando) | The same run gives different answers | Nothing |
 | [11](#11-a-treatment-with-no-arm-in-the-reset-switch) | A treatment is funded and reported, and changes nothing | `jcass-dm check` — when the reset is a `switch`. Loud in a scaffolded model; silent in some inherited ones |
 | [12](#12-reading-a-model-parameter-at-or-above-the-period-you-were-handed) | A look-back calculation quietly reads zero | Nothing, outside a benefit-cost rollout. Inside one it throws |
+| [13](#13-your-models-refs-folder-left-behind-by-an-assistant-update) | The documentation beside you describes a framework your code is not compiled against | `jcass-dm check` — **only** this |
 
 ---
 
@@ -354,6 +355,46 @@ infer one rule from the other.
 somebody will reach for: *"only read element indexes below your own"* is **wrong**. Elements are
 stepped with `Parallel.For` when the run is configured for it, so index order guarantees nothing
 about what has been computed. `iPeriod - 1` is the whole rule and it needs no ordering assumption.
+
+---
+
+## 13. Your model's `refs\` folder, left behind by an Assistant update
+
+**Symptom.** Nothing. The model builds, `check` passes on everything else, and it runs. What has
+quietly stopped being true is that the API reference and the patterns in this Assistant describe the
+framework your code is compiled against. A signature whose behaviour changed still compiles; one
+that has since been added is simply missing from IntelliSense, so you conclude it does not exist.
+
+**Why it happens.** Your model keeps its **own** copy of the reference assemblies, beside its
+`.csproj`, put there when the project was scaffolded — it has to, because the project references
+`refs\*.dll` relative to itself. Downloading a newer Assistant replaces the Assistant's copy and
+cannot reach yours. The two then describe different framework builds and nothing says so.
+
+**`jcass-dm check` catches it**, and it is the only thing that does:
+
+```
+jcass-dm check → "framework reference"
+
+  framework reference   NOTE   this model is on framework 4f21ab8; this Assistant carries 05feae1.
+```
+
+It is a **NOTE, not a PROBLEM**, deliberately. A stale reference still builds and still runs, and a
+check that refused over something not yet wrong would block work.
+
+**The fix**, from a PowerShell terminal in your Assistant folder:
+
+```powershell
+.\scripts\refresh-model-refs.ps1 -Project ..\YourModel
+```
+
+Then rebuild. Run it whether or not you think your model is current — from the outside there is
+nothing to see.
+
+**One variant is worse than being behind.** If `check` says your `refs\` holds assemblies from
+*two* different framework builds, files were copied in over whatever was there. The `.csproj`
+reference is a wildcard, so the leftover from the older release is compiled against alongside its
+replacement rather than ignored. The same script fixes it: it empties the folder before filling it,
+which is the point of it.
 
 ---
 

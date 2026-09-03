@@ -98,7 +98,14 @@ What it does cover is the set of mistakes that otherwise fail **silently**, or l
 somewhere that does not name the cause: the four names, a bundle parameter never written in
 `SetParameterValues`, a treatment declared and never produced (or produced and never
 declared), a treatment with no reset arm, a blank budget category, two `.csproj` files, a set
-`<AssemblyName>`, and lookup sets that are not in the `lookups.xlsx` you point it at.
+`<AssemblyName>`, lookup sets that are not in the `lookups.xlsx` you point it at, and a
+`refs\` folder holding a different framework build from the one this Assistant carries.
+
+That last one is worth calling out because it is the only rule here that is about the Assistant
+rather than the model. Your project keeps its own copy of the reference assemblies and nothing
+refreshes it when you download a newer Assistant, so the two drift apart with no error at all —
+see [`../docs/conventions/silent-failures.md` § 13](../docs/conventions/silent-failures.md). It
+reports as a NOTE rather than a PROBLEM: a stale reference still builds and still runs.
 
 It also reads C# as text rather than compiling it. Any rule it could not apply is reported as
 `SKIPPED`, never as passed — a check that quietly becomes a no-op is worse than no check.

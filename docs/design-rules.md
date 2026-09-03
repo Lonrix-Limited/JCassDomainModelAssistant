@@ -335,7 +335,13 @@ Five consequences the release process must carry:
   and nothing ever refreshed that copy — so a re-download left the engineer compiling against the
   previous framework while the documentation described the current one, silently.
   `scripts/refresh-model-refs.ps1` is that step, and it is clean-by-default because the reference is
-  a wildcard and a leftover assembly is compiled against rather than ignored.
+  a wildcard and a leftover assembly is compiled against rather than ignored. **The tool detects the
+  drift as well as the script fixing it**: `jcass-dm check` compares the commit stamped on the
+  model's assemblies against the one on the Assistant's and reports a NOTE when they differ. That
+  was added in preference to another paragraph, because it fires on a command the engineer already
+  runs rather than on an update page they see twice a year — and it is a NOTE rather than a refusal
+  because a stale reference still builds, and a check that blocks work over something not yet wrong
+  is a check somebody stops running.
 - **A release has to be identifiable.** `ASSISTANT-VERSION.txt` carries the commit and the release
   date, because `refs/FRAMEWORK-VERSION.txt` identifies the *framework* and
   `tools/jcass-dm.build.txt` only moves when the tool source does — it read the same commit for

@@ -431,8 +431,17 @@ most-often-retuned number in any model.
   finding your class.
 - **The five sheet names in `domain_model_setup.xlsx`.** All five must exist, spelled exactly, even
   `network_functions` with no rows in it.
-- **The `refs\` folder contents.** They arrive with the Assistant and are replaced wholesale when
-  you download a newer one. Never edit them, and never mix assemblies from two framework releases
+- **The `refs\` folder contents.** They were copied here from the Assistant when this project was
+  scaffolded. **This copy is yours and nothing refreshes it for you** - downloading a newer
+  Assistant replaces *its* `refs\`, not this one, and leaves you compiling against the older
+  framework with no error to notice. Refresh it from a PowerShell terminal in your Assistant
+  folder, and let the script replace the folder rather than copying files in over the old ones:
+
+    ```powershell
+    .\scripts\refresh-model-refs.ps1 -Project ..\DomainModelSample
+    ```
+
+  `jcass-dm check` reports a NOTE when this folder and the Assistant's disagree. Never edit them, and never mix assemblies from two framework releases
   in one folder — the reference is a wildcard, so a leftover gets compiled against rather than
   ignored.
 - **`Private=false` on the `<Reference>` item in the csproj.** It stops framework DLLs being copied
