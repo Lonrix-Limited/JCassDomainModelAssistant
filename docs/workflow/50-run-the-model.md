@@ -73,12 +73,17 @@ people's writes as well as protecting yours.
 
 ## The walking skeleton is now proven
 
-If this was the first pass — a `--from-sample` model taken end to end — the pipeline is verified.
-Everything from here on is your own engineering, and every failure from here on is attributable to
-the change you just made.
+If this was the first run you have queued yourself, you have now seen the whole pipeline end to end
+under your own hand. Everything from here on is your own engineering, and every failure from here on
+is attributable to the change you just made.
 
-Go to [`30-make-a-change.md`](30-make-a-change.md) and start replacing the sample's logic with
-yours, one file at a time, keeping the build green at every step.
+**This page is not a step to take on the starter model before you have changed anything.** That
+model was already published and run in the client's project before you saw it, which is what proves
+the pipeline — see [`40-publish.md`](40-publish.md#-before-a-first-publish-on-a-client-that-already-runs-a-custom-model).
+You arrive here after a change you meant to put live, not as a rehearsal.
+
+Go to [`30-make-a-change.md`](30-make-a-change.md) and start replacing the starter model's logic
+with yours, one file at a time, keeping the build green at every step.
 
 ## Done when
 

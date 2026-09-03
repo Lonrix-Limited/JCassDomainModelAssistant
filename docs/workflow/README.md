@@ -94,8 +94,11 @@ every step. It never stops being a model that runs.
                                                      └──────────── the loop you stay in ──────┘
 ```
 
-**First time through, skip step 30.** You come back to it once the starter model has run end to end
-under your own name.
+**First time through, stop at step 20.** Rename the starter model, build it, package it and take it
+as far as **F5** — and stop there. Steps 40 and 50 are for a change you actually mean to put live;
+the client's model is already published and already running, so a rehearsal publish overwrites it
+([`40-publish.md`](40-publish.md#-before-a-first-publish-on-a-client-that-already-runs-a-custom-model)).
+Step 30 is where you go next.
 
 **Note the order: F5 does not require a publish.** You debug the code sitting in your debug
 workspace, not the published model. Publishing before you have debugged puts unverified code into

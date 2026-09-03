@@ -54,24 +54,35 @@ command-line publish and you cannot make one.
 
 > Does this client already have a working custom domain model in production?
 
-If the answer is yes, or if you do not know, **do not publish as part of learning the workflow.**
+**Since design rule 27 the answer is almost always yes**, and asking is not a formality. The
+starter model Lonrix set up *is* a live custom model — published, and run in the client's own
+project, before you saw it. If the answer is yes, or if you do not know, **do not publish as part
+of learning the workflow.**
 
-Here is the situation this exists for. The walking skeleton
-([`README.md`](README.md#the-walking-skeleton--you-are-handed-one-already-proven)) says to prove
-the whole pipeline before doing any of your own modelling, and that includes a publish. On a
-brand-new model that is harmless: there is nothing live to lose. **On a client that is already
-running a custom model written by somebody else, that same practice publish replaces their
-production model with a sample.** Their next forecast runs the sample's logic. Nothing warns
-anybody, because as far as the system is concerned you did exactly what you asked to do.
+Here is the situation this exists for. A custom domain model has exactly one version, so a publish
+is a replacement rather than an addition. **A practice publish on a client who already runs a model
+replaces their production model with whatever happens to be in your debug workspace** — the starter
+model's sample logic, or a half-finished rename. Their next forecast runs it. Nothing warns anybody,
+because as far as the system is concerned you did exactly what you asked to do.
 
-You are in this situation whenever the model came from somewhere other than
-`jcass-dm scaffold` — you inherited a folder, you downloaded the source from the server, somebody
-handed you a zip, or the client has been running forecasts for months and you are the new
-modeller. See [`05-adopt-an-existing-model.md`](05-adopt-an-existing-model.md).
+**There is no longer a case where a practice publish is harmless.** There used to be, and it is
+worth naming so that nobody reconstructs it: a brand-new model on a client with nothing live to
+lose. That case no longer reaches an engineer. Every engagement now begins with a starter model
+that has already been published and run
+([`02-the-starter-model.md`](02-the-starter-model.md), design rule 27), so by the time a model is
+on your disk the client has one in production. The one remaining harmless publish is Lonrix
+standing that starter model up in the first place, before hand-over — and that is not your step.
+See [`05-adopt-an-existing-model.md`](05-adopt-an-existing-model.md); the model you were handed is
+an existing model, however new it is to the client.
 
-**What to do instead:** prove the pipeline as far as F5 and stop there. F5 runs your code against
+**And the pipeline is not yours to prove.** The walking skeleton
+([`README.md`](README.md#the-walking-skeleton--you-are-handed-one-already-proven)) arrives already
+proven: that one online run is what establishes the input files, the budget columns and the
+configurations are real and agree with each other. You get the diagnostic value without spending a
+publish on it.
+
+**What to do instead:** take your own change as far as F5 and stop there. F5 runs your code against
 the client's real data with real breakpoints and changes nothing outside the debug workspace.
-That is the whole diagnostic value of the walking skeleton, and none of it needs a publish.
 Publish only when you have a change you actually intend to put live.
 
 ---
