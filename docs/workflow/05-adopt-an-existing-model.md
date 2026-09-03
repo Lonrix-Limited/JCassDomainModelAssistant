@@ -142,6 +142,16 @@ means the model was written against an older framework than the one in `refs\`. 
 stop rather than inventing a replacement call:
 [`../conventions/when-to-stop.md`](../conventions/when-to-stop.md).
 
+> **For the assistant: if there is no `model-knowledge/<Name>.md` for this model, say so as part of
+> this report** — the last line of it, with the check's own findings, not a closing paragraph after
+> the skeleton map. *"And one thing `check` cannot see: there are no notes for this model."* Then ask
+> for them before the rename or anything else that changes the model.
+>
+> **Two behaviour runs of this page dropped that line entirely** — one with the skills present and one
+> with `.claude/` deleted — after doing the lookup correctly and producing a good diagnosis. A long
+> structured report crowds out a remark at the end. Put it in the report.
+> [`../00-start-here.md`](../00-start-here.md) § 4.
+
 ## Step 4 — Find out what the model needs from the client
 
 Three questions, and the answers come from the model itself rather than from anyone's memory.

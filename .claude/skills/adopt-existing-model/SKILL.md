@@ -60,6 +60,17 @@ waiting, then re-run it when the file arrives.
 engineer in plain terms, rule by rule; `workflow/05` § step 2 has a row per rule and what a
 non-OK result means. The `check-my-model` skill does this part.
 
+> **If there was no notes file at § 0, the last line of that report is that there is no notes file.**
+> Put it with the check's own findings rather than at the end of the reply — *"and one thing `check`
+> cannot see: there are no notes for this model"* — then ask for them before the rename or any other
+> change.
+>
+> **This is not belt-and-braces.** Two behaviour runs of this exact scenario, one with skills and one
+> without, produced a good diagnosis and **never mentioned the notes at all**. Both had done the
+> lookup. The report was long and structured, and a closing remark did not survive it. Attaching the
+> line to the report is what makes it survive, because the report is the thing being written
+> carefully.
+
 ## 3. Rename only if the names actually disagree, and only after asking
 
 **A rename changes what the registry loads. Never do it unprompted.**
@@ -105,6 +116,8 @@ threshold changes the forecast and that is the engineer's decision.
 
 ## 7. Never
 
+- **Never give the diagnosis and say nothing about a missing notes file.** § 0 and § 2. It is the
+  one failure this skill has actually been caught in, twice.
 - **Never rename without asking**, and never when the four names already agree.
 - **Never publish** as part of learning the workflow on an inherited model. See § 0.
 - **Never relocate numbers, CSVs or logic silently.** Recommend, with the reason, and let them decide.
