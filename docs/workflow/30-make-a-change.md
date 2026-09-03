@@ -14,7 +14,7 @@ you if you miss one.
 > [`../orientation/how-a-run-works.md`](../orientation/how-a-run-works.md).
 
 **Before you start, and after you finish:** you must already have proved the pipeline end to end
-([`README.md`](README.md#the-walking-skeleton--do-this-before-you-model-anything)). Every change
+([`README.md`](README.md#the-walking-skeleton--you-are-handed-one-already-proven)). Every change
 below ends the same way — `dotnet build`, `jcass-dm check`, then back through
 [`20-upload-and-debug.md`](20-upload-and-debug.md).
 

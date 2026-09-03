@@ -57,7 +57,7 @@ command-line publish and you cannot make one.
 If the answer is yes, or if you do not know, **do not publish as part of learning the workflow.**
 
 Here is the situation this exists for. The walking skeleton
-([`README.md`](README.md#the-walking-skeleton--do-this-before-you-model-anything)) says to prove
+([`README.md`](README.md#the-walking-skeleton--you-are-handed-one-already-proven)) says to prove
 the whole pipeline before doing any of your own modelling, and that includes a publish. On a
 brand-new model that is harmless: there is nothing live to lose. **On a client that is already
 running a custom model written by somebody else, that same practice publish replaces their

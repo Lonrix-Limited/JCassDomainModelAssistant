@@ -107,7 +107,7 @@ again from the right place.
 
 **Why `--from-sample`.** It carries the reference model's working logic, so the project runs end to
 end before you have written anything. That is the walking skeleton — see
-[`README.md`](README.md#the-walking-skeleton--do-this-before-you-model-anything) for why proving
+[`README.md`](README.md#the-walking-skeleton--you-are-handed-one-already-proven) for why proving
 the pipeline first is worth the extra half hour. **This is the project you keep.** There is no
 throwaway and no rename later.
 

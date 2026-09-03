@@ -43,7 +43,7 @@ wrong. Four unknowns and no way to separate them.
 This is also why [`10-scaffold-and-build.md`](10-scaffold-and-build.md) starts you with
 `scaffold --from-sample` rather than an empty project — it hands you a model that already runs, so
 the pipeline can be proven before you have written a line. See
-[`README.md`](README.md#the-walking-skeleton--do-this-before-you-model-anything).
+[`README.md`](README.md#the-walking-skeleton--you-are-handed-one-already-proven).
 
 ## 2. Know your three lists before you write any code
 

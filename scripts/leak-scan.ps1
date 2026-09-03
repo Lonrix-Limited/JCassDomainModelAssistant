@@ -169,7 +169,13 @@ catch {
 if ($listedByGit) {
     $source = 'git (tracked + untracked, ignored files excluded)'
     $files = $listedByGit |
-        ForEach-Object { Join-Path $repoRoot ($_ -replace '/', '\') } |
+        # Join the git-relative path as-is. Do NOT rewrite '/' to a backslash first: CI runs
+        # this script on ubuntu-latest under pwsh, where a backslash is an ordinary filename
+        # character rather than a separator. The old form produced 'docs\00-start-here.md',
+        # which Windows tolerates and Linux does not - every path then failed the Test-Path
+        # below, leaving an empty file list and a scan that reported CLEAN over nothing.
+        # Join-Path normalises forward slashes on Windows by itself.
+        ForEach-Object { Join-Path $repoRoot $_ } |
         Where-Object { Test-Path -LiteralPath $_ -PathType Leaf } |
         Get-Item -Force
 }

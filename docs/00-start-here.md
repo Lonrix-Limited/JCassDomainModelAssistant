@@ -268,7 +268,7 @@ published into.
 **Plan the engineering anyway.** [`workflow/01-plan-your-model.md`](workflow/01-plan-your-model.md)
 does not go away — four questions: start simple; which treatments, input columns and parameters; how
 each parameter increments and resets; which thresholds and constants, grouped. **Walk them one at a
-time** and wait for each answer. Read against a starter model they become questions about what is
+time** and wait for each answer. Read against a starter model, they become questions about what is
 already there. The lists are the engineer's to fill in — never yours.
 
 **Read the setup files, and read them for what they declare.**
