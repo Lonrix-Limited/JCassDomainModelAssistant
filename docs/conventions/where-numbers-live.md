@@ -53,9 +53,11 @@ Asking was only half the job.
 
 1. **Add the row to `lookups.xlsx`.** Either the engineer edits it on the web app's **Tuning** page,
    which is the route to prefer because it is the one they will use again, or they open
-   `inputs\lookups.xlsx` in Excel and add a row to any sheet whose name starts `lkp_`. Three columns
-   matter: `lookup_set_name`, `setting_key`, `setting_value` — for the example above,
-   `reseal_thresholds`, `age_gt`, `12`.
+   `inputs\lookups.xlsx` in Excel and add a row to any sheet whose name starts `lkp_` — **except a
+   unit rate, which goes in `lkp_unit_rates`** (see below). Three columns matter:
+   `lookup_set_name`, `setting_key`, `setting_value` — for the example above, `reseal_thresholds`,
+   `age_gt`, `12`. There is a fourth, `comment`, which the framework ignores and the Tuning page
+   shows beside the value; it is the only explanation a modeller gets, so fill it in.
 2. **Add a property to `Constants`** that reads it, guarded, naming the set and the key in the
    message if it is missing.
 3. **Reference that property from the trigger**, in place of the literal.
@@ -98,6 +100,40 @@ move it.
 Trigger ages and condition limits. Unit rates. Deterioration rates. Cost escalation factors.
 Minimum-interval rules between treatments. Anything a modeller would plausibly want to edit on the
 Tuning page and immediately re-run — which is a good practical proxy for the test above.
+
+### Unit rates go in one named sheet, and only unit rates do
+
+**A treatment's unit rate belongs in the `lkp_unit_rates` sheet of `inputs\lookups.xlsx`.** Not any
+`lkp_` sheet. That one, by name.
+
+Everywhere else in this framework the sheet is an organisational convenience — every `lkp_*` sheet is
+merged into one table and a value is found by `(set, key)`. **The Tuning page's *Treatment Rates* tab
+is the exception**: it reads exactly one sheet, and its name is `lkp_unit_rates`. A rate anywhere
+else still loads, still costs treatments correctly, and simply **does not appear** on the page the
+modeller was told to change it on. Nothing errors. They open the tab, do not see the rate they were
+promised, and go back to asking for a code change — which is the outcome this whole convention
+exists to remove.
+
+**Group with sets, not with sheets.** The tab's dropdown lists the distinct `lookup_set_name` values
+it finds in that sheet, so `surfacing_rates`, `pavement_rates`, `structures_rates` give a modeller
+three short tables instead of one long one — without leaving the sheet the page can see.
+
+**One rate per treatment, and vary the quantity instead.** A domain model can compute a rate at run
+time and pass it to `TreatmentInstance` — the constructor takes `quantity` and `unitRate` separately
+— and once in a while that is right. It should not be the reflex, because a rate computed in C# is a
+rate the modeller cannot change, which is this page's whole subject. When the effective cost varies
+with distress, extent or material, the shape to reach for is **the rate from `lkp_unit_rates` and a
+quantity worked out in the C#** — an extent fraction, a measured area, a distress multiplier — with
+those factors themselves in `lookups.xlsx`.
+
+**Two things that bite:**
+
+- **A `(set, key)` pair must be unique across the whole workbook.** The web app scans every `lkp_*`
+  sheet when it saves, and the same pair in two of them makes the save refuse rather than choose. So
+  when you move a rate into `lkp_unit_rates`, **move it — do not copy it.**
+- **`lkp_unit_rates` is for rates.** Thresholds, factors and limits do not belong there just because
+  the tab is convenient; they have their own tuning surfaces, and a rates tab full of trigger ages
+  stops being the thing a modeller can scan.
 
 ### The reference model's deliberate counter-examples
 

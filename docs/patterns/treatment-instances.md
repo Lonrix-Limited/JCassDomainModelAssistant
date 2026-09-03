@@ -131,10 +131,20 @@ That fraction comes from `lookups.xlsx` like every other tunable number. Pass th
 length instead and the cost is right by construction and wrong by engineering, which is the harder
 kind of wrong to notice.
 
-**The unit rate comes from lookups, never from a literal.** It is supplied per instance and is no
-longer inherited from the treatment type. The Tuning page's *Treatment Rates* tab edits exactly this
-set, so expect its values to change between runs with no code change at all:
-[`constants-from-lookups.md`](constants-from-lookups.md).
+**The unit rate comes from lookups, never from a literal — and specifically from the
+`lkp_unit_rates` sheet of `inputs\lookups.xlsx`.** It is supplied per instance and is no longer
+inherited from the treatment type. The Tuning page's *Treatment Rates* tab reads **that sheet, by
+name**, so a rate kept anywhere else works perfectly and is invisible on the page the modeller edits
+rates on. Expect the values to change between runs with no code change at all:
+[`constants-from-lookups.md`](constants-from-lookups.md) and
+[`../conventions/where-numbers-live.md`](../conventions/where-numbers-live.md).
+
+**When the effective rate varies, vary the quantity — not the rate.** The constructor lets you pass a
+rate you computed, and that is occasionally right; it should not be the reflex, because a rate
+computed in C# is a rate the modeller can no longer change. The default shape is the one above: the
+rate straight out of `lkp_unit_rates`, and a quantity the domain model works out — the repaired
+length rather than the segment length, an area rather than a count, a distress-driven extent — with
+the factors that produce it in `lookups.xlsx` like everything else.
 
 Where one job draws on two budgets, the quantity and rate are handled differently — see
 [`multi-budget-cost-split.md`](multi-budget-cost-split.md), and read it before improvising.

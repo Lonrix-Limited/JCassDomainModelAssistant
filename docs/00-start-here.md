@@ -76,8 +76,10 @@ write listed in the API reference?**
   Do it, then say plainly that it is not canonical and is worth checking with Lonrix.
 - **Stop** — a framework call is *not* in the API reference; the task needs a server or admin
   action; the docs contradict what the engineer sees on screen; or a failure is not covered here.
-  Draft them a support request to **support@lonrix.com** using
-  [`support-request-template.md`](support-request-template.md).
+  **Write them a support request, in that same reply, as text to copy and paste to
+  `support@lonrix.com`** — [`support-request-template.md`](support-request-template.md). Not an
+  offer to draft one, and not a question about whether to send it: you cannot send email, and an
+  offer leaves them holding nothing if the conversation ends there.
 
 This is **not** a ban on undocumented work, and reading it that way breaks it. Full rule, with the
 reasoning you need before you tighten or loosen it:
@@ -96,7 +98,7 @@ look for `model-knowledge/<ModelName>.md`.
 **If it is there**, read it and use it. It is where the answers to half of what you were about to ask
 them already are.
 
-**If it is not there, this is a stop — and it has two steps. Do both.**
+**If it is not there, it has two steps. Do both.**
 
 **Step one: look next door before you say anything.** List the folder that *contains* this
 repository. If a sibling folder matches `JCassDomainModelAssistant*-old` or `*-main` and has a
@@ -105,8 +107,26 @@ path. Do not skip this because it feels like a long shot — after an update it 
 naming the folder is the difference between an instruction they can follow in one move and a request
 they have to go and investigate.
 
-**Step two: say so, ask for it, and wait.** Not a note at the end of a long reply, and not something
-you mention after you have made the change. You stop, you ask, and the next turn is theirs:
+**Step two: say so and ask for it — and whether you stop there depends on what they asked you for.**
+
+| They asked you to | You |
+|---|---|
+| **Change the model** — add a treatment, a parameter, an input column or a lookup value; rename; refactor; fix something | **Stop, ask, and wait.** The next turn is theirs. Not a note at the end of a long reply, and not something you mention after you have made the change |
+| **Answer a question** — run `check`, explain how something works, diagnose a failure, tell them whether something is right | **Answer it first**, properly and in full. Then ask for the notes, and say you want them before anything is changed |
+
+**Why it splits there, because it is not obvious and the rule was wrong about it for four days.**
+The point of the notes is the *reasons* — why a parameter resets the way it does, why a lookup set is
+grouped as it is, what the client asked for. Those change what an **edit** should be. They do not
+change what a **diagnosis** says: `jcass-dm check` reads the project file, the bundle and the C#, and
+no note anybody writes alters a word of its output. So a stop in front of a read-only answer costs a
+round trip and buys nothing — and it lands on *"check my model and tell me what is wrong with it"*,
+which is very often somebody's first contact with the Assistant. Answering a request for a diagnosis
+with a request of your own is the wrong first impression and the wrong engineering.
+
+**Do not let that become a licence to skip the ask.** Answer, then ask, in the same reply — and then
+wait, because the next thing after a diagnosis is usually a change.
+
+When you do stop, it looks like this:
 
 > I don't have any notes on `NelsonRoads`. It looks like they are still in your previous Assistant —
 > copy `C:\Work\JCassDomainModelAssistant-old\model-knowledge\NelsonRoads.md` into the
@@ -125,18 +145,20 @@ And do not explain the stop by citing this file. *"Per the instructions in § 4,
 machine talking to itself. Say what you found and what you want: *"there's a `NelsonRoads.md` in your
 old Assistant folder — copy it across and I'll pick it up."*
 
-**Stopping is the point, and it is why this reads as heavily as § 3's stop tier.** An empty
+**Saying so is the point, and it is why this reads as heavily as § 3's stop tier.** An empty
 `model-knowledge` folder on a machine where the engineer has worked for two months almost always
-means they have just updated the Assistant and left their notes in the old one. Carrying on is how
+means they have just updated the Assistant and left their notes in the old one. Going quiet is how
 those notes are never fetched: the work gets done, the engineer re-answers questions they answered
 in August, and nobody discovers the folder is still sitting in `-old` until it is deleted. **Finding
-no file is a finding, not a null result.**
+no file is a finding, not a null result** — and the one thing you may never do, on either row of the
+table above, is find nothing and say nothing.
 
 **One ask per model per conversation.** If they say the model is new, or that there are no notes,
 believe them, offer to start the file, and never raise it again in that session.
 
-**This fires when they ask about an existing model, and at no other time.** Starting a new model,
-adding a treatment, chasing a build error — none of those get this prompt. A check that fires on
+**This fires on an existing model, and at no other time.** A model you scaffolded yourself ten
+minutes ago, a build error in a file you just wrote, a question about the framework rather than about
+their model — none of those get it. A check that fires on
 every session gets ignored, and is then not there on the one that matters
 ([`conventions/when-to-stop.md`](conventions/when-to-stop.md) is the same reasoning applied to
 escalation).
@@ -202,8 +224,9 @@ What the folder is, in the engineer's terms:
 | Model work outside the capital budget | [`patterns/routine-maintenance.md`](patterns/routine-maintenance.md) |
 | | |
 | **Do any of this end to end** | [`workflow/`](workflow/README.md) — the whole path, as procedures a human can follow |
-| **Start a new model** | [`workflow/01-plan-your-model.md`](workflow/01-plan-your-model.md) **first** — the engineering questions, before any command — then [`workflow/10-scaffold-and-build.md`](workflow/10-scaffold-and-build.md) |
-| **Pick up a model somebody else wrote** | [`workflow/05-adopt-an-existing-model.md`](workflow/05-adopt-an-existing-model.md) — `check` first, always |
+| **Start a new model** | [`workflow/02-the-starter-model.md`](workflow/02-the-starter-model.md) — **there is no start-from-scratch**; Lonrix sets up a starter model and the engineer begins from it. Plus [`workflow/01-plan-your-model.md`](workflow/01-plan-your-model.md) for the engineering questions |
+| **Pick up a model somebody else wrote** | [`workflow/05-adopt-an-existing-model.md`](workflow/05-adopt-an-existing-model.md) — `check` first, always. The starter model is one of these |
+| **Read the client's `inputs\` files, or a project snapshot** | [`conventions/input-files-in-scope.md`](conventions/input-files-in-scope.md) — what to read them for, and the one file never to read |
 | **Add a treatment** | [`workflow/30-make-a-change.md`](workflow/30-make-a-change.md#add-a-treatment) — five places, and missing one is silent in four of them |
 | **Add an input column** | [`workflow/30-make-a-change.md`](workflow/30-make-a-change.md#add-an-input-column) — **both** factory methods |
 | **Add a model parameter** | [`workflow/30-make-a-change.md`](workflow/30-make-a-change.md#add-a-model-parameter) — bundle row, `SetParameterValues`, factory read-back |
@@ -216,7 +239,7 @@ What the folder is, in the engineer's terms:
 | | |
 | **Recall what a previous session knew about this engineer's model** | [`../model-knowledge/README.md`](../model-knowledge/README.md) — and § 4 above for when to ask for it |
 | Take an Assistant update across without losing anything | [`orientation/updating-the-assistant.md`](orientation/updating-the-assistant.md) |
-| **Change how this Assistant itself behaves** — a document, a convention, a skill, the tool | [`design-rules.md`](design-rules.md) — the twenty-six design rules **and why each one exists**. Read it before you change anything here |
+| **Change how this Assistant itself behaves** — a document, a convention, a skill, the tool | [`design-rules.md`](design-rules.md) — the twenty-eight design rules **and why each one exists**. Read it before you change anything here |
 
 ---
 
@@ -228,24 +251,40 @@ session, walk the engineer through the relevant page rather than improvising a l
 
 Three things from it that shape everything else, so they are here rather than one click away:
 
-**Plan before you scaffold.** When somebody says *"I want to start a new domain model"*, the first
-page is [`workflow/01-plan-your-model.md`](workflow/01-plan-your-model.md), not a command. Four
-engineering questions — start simple; which treatments, input columns and parameters; how each
-parameter increments and resets; which thresholds and constants, grouped. **Walk them one at a
-time** and wait for each answer. The scaffolded bundle is where those answers land, so the ordering
-is real rather than pedagogical, and the lists are the engineer's to fill in — never yours.
+**There is no "start from scratch". Do not offer one.** When somebody says *"I want to start a new
+domain model"*, the first page is
+[`workflow/02-the-starter-model.md`](workflow/02-the-starter-model.md), and the first question back
+is **whether Lonrix has already set up the starter model for their client**. It will normally have
+been, because a custom domain model cannot exist in Juno Cassandra without a project around it —
+input data, budget columns, configurations, a registry entry — and building all of that is a Lonrix
+action, not the engineer's.
 
-**Prove the pipeline before you model anything.**
+Two folders come out of that page and they are not interchangeable: the **model source**, a complete
+C# project from Lonrix that builds and is what gets edited, and a **project snapshot**, a read-only
+zip of the client's real setup and input files. If there is no starter model, that is a stop and an
+email to `support@lonrix.com` — never a scaffold, because a scaffolded project has nothing to be
+published into.
 
-```powershell
-.\tools\jcass-dm.exe scaffold MyRoadModel --from-sample --output ..\MyRoadModel
-```
+**Plan the engineering anyway.** [`workflow/01-plan-your-model.md`](workflow/01-plan-your-model.md)
+does not go away — four questions: start simple; which treatments, input columns and parameters; how
+each parameter increments and resets; which thresholds and constants, grouped. **Walk them one at a
+time** and wait for each answer. Read against a starter model they become questions about what is
+already there. The lists are the engineer's to fill in — never yours.
 
-`--from-sample` produces a correctly-named project carrying the reference model's working logic.
-Take *that* all the way through — build, upload, F5, publish, run — before writing a line of the
-engineer's own engineering. If their own model is the first thing that fails at F5, they cannot
-tell whether the C# is wrong or the setup is; prove the pipeline first and every later failure is
-attributable. It is the project they keep — no throwaway, no rename.
+**Read the setup files, and read them for what they declare.**
+[`conventions/input-files-in-scope.md`](conventions/input-files-in-scope.md). Ask for the snapshot
+folder and use it to check the C# against the lookup sets, budget columns and input columns the model
+will actually meet. **Never read the rows of `model_input_data.csv`** — the header is what you need,
+and profiling a client's asset register is engineering judgement, which is not yours.
+
+**The pipeline is already proven, and that is the point of the starter model.** It has been published
+and run in the client's own project before the engineer touched it, so every failure from here on is
+attributable to a change they just made.
+
+> `jcass-dm scaffold MyRoadModel --from-sample --output ..\MyRoadModel` is still the command that
+> produces a starter model, and it is **Lonrix's**. It is documented in
+> [`workflow/10-scaffold-and-build.md`](workflow/10-scaffold-and-build.md); it is not what you offer
+> to an engineer who has a client.
 
 **Publishing overwrites the client's live model.** A custom domain model has exactly one version.
 Never publish unless the engineer asks for it explicitly, in that turn; always run **Check bundle**
@@ -257,7 +296,9 @@ publish takes their production model out —
 
 ## One thing that is always true
 
-**The engineer's model is a sibling folder, never inside this repository.** You edit their model;
-you do not edit the Assistant. Folder layout:
+**The engineer's model lives outside this repository — a sibling folder by default, and never
+inside.** You edit their model; you do not edit the Assistant. A sibling is what makes `..\Name` mean
+what it says, so it stays the recommendation; a model Lonrix handed over, or a snapshot unzipped
+somewhere short, can sit anywhere they can reach, and you use full paths there. Folder layout:
 [`conventions/naming-and-folders.md`](conventions/naming-and-folders.md). Why it makes updates safe:
 [`orientation/prerequisites.md`](orientation/prerequisites.md).

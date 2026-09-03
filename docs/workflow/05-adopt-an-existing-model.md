@@ -2,10 +2,20 @@
 
 *"Help me refactor the domain model in folder X."*
 
-This is a first-class way in, not a special case. It differs from starting fresh in one way that
-changes everything else: **you begin by finding out what you have, not by creating something.**
-An inherited model is already running somebody's forecasts, or is about to, and you do not yet
-know which of its conventions are deliberate.
+**This is the usual way in, not a special case.** Since there is no start-from-scratch — Lonrix sets
+up a starter model in the client's project and you begin from that
+([`02-the-starter-model.md`](02-the-starter-model.md)) — nearly every engagement arrives here, and a
+starter model is an inherited model like any other.
+
+It differs from starting fresh in one way that changes everything else: **you begin by finding out
+what you have, not by creating something.** An inherited model is already running somebody's
+forecasts, or is about to, and you do not yet know which of its conventions are deliberate.
+
+**Get the client's setup files too, if you have not already.** A project snapshot lets `check` do its
+most useful comparison and lets you check the C# against the budget columns and input columns it will
+actually meet — [`02-the-starter-model.md`](02-the-starter-model.md) § step 3, and
+[`../conventions/input-files-in-scope.md`](../conventions/input-files-in-scope.md) for what to do
+with them.
 
 You rejoin the main path at [`20-upload-and-debug.md`](20-upload-and-debug.md), and from there it
 is identical.
@@ -172,6 +182,24 @@ Then look at the folder each path is built against.
 
 `dump` prints any sheet of the bundle as text, in a stable order — so you can also take a dump
 before and after a change and compare the two line by line.
+
+**And do those columns actually exist?** With a project snapshot on disk, compare that list against
+the **header row** of the client's network data — one line, and the rest of the file is never needed:
+
+```powershell
+Get-Content <snapshot>\inputs\model_input_data.csv -TotalCount 1
+```
+
+**Which budget categories does it charge to, and do they exist?** Same shape: the bundle says what it
+wants, `budgets.xlsx` says what there is, and a category with no column stops the run at setup naming
+the treatment.
+
+```powershell
+.\tools\jcass-dm.exe dump ..\TheirModel\domain_model_setup.xlsx --sheet treatments
+```
+
+Both of those checks, and the boundary on what may and may not be read out of those files, are
+[`../conventions/input-files-in-scope.md`](../conventions/input-files-in-scope.md).
 
 ## Step 5 — Map it onto the canonical skeleton
 

@@ -12,13 +12,20 @@ and running the verb it names.
 
 ## 0. Before the first step
 
-- **If this conversation has not touched this model before and you did not scaffold it yourself
-  in this session, do the `model-knowledge` check first** —
-  [`docs/00-start-here.md` § 4](../../../docs/00-start-here.md). Read
-  `model-knowledge/<ModelName>.md` if it is there; if it is not, look for a sibling `*-old` or
-  `*-main` folder holding one, then **stop and ask them to copy it across before you start**.
-  Invoking this skill is not a way past that stop — half the answers you are about to ask them
-  for are often already in that file.
+- **This skill changes the model, so the `model-knowledge` check happens before the change** —
+  [`docs/00-start-here.md` § 4](../../../docs/00-start-here.md). Three steps, in order, and step 3
+  is the one that regresses:
+
+  1. Read `model-knowledge/<ModelName>.md` if it is there, and use it.
+  2. If it is not there, list the folder that *contains* this repository and look for a sibling
+     `JCassDomainModelAssistant*-old` or `*-main` holding one.
+  3. **Stop. Ask them to copy it across — naming the exact folder if step 2 found one — and wait
+     for their reply.** Do not start the edit and mention it afterwards; afterwards is too late,
+     because the edit is what the notes were for.
+
+  **Skip all three only if you scaffolded this model yourself in this session, or this conversation
+  has already done the check for it.** Invoking this skill is not a way past the stop — half the
+  answers you are about to ask them for are often already in that file.
 - **Honour the verb** — [`docs/00-start-here.md` § 2](../../../docs/00-start-here.md).
 - **Stop conditions apply** — [`docs/conventions/when-to-stop.md`](../../../docs/conventions/when-to-stop.md).
   Use the `draft-support-request` skill if one fires.

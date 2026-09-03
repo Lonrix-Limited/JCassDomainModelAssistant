@@ -136,8 +136,22 @@ Three columns matter:
 | `setting_key` | The key within that set |
 | `setting_value` | The value, always read as text |
 
-A value is addressed by the pair **(set name, key)**. Which sheet a row sits in is only an
-organisational convenience, so sheets can be regrouped freely without touching any C#.
+A value is addressed by the pair **(set name, key)**. Which sheet a row sits in makes no difference
+to your C#, so sheets can be regrouped freely without touching code.
+
+> **One sheet name is not free, and it is the one engineers reach for first.** The Tuning page's
+> **Treatment Rates** tab reads exactly one sheet, by name: **`lkp_unit_rates`**. Put a treatment's
+> unit rate anywhere else and the model reads it correctly and the modeller cannot see it on the page
+> they were told to edit it on. **Unit rates go in `lkp_unit_rates`; group them with lookup *sets*,
+> which is what the tab's dropdown lists.** Everything else can live wherever it reads best.
+>
+> **A `(set, key)` pair must also be unique across the whole workbook.** The web app's writer scans
+> every `lkp_*` sheet, and a pair that appears in two of them makes a save refuse as ambiguous rather
+> than choose. So move a row when you regroup; never copy it.
+
+There is a fourth column, `comment`, which the framework ignores and the Tuning page shows beside the
+value. It is the only explanation a modeller gets of what a number means — *"$/m² for thin AC"* —
+so fill it in.
 
 `jcass-dm check --lookups <path-to-lookups.xlsx>` compares the set names your `Constants` class asks
 for against the ones the file actually has, before you upload anything.
@@ -151,7 +165,8 @@ right thing to do — **and writing `private const double ReplaceGrade = 4.0;` n
 
 1. **Add the row to `lookups.xlsx`.** Either they edit it on the Tuning page, which is the route to
    prefer because it is the one they will use again, or they open `inputs\lookups.xlsx` and add a
-   row to any `lkp_` sheet: `replace_thresholds`, `cond_gt`, `4`.
+   row to any `lkp_` sheet: `replace_thresholds`, `cond_gt`, `4`. **A unit rate is the exception —
+   that goes in `lkp_unit_rates`**, for the reason above.
 2. **Add a property to `Constants`** that reads it, guarded, naming the set and the key.
 3. **Reference that property** from the trigger, in place of the literal.
 4. **Tell them where the number now lives** and that they can change it on the Tuning page without

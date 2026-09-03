@@ -16,8 +16,16 @@ namespace DomainModelSample.Objects;
 /// <para><b>How lookups.xlsx is structured.</b> Any sheet whose name starts with <c>lkp_</c> is
 /// read, and all of them are merged into one flat table. Each sheet has three columns that matter
 /// — <c>lookup_set_name</c>, <c>setting_key</c>, <c>setting_value</c> — so a value is addressed by
-/// the pair (set name, key). The sheet a row lives in is only an organisational convenience; it is
-/// not part of the address, so sheets can be reorganised without touching code.</para>
+/// the pair (set name, key). The sheet a row lives in is not part of the address, so sheets can be
+/// reorganised without touching code.</para>
+///
+/// <para><b>One sheet name is not free, and it is the one you will reach for first.</b> Treatment
+/// unit rates belong in the sheet called <c>lkp_unit_rates</c>, because the web app's Tuning page
+/// "Treatment Rates" tab reads that one sheet by name. A rate in any other <c>lkp_</c> sheet loads
+/// correctly, costs treatments correctly, and never appears on the page the modeller was told to
+/// edit rates on. Group rates into several lookup SETS inside that sheet rather than into several
+/// sheets, and never leave the same (set, key) pair in two sheets — the web app refuses to save an
+/// ambiguous pair rather than choosing one.</para>
 ///
 /// <para><b>Read them here, not earlier.</b> This object is built from
 /// <see cref="DomainModelSample.SetupInstance"/>, which the framework calls after it has loaded
@@ -35,9 +43,10 @@ public class Constants
     private const string ReplaceThresholds = "replace_thresholds";
 
     /// <summary>
-    /// Set name in lookups.xlsx holding the per-treatment unit rates. This is the set the web
-    /// app's Tuning page "Treatment Rates" tab edits, so expect its values to change between runs
-    /// with no code change.
+    /// Set name in lookups.xlsx holding the per-treatment unit rates. Keep these rows in the
+    /// <c>lkp_unit_rates</c> SHEET: that is the sheet the web app's Tuning page "Treatment Rates"
+    /// tab reads, by name, so expect the values to change between runs with no code change. A rate
+    /// kept in another lkp_ sheet works and is invisible on that page.
     /// </summary>
     private const string UnitRates = "unit_rates";
 

@@ -60,7 +60,9 @@ internal static class AddTreatmentVerb
         output.WriteLine( "  2. TreatmentsTrigger.cs   - decide when it fires and what it costs, and");
         output.WriteLine( "                              CALL it from GetTriggeredTreatments. Set");
         output.WriteLine( "                              TreatmentSuitabilityScore, or it is never chosen.");
-        output.WriteLine( "  3. lookups.xlsx           - a unit_rates row, plus any thresholds it reads.");
+        output.WriteLine( "  3. lookups.xlsx           - a unit_rates row in the lkp_unit_rates SHEET (that is the");
+        output.WriteLine( "                              one the Tuning page's Treatment Rates tab reads, by name),");
+        output.WriteLine( "                              plus any thresholds it reads, in any lkp_ sheet.");
         output.WriteLine( "  4. The element's Reset    - handle it. The default branch throws, so a treatment");
         output.WriteLine( "                              missing here fails loudly rather than doing nothing.");
         output.WriteLine();

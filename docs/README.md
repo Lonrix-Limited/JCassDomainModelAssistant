@@ -12,8 +12,8 @@ routes; it carries almost no content of its own.
 |---|---|---|
 | (this folder) | [`00-start-here.md`](00-start-here.md), the single entry point; [`design-rules.md`](design-rules.md), the rules behind everything here; and [`support-request-template.md`](support-request-template.md) | **Present** |
 | [`orientation/`](orientation/) | What you are building, how a run works, prerequisites, running commands, the C# you need, reading errors | **Present** |
-| [`conventions/`](conventions/) | The rules that fail silently — where numbers live, the four names, when to stop | **Present** |
-| [`workflow/`](workflow/) | Plan, scaffold, build, upload, debug, publish, run. The walking skeleton, end to end | **Present** |
+| [`conventions/`](conventions/) | The rules that fail silently — where numbers live, the four names, when to stop, what to do with the client's input files | **Present** |
+| [`workflow/`](workflow/) | Plan, start from the client's starter model, build, upload, debug, publish, run — end to end | **Present** |
 | [`patterns/`](patterns/) | The canonical shape of each recurring piece of a real model, each with a compiling example | **Present** |
 | [`framework/`](framework/) | The generated framework API reference and concepts mirror | **Present** — generated, never edited by hand |
 

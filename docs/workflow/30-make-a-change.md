@@ -59,7 +59,7 @@ reason, and the numbers that legitimately *do* stay in C#:
 | 2 | `domain_model_setup.xlsx` → `treatments` | A row using **exactly** that string, and a budget category |
 | 3 | `Objects\TreatmentsTrigger.cs` | When it fires, and what it costs |
 | 4 | `Objects\Resetter.cs` | A `case` arm — what it does to the element |
-| 5 | The client's `inputs\lookups.xlsx` → `unit_rates` | A rate row keyed by the treatment name, plus any thresholds it needs |
+| 5 | The client's `inputs\lookups.xlsx`, sheet **`lkp_unit_rates`** → set `unit_rates` | A rate row keyed by the treatment name. Thresholds go in whichever `lkp_` sheet reads best; **the rate goes in that sheet by name** |
 
 ### The procedure
 
@@ -108,8 +108,14 @@ reason, and the numbers that legitimately *do* stay in C#:
    treatment is funded, reported and has no effect:
    [`../conventions/silent-failures.md` § 11](../conventions/silent-failures.md#11-a-treatment-with-no-arm-in-the-reset-switch).
 
-5. **`inputs\lookups.xlsx`** — add the `unit_rates` row keyed `reseal`, and any thresholds the
-   trigger reads. Upload it on **Files → Inputs**, or edit it on the **Tuning** page.
+5. **`inputs\lookups.xlsx`** — add the `unit_rates` row keyed `reseal` **in the `lkp_unit_rates`
+   sheet**, and any thresholds the trigger reads in whichever `lkp_` sheet suits. Upload it on
+   **Files → Inputs**, or edit it on the **Tuning** page.
+
+   **The sheet name matters for the rate and only for the rate.** Tuning's *Treatment Rates* tab
+   reads `lkp_unit_rates` by name; a rate in another sheet still loads and still costs the
+   treatment, and simply never appears on the page the modeller edits rates on.
+   [`../conventions/where-numbers-live.md`](../conventions/where-numbers-live.md).
 
 ### Then
 

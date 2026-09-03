@@ -12,13 +12,20 @@ and running the verb it names.
 
 ## 0. Before the first step
 
-- **If this conversation has not touched this model before and you did not scaffold it yourself
-  in this session, do the `model-knowledge` check first** —
-  [`docs/00-start-here.md` § 4](../../../docs/00-start-here.md). Read
-  `model-knowledge/<ModelName>.md` if it is there; if it is not, look for a sibling `*-old` or
-  `*-main` folder holding one, then **stop and ask them to copy it across before you start**.
-  Invoking this skill is not a way past that stop — half the answers you are about to ask them
-  for are often already in that file.
+- **This skill changes the model, so the `model-knowledge` check happens before the change** —
+  [`docs/00-start-here.md` § 4](../../../docs/00-start-here.md). Three steps, in order, and step 3
+  is the one that regresses:
+
+  1. Read `model-knowledge/<ModelName>.md` if it is there, and use it.
+  2. If it is not there, list the folder that *contains* this repository and look for a sibling
+     `JCassDomainModelAssistant*-old` or `*-main` holding one.
+  3. **Stop. Ask them to copy it across — naming the exact folder if step 2 found one — and wait
+     for their reply.** Do not start the edit and mention it afterwards; afterwards is too late,
+     because the edit is what the notes were for.
+
+  **Skip all three only if you scaffolded this model yourself in this session, or this conversation
+  has already done the check for it.** Invoking this skill is not a way past the stop — half the
+  answers you are about to ask them for are often already in that file.
 - **Honour the verb** — [`docs/00-start-here.md` § 2](../../../docs/00-start-here.md). "Walk me
   through adding a treatment" means *they* make the five edits, one at a time, and this skill is not
   the way round that. An engineer who has never made this change cannot maintain the model.
@@ -49,6 +56,18 @@ is [`docs/patterns/constants-from-lookups.md`](../../../docs/patterns/constants-
 [`docs/conventions/where-numbers-live.md`](../../../docs/conventions/where-numbers-live.md).
 
 The `add-lookup-constant` skill does that half.
+
+**And the unit rate has a sheet, by name: `lkp_unit_rates`.** A threshold can go in whichever `lkp_`
+sheet reads best, because the framework merges them all; the rate cannot, because the Tuning page's
+**Treatment Rates** tab reads that one sheet by name. A rate in another sheet costs the treatment
+correctly and never appears on the page the modeller was told to change rates on.
+[`docs/conventions/where-numbers-live.md`](../../../docs/conventions/where-numbers-live.md)
+§ *Unit rates go in one named sheet*.
+
+**If they say the rate depends on something — material, distress, traffic — the default answer is to
+vary the quantity, not the rate.** One rate per treatment in `lkp_unit_rates`, and a quantity the C#
+works out (an extent fraction, a measured area), because cost is the product of the two and a rate
+computed in C# is a rate the modeller has lost.
 
 ## 3. The five places
 
@@ -87,7 +106,7 @@ because the value is not known yet.
 | Ask | Never |
 |---|---|
 | The trigger conditions and their thresholds | A plausible age or condition limit |
-| The unit rate, and what quantity it is priced per | A rate, or the assumption that quantity is the element's whole size |
+| The unit rate, and what quantity it is priced per — it goes in `lkp_unit_rates` | A rate, or the assumption that quantity is the element's whole size |
 | The budget category | A category name that sounds right |
 | What the treatment does to the element in `Reset` | A condition reset value |
 | How the candidate should be ranked | A scoring formula presented as standard |

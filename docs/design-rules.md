@@ -1,8 +1,9 @@
 # Design rules
 
-**This is the "why" behind everything else in this repository.** Twenty-six rules, each with the
-reasoning that produced it. They were settled while the Assistant was built, between 9 and 28
-August 2026, and they are live rules rather than history.
+**This is the "why" behind everything else in this repository.** Twenty-eight rules, each with the
+reasoning that produced it. The first twenty-six were settled while the Assistant was built, between
+9 and 28 August 2026; rules 27 and 28 were added on 2026-09-03 from watching it in real use, and
+several of the originals were amended the same day. They are live rules rather than history.
 
 ## Who this file is for
 
@@ -50,7 +51,7 @@ credential, no licence check and no Lonrix involvement. That is the whole distri
 It is also **why `refs/` must contain reference assemblies rather than real ones**: a public
 repository publishes whatever is committed to it. See rule 11.
 
-## 2. The engineer's model is a sibling folder, never inside the Assistant
+## 2. The engineer's model is outside the Assistant — a sibling by default, never inside
 
 Debug upload requires **source only**, rooted at the `.csproj`, with exactly one `.csproj` at the
 top of the zip. Two invariants follow, and everything else rests on them:
@@ -69,6 +70,15 @@ wholesale without touching the engineer's work.
 engineer who does not know where their model went cannot check your work, and finds out weeks
 later — see rule 23.
 
+**"Sibling" is the default, not the requirement — amended 2026-09-03.** The invariant is *outside*.
+A sibling folder is what makes `..\MyRoadModel` mean what it says in every command on every page, so
+it stays the recommendation and it is where `scaffold --output` points. But a model handed over by
+Lonrix, or a project snapshot unzipped somewhere short to dodge Windows' path limit
+([`workflow/02-the-starter-model.md`](workflow/02-the-starter-model.md)), can sit anywhere the
+engineer can reach. When it does, the cost is full paths instead of `..\` and an assistant that has
+to be able to read the folder — not a broken arrangement. **Do not tell an engineer to move a working
+model to satisfy the convention.**
+
 ## 3. Full tooling, not documentation alone
 
 `jcass-dm` scaffolds a project, reads and writes the bundle, checks consistency and packages the
@@ -81,21 +91,33 @@ convention.
 ## 4. `DomainModelSample` is the worked reference, not the starting point
 
 It lives at [`../reference-model/DomainModelSample/`](../reference-model/DomainModelSample/) and it
-is there to be *read*. **Nobody starts by renaming it.**
+is there to be *read*. **Nobody starts by renaming it.** Since rule 27 nobody starts from it at all —
+an engineer with a client starts from that client's starter model — but it remains the worked example
+every pattern page points at, and the answer to *"show me what a real one looks like"*.
 
 Renaming a sample by hand is how the four-name failure class happens — four names must agree, a
 manual rename gets three of them, and the failure appears much later as *"class not found in the
 specified .dll"*. See [`conventions/four-names.md`](conventions/four-names.md).
 
-## 5. Scaffold-from-sample is the walking skeleton
+## 5. Scaffold-from-sample is how a starter model comes into being
 
 ```powershell
 .\tools\jcass-dm.exe scaffold MyRoadModel --from-sample --output ..\MyRoadModel
 ```
 
-emits a **correctly-named** project carrying the reference model's working logic. The engineer
-proves the whole pipeline on *that* — the artefact they keep — then replaces sample logic with
-their own engineering, file by file, with a working build at every step.
+emits a **correctly-named** project carrying the reference model's working logic. The pipeline is
+proved on *that* — the artefact that is kept — and sample logic is then replaced with real
+engineering, file by file, with a working build at every step.
+
+> **Re-weighted 2026-09-03 by rule 27, and the change is who runs this command.** It used to be the
+> engineer's first action. It is now **Lonrix's**, producing the starter model that is set up in the
+> client's project and run online once before the engineer sees it. What survives unchanged is the
+> reasoning below — a walking skeleton that already runs, no throwaway, no hand rename. The engineer
+> still gets one; they get it already proven against the client's real input files, which is strictly
+> better than proving it themselves.
+>
+> `scaffold` is still the right command for anyone building a domain model outside a Juno Cassandra
+> client project. It is not what an agent offers to an engineer who has a client.
 
 **No throwaway, and no hand rename.** The generator cannot emit a mismatched name, which removes
 the four-name failure class rather than documenting it. That is the difference between a trap you
@@ -176,19 +198,29 @@ If a scan hit is in prose describing how the service works, **the content is wro
 content.** Suppression is for a genuine word collision, and every suppression is printed on every
 run so that it cannot hide.
 
-## 13. The primary case is a brand-new custom domain model
+## 13. The primary case is the takeover case
 
-Everything is written for an engineer building a model for a client that does not yet have one,
-where the walkthrough's practice publish is harmless.
+> **Reversed 2026-09-03 by rule 27, and it used to say the opposite** — *"the primary case is a
+> brand-new custom domain model"*, written for a client that did not yet have one, where a practice
+> publish was harmless. Once every engagement begins with a starter model that Lonrix has set up and
+> run in the client's own project, **the client always already has a live custom model**, and a
+> practice publish is never harmless. The old primary case no longer exists.
 
-**The takeover case is different and gets an explicit warning at the publish gate.** An engineer
-inheriting a client that already runs a custom model is one click from replacing a live production
-model, because a custom domain model has exactly one version. A rollback slot exists, but recovery
-is an intervention rather than a button.
+Everything is written for an engineer picking up a model that is already registered, already
+published and already producing forecasts for the client.
 
-So in the takeover case: prove the pipeline as far as **F5**, which changes nothing outside the
-debug workspace, and stop there. Publish only when there is a change genuinely meant to go live.
-See [`workflow/40-publish.md`](workflow/40-publish.md).
+**So the publish gate's warning is the normal path rather than an exception.** An engineer working on
+a client that already runs a custom model is one click from replacing a live production model,
+because a custom domain model has exactly one version. A rollback slot exists, but recovery is an
+intervention rather than a button.
+
+Therefore, always: prove the pipeline as far as **F5**, which changes nothing outside the debug
+workspace, and stop there. Publish only when there is a change genuinely meant to go live. See
+[`workflow/40-publish.md`](workflow/40-publish.md).
+
+**The one case where a practice publish is still harmless** is a model that is not yet the client's
+live one — which now means a starter model that Lonrix is standing up, before hand-over. That is a
+Lonrix action, not an engineer's.
 
 ## 14. Work from canonical guidance, never invention — and escalate concretely
 
@@ -216,10 +248,30 @@ when it matters.**
 version stamp, the model name. *"Contact support"* on its own produces *"it doesn't work"* and a day
 spent establishing basics. Use [`support-request-template.md`](support-request-template.md).
 
+**The draft goes in the reply, as text ready to copy and paste**, in the same message as the stop.
+Not an offer to write one, not a question about whether to send it.
+
+> Added 2026-09-03, after a behaviour run caught the near-miss. The agent stopped correctly, invented
+> nothing, and finished with *"Would you like me to draft a support request?"* — which is the rule
+> being honoured in form and missed in substance. **An offer is not an artefact.** If the
+> conversation ends on that sentence, and conversations do, the engineer is holding nothing and
+> there is no escalation at all; the stop has cost them the answer and given them no route onward.
+> Asking also buys nothing, because there is no version of the reply where drafting it was the wrong
+> thing to do.
+>
+> **Do not ask whether to send it either.** The agent has never had a path to send it and never
+> will — sending is the engineer's, from their own mail client, which is also what keeps them in
+> control of what leaves their organisation. Say where it goes; do not ask permission to do
+> something you cannot do.
+
 ## 15. `support@lonrix.com` is the single escalation destination
 
 Every stop condition in rule 14, every skill that gives up, and the support-request template point
 there and nowhere else.
+
+**Name it as the paste target of a draft that is already written**, not as somewhere to go — *"paste
+this to `support@lonrix.com`"* rather than *"contact `support@lonrix.com`"*. The address on its own
+is a referral, and rule 14 is that a referral is not an escalation.
 
 **Three routes means none of them stays maintained.** One destination is a destination somebody
 watches.
@@ -271,6 +323,56 @@ Legitimately staying in C#: unit conversions, mathematical constants, array indi
 normalisation factors, framework sentinel values such as the `-999` invalid-coordinate marker, and
 structural limits that are part of how the code works rather than what the model predicts. Name them
 properly — a magic literal is still bad practice, it is just not a *lookup*.
+
+### Unit rates have a fixed home, and it is the one sheet name that is wired to a screen
+
+> Added 2026-09-03, from watching real use. An agent put unit rates in `lookups.xlsx` — the rule
+> above, honoured — and chose its own sheet for them, which quietly cost the modeller the page they
+> were meant to edit them on.
+
+**A treatment's unit rate goes in the `lkp_unit_rates` sheet of `inputs/lookups.xlsx`. Not any
+`lkp_` sheet: that one.**
+
+The framework merges every sheet whose name starts `lkp_` into one flat table and addresses a value
+by `(lookup_set_name, setting_key)`, so from the C#'s point of view the sheet a row sits in genuinely
+does not matter. **The web app is not so indifferent.** The Tuning page's **Treatment Rates** tab
+reads exactly one sheet, by name, and it is `lkp_unit_rates`. A rate in `lkp_thresholds` is read
+correctly by the model, forecasts correctly, and is **invisible on the page the modeller was told to
+use** — so the one number they most expect to own is the one they have to open Excel for.
+
+That is the whole reason this rule names a sheet at all, and it is the only place in the framework
+where a sheet name carries meaning. Use **lookup sets** to break the rates into groups a modeller
+would want to see together — the tab's dropdown is those set names — rather than reaching for a
+second sheet.
+
+**Two facts that follow, and both cost time when they are learned the hard way:**
+
+- **A `(set, key)` pair must be unique across every `lkp_*` sheet in the workbook.** The web app's
+  writer scans all of them, and a pair appearing twice makes the save refuse as ambiguous rather
+  than pick one. So copying a rate into `lkp_unit_rates` while leaving the original elsewhere breaks
+  editing for both.
+- **Column D is a `comment`**, and the Treatment Rates tab renders it beside the value. It is the
+  only explanation a modeller gets of what a rate is priced per, so write it — *"$/m² for thin
+  AC"* — rather than leaving it blank.
+
+### When the effective rate varies, vary the quantity — not the rate
+
+**The default is one rate per treatment in `lkp_unit_rates`, and a quantity computed by the domain
+model.** A domain model *can* compute a rate at run time and pass it to `TreatmentInstance` — the
+constructor takes both — and that is occasionally right. It should not be the first thing reached
+for, because the moment the rate is computed in C# it stops being a number the modeller can change,
+which is the whole rule this one sits under.
+
+Cost is `quantity × unitRate`, and nothing checks that the two agree on units. So when a job costs
+more per square metre on a badly distressed element, or covers only part of the segment, the shape
+to reach for is:
+
+> **rate from `lkp_unit_rates`, quantity adjusted in the C#** — an extent fraction, a distress
+> multiplier, a measured area rather than the whole element.
+
+The adjustment factors are themselves tunable numbers and go in `lookups.xlsx` like everything else.
+What survives is a rate the modeller recognises, on the page they were given, priced per a unit they
+can name.
 
 ### Three tiers, and the documentation teaches the boundaries, not just the middle
 
@@ -351,10 +453,13 @@ Five consequences the release process must carry:
   surface.
 - **The notification channel is the web app's existing What's New feature**, not a new one.
 
-## 19. Adopting an existing model is a first-class entry path
+## 19. Adopting an existing model is *the* entry path
 
-*"Help me refactor the domain model in folder X"* must work as well as scaffolding a new one. It
-differs in four ways that the documentation and tooling must handle:
+*"Help me refactor the domain model in folder X"* must work as well as scaffolding a new one — and
+since rule 27 it is the path nearly every engagement actually takes, because the starter model is by
+definition a model somebody else wrote. **Promoted 2026-09-03 from *a* first-class entry path to
+*the* one.** Adoption differs from scaffolding in four ways that the documentation and tooling must
+handle:
 
 - **`check` becomes the *first* action**, not a late one. You do not yet know which of the model's
   conventions are deliberate.
@@ -509,11 +614,12 @@ ordinary request if the engineer raises it.
 The distinction that keeps this from contradicting rule 18: **git is for *their model*, which is
 theirs and stateful. It is never for *the Assistant*, which is replaced wholesale.**
 
-## 26. Per-model knowledge lives in `model-knowledge/`, and the agent asks for it when it is missing
+## 26. Per-model knowledge lives in `model-knowledge/`, and the agent asks for it before changing anything
 
 > Added 2026-08-28, from the question of how a client who has worked for two months takes an update
 > without losing what their agent learned. **Rewritten the same day** — see *Why not the model
-> folder* below.
+> folder* below. **Amended 2026-09-03** — see *The stop is keyed on changing a model, not on touching
+> one*, which is where the rule was wrong.
 
 Rule 18 says improvements arrive by re-download, and justifies it with rule 2: the model is a
 sibling folder, so the Assistant is stateless with respect to the engineer's work and can be swapped
@@ -558,14 +664,51 @@ risk is closable without machinery:
 
 - **The trigger is the ask, not the session.** When the engineer asks about an existing model and
   `model-knowledge/<name>.md` does not exist, the agent says so and asks them to copy the folder
-  from their previous Assistant before going further. **That fires exactly when it matters, and
-  never during ordinary work** — which is the failure mode rule 14 warns about: a check that fires
-  constantly gets ignored, and is then not there when it counts.
+  from their previous Assistant before **changing** anything. **That fires exactly when it matters,
+  and never during ordinary work** — which is the failure mode rule 14 warns about: a check that
+  fires constantly gets ignored, and is then not there when it counts.
 - **A sibling `*-old` or `*-main` folder holding `model-knowledge/` files turns the guess into a
   fact**, and lets the agent name the exact folder to copy from.
 - **No counter, and no session bookkeeping.** A counter needs a write on every session, and
   `.claude/settings.json` allows only read-only commands on purpose. The empty-or-missing file
   answers the same question with no state to maintain.
+
+### The stop is keyed on changing a model, not on touching one
+
+> **Amended 2026-09-03, and this is the half the first version got wrong.** Decided by Fritz after a
+> behaviour run measured the rule in both directions on the same afternoon and it failed in both.
+
+**The lookup always happens. What follows it depends on what was asked.**
+
+| The request | What the agent does |
+|---|---|
+| **Changes the model** — a treatment, a parameter, an input column, a lookup value, a rename, a refactor | Look, then **stop and ask**, and wait. Before the edit, never after it |
+| **Only reads it** — `check`, a diagnosis, an explanation, *"is this right?"* | **Answer first**, then say the notes are missing and ask for them before anything is changed |
+
+**Why the first version was wrong.** It keyed the stop on *"have I seen this model before?"*, which
+sounds like the same question and is not. Asked *"check my model and tell me what is wrong with
+it"* — on an inherited model, which is exactly the case this rule was written for — the agent
+stopped before running `check` and offered nothing at all. It followed the rule as written, so **the
+rule was what was wrong**, not the agent.
+
+**The test that fixes it is whether the notes could change the answer.** `jcass-dm check` reads the
+project file, the bundle and the C#; no note an engineer writes alters a line of its output. A
+diagnosis therefore cannot be wrong for lack of notes, and a stop in front of one is pure cost —
+paid on what is very often somebody's first contact with the Assistant, and paid by answering a
+request for help with a request of your own. An **edit** is the opposite case: the notes are where
+the reasons live — why a parameter resets the way it does, why a set is grouped as it is — and those
+are precisely what gets tidied away by somebody who does not have them.
+
+**The half that is not negotiable is saying so.** Both rows end with the engineer being told the
+notes file is missing and being asked for it. Finding nothing and saying nothing is the failure the
+rule exists to prevent, and it is the one a read-only answer makes easiest, because the answer feels
+complete without it.
+
+**This is also the shape the six skills carry**, as step 0: `add-treatment`, `add-parameter`,
+`add-input-column` and `add-lookup-constant` all change the model and stop. `check-my-model` runs the
+check and mentions the notes afterwards. `adopt-existing-model` does both in order — the diagnosis
+is read-only and comes first, the ask lands before any rename or refactor — which is also what rule
+19 requires of it.
 
 ### Two rules bind the agent
 
@@ -583,3 +726,102 @@ product rule 9 exists to prevent: the Copilot and Cursor users get nothing.
 
 A client's recurring model-specific procedure is a **section in `model-knowledge/<name>.md`**, which
 every agent can read.
+
+## 27. There is no "start from scratch" — every engagement begins with the starter model
+
+> Added 2026-09-03, from watching two real first sessions. Asked to *"start a new model from
+> scratch"*, the agent did exactly that — and the client already had a model set up by Lonrix, as the
+> workflow requires. Nobody in the room, including the maintainer, could tell which of *"the demo
+> model"*, *"the sample model"* and *"your model"* the agent meant, and the agent never looked at the
+> client's actual setup files because it had no reason to think they existed. **This rule is the fix,
+> and it changes what the primary entry path is** — see rules 5, 13 and 19, all of which move with it.
+
+**Lonrix sets up a starter model in the client's Juno Cassandra project, publishes it, and runs it
+online at least once, before an engineer begins.** The engineer's first action is not a command; it
+is to download that model's source and a snapshot of the project it lives in.
+
+**A custom domain model cannot exist on its own, and that is the whole argument.** It needs a client
+project around it: network data, budget columns, configurations, lookup sets, a registry entry, a
+publish grant. Someone has to create every one of those and it is not the engineer. An engineer who
+starts from an empty folder writes C# against setup files they have never seen, and discovers what
+those files actually contain at the first upload — a fortnight of work sequenced backwards.
+
+**The one run is the load-bearing part, not the model.** It is what proves the input files, the
+budget columns and the configurations are real and consistent with each other. Every failure from
+that point on is attributable to a change the engineer made, because the pipeline demonstrably worked
+before they touched it. That is the walking-skeleton argument of rule 5, moved upstream to where it
+costs the engineer nothing.
+
+**Consequences, and each one is a behaviour rather than a preference:**
+
+- **An agent never offers to create a model from nothing.** *"I want to start a new domain model"* is
+  answered by [`workflow/02-the-starter-model.md`](workflow/02-the-starter-model.md), and the first
+  question back is whether Lonrix has set the starter model up.
+- **No starter model is a stop, not a scaffold.** Registering a custom domain model is a Lonrix
+  action, so *"there isn't one"* means an email to `support@lonrix.com`, under rule 14's second stop
+  condition — the task needs an administrative action. An agent that scaffolds instead has produced a
+  project that cannot be published.
+- **Two folders arrive, and they are not interchangeable.** The **model source** is a complete C#
+  project handed over by Lonrix; it builds, and it is what gets edited. The **project snapshot** is a
+  zip taken from Postprocessing → *Snapshot / Archive Setup and Outputs*; it is read-only evidence,
+  and it deliberately strips `refs\` and `.vscode\`, so the copy of the source inside it **does not
+  compile**. Confusing the two costs an afternoon. Rule 28 covers what the snapshot is for.
+- **It is "starter model", and never anything else.** Not stub — *stub* reads as *not implemented
+  yet*, and this thing runs. Not demo, not sample, not default: `DomainModelSample` is a different
+  artefact that lives inside this repository (rule 4), and a session in which both are called "the
+  sample model" is a session where nobody knows which folder is being discussed.
+- **Renaming it to the client's model name is a normal early step**, and it goes through
+  `jcass-dm rename` like every other rename. Four names, atomically, never by hand (rule 19).
+
+**What this rule does not do is retire `scaffold`.** It is still how a starter model is produced —
+by Lonrix — and it is still right for anyone building a domain model outside a client project. It is
+simply not what an agent offers to an engineer who has a client.
+
+## 28. The client's setup files are in scope — as evidence, never as data
+
+> Added 2026-09-03, from the same two sessions as rule 27. The agent *"did not have access to or seem
+> to want to look at"* the client's `inputs\` files, and so could not tell the engineer whether the
+> C# it was helping to write would meet the setup it was about to be uploaded into.
+
+**An agent asks for the project snapshot folder, reads the setup files in it, and uses them to check
+the C# against what the model will actually meet.** The full page is
+[`conventions/input-files-in-scope.md`](conventions/input-files-in-scope.md).
+
+**Why this is worth a rule.** A domain model is C# *plus* a set of spreadsheets, and half of its
+failure modes are disagreements between the two: a `budget_category` with no column in
+`budgets.xlsx`, a lookup set the `Constants` class asks for and the file does not have, an input
+column the factory reads that is not in the network data's header. Each one is invisible to somebody
+reading only the C#, each one costs an upload and an F5 to discover, and each one is trivial to spot
+when both halves are open at once. **`jcass-dm check --lookups` exists precisely because this is
+worth doing** — the rule most worth having is the one that reports `SKIPPED` when nobody supplied the
+file.
+
+**And the boundary, which matters as much as the permission.**
+
+> **Setup files are read to find out what they *declare*. The network data is never read to find out
+> what it *says*.**
+
+`inputs\` holds `model_input_data.csv` — one row per asset, tens of thousands of rows on a real
+network. *"Read all the files in `inputs\`"*, taken literally, pulls a client's whole asset register
+into a conversation. **The header row is the part that matters and the rest is never needed**: what
+an agent is checking is whether a column the C# reads exists, not what is in it.
+
+**The second reason is not about volume.** An agent that starts profiling a client's condition data
+— *"63% of your chipseal is over 15 years old, so I'd suggest…"* — has crossed from plumbing into
+engineering judgement, which is the line rule 14 and rule 17 both defend. The engineer decides what
+the network needs. The web app has an **Analyse Input** page built for that question, with real
+statistics, and it is the right answer every time. The same restraint covers `outputs\`: reading a
+forecast to form an opinion about it is the same crossing in a different folder.
+
+**Three more things follow:**
+
+- **The authority is the web app, not the local read.** **Check Setup** on the Tuning page runs the
+  framework's own loader over the client's real files and reports twenty-five named checks;
+  **Check bundle** on the Debug Model page runs the same validators against the bundle being edited.
+  Rule 6 already says the local check is a subset — this rule adds that an agent with the files in
+  front of it must still not reimplement those validators locally.
+- **The engineer makes the edits.** Guide them, name the sheet and the row, and prefer the Tuning
+  page over Excel wherever both would work — it is the route they will use again every time they
+  recalibrate. Rule 22's reasoning, applied to spreadsheets.
+- **Nothing is ever written into the snapshot.** It is a download, it goes stale the moment the client
+  changes anything, and an edit there reaches nothing at all.

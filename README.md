@@ -109,17 +109,30 @@ work, and what each one gets you.
 
 > *"I want to start a new domain model, walk me through it."*
 
-The most useful opening line there is. It takes you through the engineering questions first —
-which treatments, which input columns, which parameters
-([`docs/workflow/01-plan-your-model.md`](docs/workflow/01-plan-your-model.md)) — then scaffolds a
-correctly-named project **in a folder it names and confirms with you first**, builds it, and checks
-it.
+The most useful opening line there is — and the first thing it does is ask whether **Lonrix has set
+up the starter model** for your client. It normally has: a custom domain model needs a Juno Cassandra
+project around it (network data, budgets, configurations, a registry entry), and building that is
+ours rather than yours. So you do not start from an empty folder. You download the starter model's
+source and a snapshot of your project's real setup files, and your assistant takes it from there —
+the engineering questions
+([`docs/workflow/01-plan-your-model.md`](docs/workflow/01-plan-your-model.md)), a `jcass-dm check`
+before anything is touched, and a rename to your own model name that changes all four names at once.
+[`docs/workflow/02-the-starter-model.md`](docs/workflow/02-the-starter-model.md).
+
+> *"My model is at C:\Work\NelsonRoads and the project snapshot is unzipped at C:\work\snapshot.
+> Check the two against each other."*
+
+**Give it both folders.** With your real `inputs\` files in front of it, your assistant can tell you
+that a treatment is charged to a budget category with no column, or that your code asks for a lookup
+set the file does not have — before an upload rather than after one. It reads them to see what they
+*declare*; it will not profile your network data or offer an opinion about your asset condition, and
+the web app's **Analyse Input** page is the right tool for that question.
 
 > *"I have an existing domain model in the folder next door. Check it and tell me what state it is
 > in."*
 
-The other way in. Your assistant runs `jcass-dm check` before it changes anything, and reports what
-does and does not hang together.
+Same thing from the other end, and the commonest request there is. Your assistant runs `jcass-dm
+check` before it changes anything, and reports what does and does not hang together.
 
 **Making a change**
 

@@ -85,6 +85,11 @@ model should be structured. It needs these input columns — `element_name`, `ma
 `replacement_rates`, `rate_factors`, `unit_rates`. It fails at setup with a message naming any one
 that is missing.
 
+**Put the `unit_rates` rows in the sheet called `lkp_unit_rates`.** Every `lkp_` sheet is merged
+before your code sees it, so the sheet makes no difference to the model — but the web app's
+**Tuning → Treatment Rates** tab reads that one sheet by name, and a rate anywhere else never
+appears on the page the modeller was told to change rates on.
+
 ---
 
 ## 4. The file map

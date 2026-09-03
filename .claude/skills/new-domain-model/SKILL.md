@@ -1,15 +1,36 @@
 ---
 name: new-domain-model
-description: Start a brand-new Juno Cassandra domain model. Walks the engineer through choosing the one name, runs jcass-dm scaffold, sets the bundle's meta sheet, and confirms the model builds and checks clean. Use when they say "new model", "start a model", "scaffold a model", or have nothing yet.
+description: Start a Juno Cassandra domain model. First establishes that Lonrix has set up the client's starter model — there is no start-from-scratch — then gets its source and a project snapshot, diagnoses it and renames it. Falls back to jcass-dm scaffold only when there is no client project behind the work. Use when they say "new model", "start a model", "scaffold a model", or have nothing yet.
 ---
 
 # New domain model
 
 **This skill is a wrapper.** Every step is a page in `docs/` plus a `jcass-dm` verb. Without it,
-do the same job by reading [`docs/workflow/10-scaffold-and-build.md`](../../../docs/workflow/10-scaffold-and-build.md)
+do the same job by reading [`docs/workflow/02-the-starter-model.md`](../../../docs/workflow/02-the-starter-model.md)
 and running the verbs it names.
 
-## 0. Before the first step
+## 0. First: there is no "start from scratch". Do not offer one.
+
+**Ask before anything else: has Lonrix set up the starter model for this client, and has it been run
+online at least once?**
+
+A custom domain model cannot exist in Juno Cassandra without a project around it — network data,
+budget columns, configurations, lookups, a registry entry, a publish grant — and creating all of that
+is a Lonrix action. So the normal answer is *yes*, and the engineer's first move is to download two
+things rather than to run a command:
+[`docs/workflow/02-the-starter-model.md`](../../../docs/workflow/02-the-starter-model.md).
+Design rule 27.
+
+| Their answer | You |
+|---|---|
+| **Yes, Lonrix set it up** | Walk `workflow/02-the-starter-model.md`: the model source, a project snapshot, `check`, then `rename`. Then hand off to the `adopt-existing-model` skill — the starter model is an existing model |
+| **No / they do not know** | **Stop and draft the email.** Registering a custom domain model is an administrative action, which is rule 14's second stop condition. Write a support request to `support@lonrix.com` naming the client, ready to copy and paste — do not offer to write one, and do not scaffold instead. A scaffolded project has nothing to be published into |
+| **There is no Juno Cassandra client project at all** | Then § 2 onwards applies as written: `scaffold --from-sample` is the right starting point. This is also how *Lonrix* produces a starter model |
+
+**Never suggest copying and renaming `reference-model/DomainModelSample/`** in any of the three
+cases. That is the four-name failure class, and `rename` or `scaffold` is the answer.
+
+## 0b. Before the first step
 
 - **Honour the verb.** "Guide me through starting a model" and "scaffold me a model called X" are
   different requests — [`docs/00-start-here.md` § 2](../../../docs/00-start-here.md). In guided
@@ -21,7 +42,9 @@ and running the verbs it names.
 
 ## 1. Read
 
-- [`docs/workflow/01-plan-your-model.md`](../../../docs/workflow/01-plan-your-model.md) — **the step before this one.** Four engineering questions, walked one at a time, before any command is typed.
+- [`docs/workflow/02-the-starter-model.md`](../../../docs/workflow/02-the-starter-model.md) — **the way in**, and § 0 above.
+- [`docs/conventions/input-files-in-scope.md`](../../../docs/conventions/input-files-in-scope.md) — what to do with the project snapshot, and the one file never to read.
+- [`docs/workflow/01-plan-your-model.md`](../../../docs/workflow/01-plan-your-model.md) — **the step before any command.** Four engineering questions, walked one at a time.
 - [`docs/workflow/10-scaffold-and-build.md`](../../../docs/workflow/10-scaffold-and-build.md) — the procedure this skill runs.
 - [`docs/workflow/README.md`](../../../docs/workflow/README.md) — why the walking skeleton comes before any modelling.
 - [`docs/conventions/four-names.md`](../../../docs/conventions/four-names.md) — what the name they choose becomes.
@@ -42,7 +65,7 @@ Then three answers are the engineer's:
 |---|---|
 | **The model name** | It becomes all four names and it is the model's identity for life. Constraints and how to change it later: `conventions/four-names.md`. |
 | **The element noun** (`--element`) — `RoadSegment`, `PipeSegment`, `Bridge` | It names the thing being modelled. Not one of the four; theirs to choose. |
-| **Whether the client already runs a custom domain model** | If yes, this is really the adoption case — stop and use `adopt-existing-model`, and read the takeover warning in [`docs/workflow/40-publish.md`](../../../docs/workflow/40-publish.md#-before-a-first-publish-on-a-client-that-already-runs-a-custom-model) before publish is mentioned at all. |
+| **Whether the client already runs a custom domain model** | Since design rule 27 the answer is almost always yes — the starter model is one. That makes this the adoption case: stop, go to § 0, and read the takeover warning in [`docs/workflow/40-publish.md`](../../../docs/workflow/40-publish.md#-before-a-first-publish-on-a-client-that-already-runs-a-custom-model) before publish is mentioned at all. |
 
 Default to `--from-sample` unless they say otherwise, and say why in one sentence
 (`workflow/README.md`, the walking skeleton).

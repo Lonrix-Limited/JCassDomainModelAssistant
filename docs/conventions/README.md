@@ -11,6 +11,7 @@ look plausible, and nothing anywhere says a word.
 | [`when-to-stop.md`](when-to-stop.md) | Before writing a framework call you are not certain exists. Proceed, flag, or stop and escalate. |
 | [`four-names.md`](four-names.md) | Renaming a model, or diagnosing *"class not found in the specified .dll"*. |
 | [`naming-and-folders.md`](naming-and-folders.md) | Deciding which folder a file belongs in, or building an upload zip. |
+| [`input-files-in-scope.md`](input-files-in-scope.md) | Reading the client's `inputs\` files or a project snapshot. What they settle, what to check against them, and the one file never to read. |
 
 Wherever a convention here can be checked mechanically, `jcass-dm check` checks it. Where it cannot,
 the page says so — those are the ones to raise out loud.

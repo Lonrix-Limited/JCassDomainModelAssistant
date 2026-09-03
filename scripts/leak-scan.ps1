@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Fails the build if anything in this repository names Juno Cassandra server or admin internals.
 
@@ -111,6 +111,11 @@ $denyList = @(
     # at best and a wrong instruction at worst.
     @{ Pattern = 'aa_git_repos';          Why = "maintainer's local checkout path" }
     @{ Pattern = 'cassandra_release_dlls'; Why = 'maintainer build-output folder' }
+    # Added 2026-09-03 with the Office-package scanning below: three committed .xlsx
+    # fixtures were publishing this folder inside xl/workbook.xml. Unlike the two above,
+    # these name a person and their personal cloud storage.
+    @{ Pattern = 'Juno Services Dropbox'; Why = "maintainer's personal cloud folder" }
+    @{ Pattern = 'C:[\\\\/]+Users[\\\\/]+fritz'; Why = "maintainer's home directory" }
 )
 
 # Binary and near-binary extensions. Grepping these produces noise, not findings.
@@ -118,6 +123,22 @@ $skipExtensions = @(
     '.dll', '.pdb', '.exe', '.zip', '.xlsx', '.xls', '.xlsm', '.png', '.jpg', '.jpeg',
     '.gif', '.ico', '.pdf', '.7z', '.gz', '.tar', '.bin', '.so', '.dylib', '.nupkg'
 )
+
+# Office files ARE zips full of XML, and the XML is not noise.
+#
+# Added 2026-09-03, after six committed .xlsx fixtures were found publishing the
+# maintainer's local checkout path - and, in three of them, their Windows username and
+# Dropbox folder structure - inside xl/workbook.xml. Excel writes that path into an
+# <x15ac:absPath> element to remember where the workbook was last saved from. It is
+# invisible in Excel, it survives every copy of the file, and 'aa_git_repos' has been on
+# the denylist above the entire time. The scan reported CLEAN on every run, because
+# .xlsx was on the skip list.
+#
+# That is precisely the silent failure this script exists to convert into a loud one, so
+# these are unpacked and their text parts are scanned like any other file. Reported as
+# '<file>!<entry>' so the hit names the part inside the package.
+$archiveExtensions = @('.xlsx', '.xlsm', '.xls', '.docx', '.pptx')
+$archiveTextParts  = @('.xml', '.rels', '.txt', '.json', '.vml')
 
 $suppressionMarker = 'jcass-leak-scan:allow'
 
@@ -163,16 +184,16 @@ else {
     }
 }
 
-$files = @($files | Where-Object {
-    ($skipExtensions -notcontains $_.Extension.ToLowerInvariant()) -and ($_.FullName -ne $selfPath)
-})
+$allFiles = @($files | Where-Object { $_.FullName -ne $selfPath })
+$archives = @($allFiles | Where-Object { $archiveExtensions -contains $_.Extension.ToLowerInvariant() })
+$files    = @($allFiles | Where-Object { $skipExtensions -notcontains $_.Extension.ToLowerInvariant() })
 
 if (-not $Quiet) {
     Write-Host ''
     Write-Host "Leak scan: $repoRoot"
-    Write-Host "  $($denyList.Count) patterns, $($files.Count) files"
+    Write-Host "  $($denyList.Count) patterns, $($files.Count) files, $($archives.Count) Office packages unpacked"
     Write-Host "  file list from: $source"
-    Write-Host "  not scanned: binary file types, and this script (it holds the denylist)"
+    Write-Host "  not scanned: binary file types (Office packages ARE unpacked), and this script (it holds the denylist)"
     Write-Host ''
 }
 
@@ -220,6 +241,72 @@ foreach ($file in $files) {
     }
 }
 
+# ---------------------------------------------------------------------------
+# Office packages: unpack in memory and scan the text parts.
+#
+# No suppression marker is honoured here. These parts are written by Excel rather than
+# by a person, so there is no line for a marker to sit on and nothing legitimate to
+# suppress: a denylist hit inside a workbook part is always something to remove from the
+# workbook. If a fixture ever genuinely needs one, take it out of this scan explicitly
+# rather than inventing a marker nobody can see in Excel.
+# ---------------------------------------------------------------------------
+Add-Type -AssemblyName System.IO.Compression.FileSystem -ErrorAction SilentlyContinue
+
+foreach ($archive in $archives) {
+    $relative = $archive.FullName.Substring($repoRoot.Length).TrimStart('\', '/').Replace('\', '/')
+
+    $zip = $null
+    try {
+        $zip = [System.IO.Compression.ZipFile]::OpenRead($archive.FullName)
+    }
+    catch {
+        # Not a readable zip. An .xls is a real possibility here and is genuinely binary;
+        # say so rather than passing it silently, because a part that cannot be read is a
+        # part that was not scanned.
+        Write-Host ("  note: could not unpack {0} - not scanned ({1})" -f $relative, $_.Exception.Message) -ForegroundColor Yellow
+        continue
+    }
+
+    try {
+        foreach ($part in $zip.Entries) {
+            $extension = [System.IO.Path]::GetExtension($part.FullName).ToLowerInvariant()
+            if ($archiveTextParts -notcontains $extension) { continue }
+
+            $reader = $null
+            try {
+                $reader = New-Object System.IO.StreamReader($part.Open())
+                $content = $reader.ReadToEnd()
+            }
+            finally {
+                if ($reader) { $reader.Dispose() }
+            }
+
+            foreach ($entry in $denyList) {
+                if ($content -notmatch $entry.Pattern) { continue }
+
+                # One hit per (package part, pattern). The XML is one enormous line, so a
+                # line number would be meaningless; quote the neighbourhood of the match
+                # instead, which is what tells the reader what to delete.
+                $where = $content.IndexOf(($Matches[0]), [StringComparison]::OrdinalIgnoreCase)
+                $from = [Math]::Max(0, $where - 60)
+                $length = [Math]::Min(200, $content.Length - $from)
+                $excerpt = $content.Substring($from, $length) -replace '\s+', ' '
+
+                $hits += [pscustomobject]@{
+                    File    = "$relative!$($part.FullName)"
+                    Line    = 0
+                    Pattern = $entry.Pattern
+                    Why     = $entry.Why
+                    Text    = $excerpt.Trim()
+                }
+            }
+        }
+    }
+    finally {
+        $zip.Dispose()
+    }
+}
+
 if ($suppressed.Count -gt 0) {
     Write-Host "SUPPRESSED ($($suppressed.Count)) - shown every run, on purpose:" -ForegroundColor Yellow
     foreach ($s in $suppressed) {
@@ -233,7 +320,8 @@ if ($hits.Count -gt 0) {
     Write-Host "LEAK SCAN FAILED - $($hits.Count) hit(s)" -ForegroundColor Red
     Write-Host ''
     foreach ($h in $hits) {
-        Write-Host ("  {0}:{1}" -f $h.File, $h.Line) -ForegroundColor Red
+        $location = if ($h.Line -gt 0) { "{0}:{1}" -f $h.File, $h.Line } else { $h.File }
+        Write-Host ("  {0}" -f $location) -ForegroundColor Red
         Write-Host ("      matched /{0}/  ({1})" -f $h.Pattern, $h.Why)
         $text = if ($h.Text.Length -gt 160) { $h.Text.Substring(0, 160) + ' ...' } else { $h.Text }
         Write-Host ("      {0}" -f $text) -ForegroundColor DarkGray

@@ -9,9 +9,11 @@ Work through the four guidelines below. When you can answer all four, go to
 step 10 without them and you will be designing the model and learning the framework at the same
 time, and every problem will look like both.
 
-**Adopting a model somebody else wrote?** This page is still worth twenty minutes — read it as a set
-of questions to ask about the model you have inherited. Then go to
-[`05-adopt-an-existing-model.md`](05-adopt-an-existing-model.md).
+**Starting on a client, or adopting a model somebody else wrote?** Both are the same situation, and
+this page is still worth twenty minutes — read it as a set of questions to ask about the model in
+front of you rather than one you are about to invent. Get the model and the project snapshot first
+([`02-the-starter-model.md`](02-the-starter-model.md)), then diagnose it
+([`05-adopt-an-existing-model.md`](05-adopt-an-existing-model.md)).
 
 ---
 
@@ -146,6 +148,13 @@ Names are entirely up to you — group by what a modeller would want to see toge
 the file to recalibrate. Sets can be reorganised later without touching code, so this is a cheap
 decision to get roughly right and an expensive one to skip.
 
+**One thing is not up to you: your treatment costs go in the sheet called `lkp_unit_rates`.**
+`lookups.xlsx` has several sheets, all of them starting `lkp_`, and the model reads all of them the
+same way — but the web app's **Tuning → Treatment Rates** tab reads that one sheet by name. A rate in
+any other sheet forecasts perfectly and never appears on the page you were told to change rates on.
+Group your rates into as many *sets* as you like inside it; the tab turns each set into its own short
+table. [`../conventions/where-numbers-live.md`](../conventions/where-numbers-live.md).
+
 Bring the list as three columns and your assistant can turn it into lookup rows and the matching
 `Constants.cs` properties directly:
 
@@ -175,8 +184,13 @@ Next: [`10-scaffold-and-build.md`](10-scaffold-and-build.md).
 ## For the assistant — walk these one at a time, and do not fill them in
 
 When an engineer says *"I want to start a new domain model"*, **this page comes before any command
-is typed.** Do not scaffold first and plan afterwards; the scaffolded bundle is where these answers
-land, so the ordering is real rather than pedagogical.
+is typed** — and the command it comes before is no longer a scaffold. There is no start-from-scratch:
+they begin from the starter model Lonrix set up for their client
+([`02-the-starter-model.md`](02-the-starter-model.md), design rule 27). Ask whether that exists
+before anything else; if it does not, that is a stop and an email, not a scaffold.
+
+Plan first either way. The bundle — theirs or the starter model's — is where these answers land, so
+the ordering is real rather than pedagogical.
 
 Take the four guidelines **one at a time**, and wait for an answer before moving on. Reading all four
 at somebody in one message produces agreement and no lists.

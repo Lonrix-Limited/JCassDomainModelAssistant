@@ -6,6 +6,12 @@ Use this whenever you hit a stop condition in
 [`conventions/when-to-stop.md`](conventions/when-to-stop.md), which is also where the reasoning
 behind drafting rather than delegating lives.
 
+**For the assistant: fill this in and put the finished text in your reply**, in the same message as
+the stop, introduced as something to copy and paste to `support@lonrix.com`. Do not offer to draft
+it and do not ask whether to send it — you cannot send email, and the engineer sends it from their
+own mail client. An offer to draft leaves them holding nothing if the conversation ends there, and
+conversations end there.
+
 ---
 
 ## The template
@@ -55,6 +61,17 @@ Get-Content .\refs\FRAMEWORK-VERSION.txt | Select-String "Framework commit"
 It matters more than it looks. It says exactly which framework the model was compiled against, which
 is the first thing anyone diagnosing a signature or behaviour question needs and the last thing
 anyone thinks to ask for.
+
+---
+
+## Handing it over
+
+**The filled-in text goes in the reply.** One sentence in front of it — *"here is a support request,
+ready to paste into an email to `support@lonrix.com`"* — then the block, then nothing else about it.
+
+- **Do not offer to write it.** Write it.
+- **Do not ask whether to send it.** They send it, and they decide when.
+- **Do not soften the stop** by finding a nearby task to do instead. The draft is the deliverable.
 
 ---
 

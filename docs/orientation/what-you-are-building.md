@@ -37,25 +37,36 @@ way around it — a run that reaches production is always a human decision.
 
 ## Two entry paths, and they start differently
 
-### A new model — the primary case
+### A new model for a client — and it starts from a model that already exists
 
-Nothing is running yet, so nothing can be broken. The engineer scaffolds, and the first thing they
-do is prove the whole pipeline works before writing any engineering of their own:
+**There is no start-from-scratch.** Lonrix sets up a **starter model** in the client's Juno Cassandra
+project, publishes it and runs it online once, before the engineer begins. The engineer downloads
+that model's source and a snapshot of the client's setup files, and works from there:
+[`../workflow/02-the-starter-model.md`](../workflow/02-the-starter-model.md).
+
+That is not a shortcut — a custom domain model cannot exist without a client project around it
+(network data, budget columns, configurations, a registry entry), and someone has to build all of it.
+The one online run is what proves the pieces fit, so every failure the engineer meets afterwards is
+attributable to a change they just made.
+
+**So the engineer's first case is really the inherited case**, below, and everything it says applies.
 
 ```powershell
 .\tools\jcass-dm.exe scaffold MyRoadModel --from-sample --output ..\MyRoadModel
 ```
 
-`--from-sample` produces a **working** model under their own name — it builds, it uploads, it F5s,
-it publishes, it runs. That artefact is the one they keep. They then replace sample logic with their
-own engineering file by file, with a working build at every step.
+That command is how a starter model is **produced** — by Lonrix — and it is also the entry point for
+anyone building a domain model with no client project behind it. `--from-sample` produces a
+**working** model under a chosen name: it builds, it uploads, it F5s, it publishes, it runs. That
+artefact is the one that is kept; sample logic is replaced file by file, with a working build at
+every step.
 
 **Nobody starts by copying the reference model and renaming it.** That was the old advice, and
-renaming is the most reliable way to break a model — see
+renaming by hand is the most reliable way to break a model — see
 [`../conventions/four-names.md`](../conventions/four-names.md). The reference model exists to be
 *read*.
 
-### A model they have inherited — first-class, not an afterthought
+### A model they have inherited — which is now the usual case
 
 *"Help me refactor the CDM in folder X"* is a normal request and differs in four ways:
 

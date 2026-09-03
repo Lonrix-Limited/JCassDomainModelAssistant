@@ -130,7 +130,9 @@ In this order. Each step leaves you with a project that still builds.
 3. **Make it deteriorate.** `Incrementer.cs`, with the rates in `lookups.xlsx`.
 
 4. **Add a treatment.** A constant in `TreatmentNames.cs`, a bundle row, a trigger in
-   `TreatmentsTrigger.cs`, a reset arm in `Resetter.cs`, a unit rate in `lookups.xlsx`.
+   `TreatmentsTrigger.cs`, a reset arm in `Resetter.cs`, a unit rate in the **`lkp_unit_rates`**
+   sheet of `lookups.xlsx` — that sheet name is the one the Tuning page's Treatment Rates tab
+   reads, so a rate in another sheet is invisible there.
 
    ```powershell
    .\tools\jcass-dm.exe add-treatment ..\{{MODEL}}\domain_model_setup.xlsx --name repair --budget-category renewals

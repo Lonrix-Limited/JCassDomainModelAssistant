@@ -11,11 +11,21 @@ and running the verbs it names.
 
 ## 0. Before the first step
 
-- **Look for `model-knowledge/<ModelName>.md` before anything else, and ask for it if it is not
-  there** — [`docs/00-start-here.md` § 4](../../../docs/00-start-here.md). This is the entry path
-  where a previous session's notes are most likely to exist and most likely to be missing, because
-  an engineer arriving here with an inherited model has often just updated the Assistant. Ask before
-  the diagnosis, not after it.
+- **Look for `model-knowledge/<ModelName>.md` before anything else** —
+  [`docs/00-start-here.md` § 4](../../../docs/00-start-here.md). This is the entry path where a
+  previous session's notes are most likely to exist and most likely to be missing, because an
+  engineer arriving here with an inherited model has often just updated the Assistant.
+
+  **If it is there, read it before the diagnosis.** If it is not there, **run the diagnosis anyway
+  and give it to them** — `check` is read-only and its output does not depend on any note — then
+  ask for the notes in that same reply and **wait before renaming or refactoring anything**. The
+  diagnosis is what they came for and it costs nothing to hand over; the change is what the notes
+  were for.
+
+  > **Amended 2026-09-03.** This step used to say *ask before the diagnosis, not after it*, and a
+  > behaviour run showed what that produces: an engineer asks what is wrong with a model they have
+  > just inherited and gets a request for a file they have never heard of, with no diagnosis at all.
+  > Rule 26 now keys the stop on **changing** a model rather than on touching one.
 - **Read the takeover warning now, not at step 40.**
   [`docs/workflow/40-publish.md`](../../../docs/workflow/40-publish.md#-before-a-first-publish-on-a-client-that-already-runs-a-custom-model).
   An inherited model is by definition the takeover case: the client may have a production model that
@@ -36,8 +46,15 @@ and running the verbs it names.
 ## 2. Diagnose before you change anything
 
 ```powershell
-.\tools\jcass-dm.exe check --project ..\TheirModel
+.\tools\jcass-dm.exe check --project ..\TheirModel --lookups <snapshot>\inputs\lookups.xlsx
 ```
+
+**Ask for the client's setup files if you do not have them.** A project snapshot — Postprocessing →
+*Snapshot / Archive Setup and Outputs*, unzipped somewhere short — turns the `lookup sets` rule from
+`SKIPPED` into a real comparison, and it is the rule most worth having on a model you did not write.
+[`docs/conventions/input-files-in-scope.md`](../../../docs/conventions/input-files-in-scope.md) says
+what else to check against them, and what never to read. Run `check` without `--lookups` rather than
+waiting, then re-run it when the file arrives.
 
 **First action, always** — before reading a line of the C#. Then read the result back to the
 engineer in plain terms, rule by rule; `workflow/05` § step 2 has a row per rule and what a

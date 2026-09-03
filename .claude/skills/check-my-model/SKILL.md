@@ -10,13 +10,18 @@ description: Run jcass-dm check on a domain model and explain the result in mode
 
 ## 0. Before the first step
 
-- **If this conversation has not touched this model before and you did not scaffold it yourself
-  in this session, do the `model-knowledge` check first** —
+- **`check` is read-only, so it runs first. Do not stop for the notes file before it** —
   [`docs/00-start-here.md` § 4](../../../docs/00-start-here.md). Read
-  `model-knowledge/<ModelName>.md` if it is there; if it is not, look for a sibling `*-old` or
-  `*-main` folder holding one, then **stop and ask them to copy it across before you start**.
-  Invoking this skill is not a way past that stop — half the answers you are about to ask them
-  for are often already in that file.
+  `model-knowledge/<ModelName>.md` if it is there, and use it; **if it is not there, run the check
+  and give the diagnosis anyway**, then close the same reply by saying the notes are missing —
+  naming a sibling `*-old` or `*-main` folder if you can find one — and asking for them **before
+  anything is changed**.
+
+  **This is deliberate and it was decided after getting it wrong.** No note an engineer writes
+  changes a word of what `check` reports, so a stop in front of it costs a round trip and buys
+  nothing — and *"check my model and tell me what is wrong with it"* is very often somebody's first
+  contact with the Assistant. **What you may never do is find no notes file and not say so.** The
+  diagnosis is the answer; the ask still has to be in the reply.
 - **Honour the verb** — [`docs/00-start-here.md` § 2](../../../docs/00-start-here.md). In a guided
   session a green check is the feedback that proves the lesson landed: say what it just verified and
   why that mattered. It is never a way to skip the teaching.
@@ -33,9 +38,16 @@ description: Run jcass-dm check on a domain model and explain the result in mode
 .\tools\jcass-dm.exe check --project ..\MyRoadModel --lookups ..\lookups.xlsx
 ```
 
-**Pass `--lookups` whenever a copy of the client's `inputs\lookups.xlsx` is available** — download
-it from **Files → Inputs**. Without it the `lookup sets` rule reports `SKIPPED`, which is the rule
-most worth having.
+**Pass `--lookups` whenever a copy of the client's `inputs\lookups.xlsx` is available** — download it
+from **Files → Inputs**, or take it out of a project snapshot they have already unzipped. Without it
+the `lookup sets` rule reports `SKIPPED`, which is the rule most worth having, so **ask for the file
+rather than silently reporting a skip**.
+
+If they have a snapshot folder there is more you can check than `jcass-dm` does — the budget columns
+in `budgets.xlsx` against the bundle's `treatments` sheet, and the network CSV's **header row**
+against what the factory reads.
+[`docs/conventions/input-files-in-scope.md`](../../../docs/conventions/input-files-in-scope.md),
+including the rule that the CSV's rows are never read.
 
 ## 3. Explain the result
 

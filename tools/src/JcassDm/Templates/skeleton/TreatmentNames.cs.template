@@ -27,7 +27,9 @@ namespace {{NAMESPACE}};
 ///   <item><description>Decide when it fires, and what it costs, in <see cref="TreatmentsTrigger"/>.</description></item>
 ///   <item><description>Handle it in <see cref="Resetter"/>. The <c>default:</c> arm there throws,
 ///   so a treatment you forget fails loudly rather than doing nothing.</description></item>
-///   <item><description>Add its rate to the <c>unit_rates</c> set in <c>inputs\lookups.xlsx</c>.</description></item>
+///   <item><description>Add its rate to the <c>unit_rates</c> set in the <c>lkp_unit_rates</c>
+///   sheet of <c>inputs\lookups.xlsx</c>. That sheet name is load-bearing: the web app's Tuning
+///   page reads rates from it by name, and a rate elsewhere is invisible there.</description></item>
 /// </list>
 ///
 /// <example>

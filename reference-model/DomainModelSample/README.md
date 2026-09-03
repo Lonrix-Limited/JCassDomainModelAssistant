@@ -357,10 +357,17 @@ Three columns matter:
 | `repair_thresholds` | `cond_gt` | 50 |
 | `replace_thresholds` | `age_gt` | 5 |
 
-A value is addressed by the **pair** (set name, key). Which sheet a row sits in is only an
-organisational convenience — it is not part of the address, so you can regroup sheets freely
-without touching code. This kit reads two sets of thresholds from `lkp_project` and the treatment
-rate adjustments from `lkp_unit_rates`.
+A value is addressed by the **pair** (set name, key). Which sheet a row sits in is not part of the
+address, so you can regroup sheets freely without touching code. This kit reads two sets of
+thresholds from `lkp_project` and the treatment rate adjustments from `lkp_unit_rates`.
+
+> **One sheet name is not free.** Treatment unit rates go in **`lkp_unit_rates`**, and that is why
+> this kit puts them there. The web app's Tuning page **Treatment Rates** tab reads that one sheet
+> by name — a rate in any other `lkp_` sheet loads correctly, costs treatments correctly, and never
+> appears on the page the modeller was told to change rates on. Group rates into several *sets*
+> inside that sheet, which is what the tab's dropdown lists, rather than into several sheets. And
+> never leave the same (set, key) pair in two sheets: the web app refuses an ambiguous save rather
+> than picking one.
 
 ### Reading them
 

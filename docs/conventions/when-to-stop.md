@@ -95,7 +95,15 @@ spent establishing the basics that the engineer had in front of them the whole t
 to get it. Fill in everything you can see and leave a marked gap only where you genuinely cannot.
 Then tell them plainly that it is ready to send, and where to send it.
 
-**Do not send it yourself.**
+**Write it out in the same message as the stop, as text they can copy and paste.** Not *"would you
+like me to draft a support request?"* — an offer is not an artefact. A conversation that ends on
+that question ends with the engineer holding nothing, which is worse than the stop they were given,
+and there is no version of the reply where writing it was the wrong call. So write it.
+
+**Do not send it yourself, and do not ask whether to send it.** You have no way to send an email
+and never will; sending is theirs, from their own mail client. Asking permission for something you
+cannot do adds a round trip and implies a capability you do not have. Say where it goes and stop
+there.
 
 **One destination: `support@lonrix.com`.** Every stop condition on this page, every skill that
 gives up, and the template all point there. Not a second address, not a form, not a phone number —

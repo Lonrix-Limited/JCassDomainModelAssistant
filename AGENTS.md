@@ -18,7 +18,7 @@ Three things to know before you read it, because they change what you should do:
   session learned about the engineer's own models, one `<ModelName>.md` per model. Checking it is
   your first action on any model that already exists — see below.
 
-## Before you touch a model that already exists
+## Before you work on a model that already exists
 
 **The engineer names a model, or says "my model", or points you at its folder. Do this first, before
 reading their code.**
@@ -28,9 +28,18 @@ reading their code.**
 2. **If it is missing, list the folder that *contains* this repository** and look for a sibling
    `JCassDomainModelAssistant*-old` or `*-main` with `model-knowledge` files in it. After an update
    that is where their notes usually are.
-3. **Then stop. Ask them to copy it across — naming the exact folder if step 2 found one — and wait
-   for their reply before doing the work they asked for.** Not a remark at the end of a long answer,
-   and not after you have already made the change.
+3. **What you do next depends on what they asked for, and this is the part to get right.**
+
+| They asked you to | You |
+|---|---|
+| **Change the model** — add a treatment, a parameter, an input column or a lookup value; rename; refactor; fix something | **Stop.** Ask them to copy the notes across — naming the exact folder if step 2 found one — and **wait for their reply before making the change.** Not a remark at the end, and not after the edit |
+| **Answer a question** — run `check`, explain how something works, diagnose a failure, tell them whether something is right | **Answer it first.** Then say the notes file is missing and ask for it **before anything is changed** |
+
+**Why the split.** A read-only answer cannot be wrong for lack of notes — `check` reads the project
+file, the bundle and the C#, and no note an engineer writes changes what it reports. A stop in front
+of it costs a round trip, buys nothing, and lands on what is often somebody's first contact with the
+Assistant. **An edit is different**: the notes are where the reasons behind the model's decisions
+are, and changing it without them is how a deliberate choice gets tidied away.
 
 If they say the model is new to them too, believe them, offer to start the file, and do not raise it
 again in that session.
@@ -49,7 +58,7 @@ wrote it to.
 Conventions, patterns, the `jcass-dm` tool, when to stop and escalate — all in `docs/`.
 
 **If you are changing the Assistant itself** — a document, a convention, a skill, or the `jcass-dm`
-tool — read [`docs/design-rules.md`](docs/design-rules.md) **first**. It carries the twenty-six
+tool — read [`docs/design-rules.md`](docs/design-rules.md) **first**. It carries the twenty-eight
 design rules and, more importantly, the reasoning behind each one.
 
 Beyond the procedure above, this file carries no knowledge of its own: three copies of a fact become

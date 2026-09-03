@@ -6,6 +6,18 @@
 Picking up a model somebody else wrote? Go to
 [`05-adopt-an-existing-model.md`](05-adopt-an-existing-model.md) instead and come back at step 3.
 
+> ## Step 1 is not the engineer's step any more
+>
+> **If you are building a model for a Juno Cassandra client, you do not scaffold one — you start from
+> the starter model Lonrix set up for that client.**
+> [`02-the-starter-model.md`](02-the-starter-model.md) is your page, and you rejoin this one at
+> **step 3**, the build loop, which is identical either way.
+>
+> **Step 1 below is how a starter model is produced**, by Lonrix, before hand-over — and it is also
+> the right starting point for anyone building a domain model with no client project behind it. The
+> reasoning for the walking skeleton is unchanged and is worth reading whichever side of the
+> hand-over you are on. Design rules 5 and 27.
+
 ---
 
 ## Before you start

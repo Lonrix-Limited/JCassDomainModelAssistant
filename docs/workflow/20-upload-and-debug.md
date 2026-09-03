@@ -68,6 +68,13 @@ The first time, an overlay appears — *"Set up the Debug workspace"* — offeri
 source in: clone from Git, upload a zip, or skip. **Choose "I'll upload a zip".** It only dismisses
 the overlay so the editor can mount; it does not upload anything by itself.
 
+> **"Clone from Git" is not a supported route into the debug workspace, and it is not an
+> alternative to zipping.** It is VS Code's own menu item rather than a Juno Cassandra feature: the
+> workspace is a deliberately confined environment with no outbound network story and no place to
+> put a credential, so a clone is untested at best and will usually simply fail. Zip in, zip out,
+> both ways — and if the overlay's wording makes it look like a choice, say so plainly rather than
+> offering it. See [`../design-rules.md`](../design-rules.md) rule 8.
+
 That overlay also mentions **Restricted Mode**. The editor opens folders untrusted until you tell
 it otherwise, which is normal and gets in the way of building. Trust the workspace when it asks.
 
