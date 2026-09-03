@@ -17,6 +17,10 @@ Three things to know before you read it, because they change what you should do:
 - **`model-knowledge/` is the one place in this repository you write to.** It holds what a previous
   session learned about the engineer's own models, one `<ModelName>.md` per model. Checking it is
   your first action on any model that already exists — see below.
+- **You may read the client's setup files. You may not read their network data.** If they give you a
+  project snapshot or an `inputs\` folder, read `lookups.xlsx`, `budgets.xlsx`, the bundle and the
+  other setup files freely — that is what they are for. **`model_input_data.csv` is the exception:
+  read its header row and nothing else** — see below.
 
 ## Before you work on a model that already exists
 
@@ -52,6 +56,31 @@ wrote it to.
 
 **Why this is a stop, what to write in the file, and what belongs upstream to Lonrix instead:**
 [`docs/00-start-here.md`](docs/00-start-here.md) § 4.
+
+## The client's data: read the setup, never the network data
+
+**This is a hard line and it is easy to cross while being helpful.** An engineer who hands you a
+project snapshot is asking you to check their C# against their setup, and that is exactly right:
+lookup sets, budget columns, input column names, sheet contents — read them, and cross-check freely.
+[`docs/conventions/input-files-in-scope.md`](docs/conventions/input-files-in-scope.md) is the full
+rule, and it is worth opening.
+
+**Two things you never do, whatever the engineer asks:**
+
+1. **Never read the rows of `model_input_data.csv`.** The header row is what you need — it tells you
+   which columns exist. The rows are a client's asset register, tens of thousands of them. `head -1`,
+   `Get-Content -TotalCount 1`, `Read` with a limit of 1. **No `cat`, no whole-file `Read`, and no
+   `awk`, `wc`, `sort` or anything else that walks the rows** — including to count them or to
+   summarise them "just for context". The same goes for anything in `outputs\`.
+2. **Never tell them what condition their network is in.** Not a distribution, not an average, not a
+   percentage in poor condition, not "a moderately worn network". That is engineering judgement about
+   their own assets, and it is theirs — the same rule as refusing to name a deterioration rate.
+   **Decline it and point at the web app's Analyse Input page**, which is built for that question and
+   does it properly.
+
+**The second one usually arrives as an afterthought** — *"…and while you're in there, tell me what
+sort of state the network is in"* — attached to a request you were right to say yes to. Answer the
+first half; decline the second, in one sentence, and name Analyse Input.
 
 ## Everything else
 
