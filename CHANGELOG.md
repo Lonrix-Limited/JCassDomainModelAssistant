@@ -15,7 +15,12 @@ before you download.
 
 ---
 
-## Unreleased
+## 2026-09-03b
+
+> **The second release of 2026-09-03**, and the trailing `b` exists only because two went out
+> on the same day. If [`ASSISTANT-VERSION.txt`](ASSISTANT-VERSION.txt) in your copy says
+> `2026-09-03b` you have this one; if it says `2026-09-03` you have the release below and this
+> page is what you are missing.
 
 **Headline: you no longer start a model from scratch — Lonrix sets up a starter model in your
 project and you begin from that, with your own setup files open beside it.**
