@@ -20,23 +20,28 @@
     tools\jcass-dm.build.txt has, and harmless for the same reason: it identifies the content, and
     the content is what somebody is asking about.
 
+    RELEASES ARE NAMED BY DATE, and CHANGELOG.md promises engineers that two dates answer "is
+    the one I am holding older than the one on GitHub?" without their knowing any numbering
+    convention. A version number here would also collide with jcass-dm's own, which is a
+    different thing. Keep both the -Release name and the tag in the date form.
+
     Release procedure, in order:
 
         1. Commit everything that is going out.
-        2. .\scripts\stamp-assistant-version.ps1
+        2. .\scripts\stamp-assistant-version.ps1 -Release <yyyy-MM-dd>
         3. Commit ASSISTANT-VERSION.txt and the CHANGELOG entry together.
-        4. git tag -a v<n> -m "..."  and push the tag.
+        4. git tag -a release-<yyyy-MM-dd> -m "..."  and push the tag.
 
 .PARAMETER Release
-    An optional human-readable release name for the CHANGELOG heading this belongs to - "v1.1",
-    "2026-09 beta". Recorded as-is. Omit it and the file says the release is unnamed, which is
-    honest rather than absent.
+    The release name, which is the release date - "2026-09-03". Recorded as-is, and it must match
+    the CHANGELOG heading it belongs to. Omit it and the file says the release is unnamed, which
+    is honest rather than absent.
 
 .EXAMPLE
     .\scripts\stamp-assistant-version.ps1
 
 .EXAMPLE
-    .\scripts\stamp-assistant-version.ps1 -Release v1.1
+    .\scripts\stamp-assistant-version.ps1 -Release 2026-09-03
 #>
 
 [CmdletBinding()]
@@ -73,9 +78,18 @@ $dirty = -not [string]::IsNullOrWhiteSpace((& git -C $repoRoot status --porcelai
 $frameworkSha = '(refs/FRAMEWORK-VERSION.txt not found)'
 $frameworkStamp = Join-Path $repoRoot 'refs\FRAMEWORK-VERSION.txt'
 if (Test-Path -LiteralPath $frameworkStamp) {
-    $line = @(@(Get-Content -LiteralPath $frameworkStamp) | Where-Object { $_ -match '^Framework commit' })
+    $stampLines = @(Get-Content -LiteralPath $frameworkStamp)
+    $line = @($stampLines | Where-Object { $_ -match '^Framework commit' })
     if ($line.Count -gt 0) {
         $frameworkSha = ($line[0] -replace '^Framework commit\s*:\s*', '').Trim()
+    }
+
+    # FRAMEWORK-VERSION.txt warns when the assemblies were built from a modified working tree, in
+    # which case its commit is the nearest one rather than an exact description of those bytes.
+    # Carry the qualifier through: a stamp somebody quotes to support must not be more confident
+    # than the file it was read from.
+    if (@($stampLines | Where-Object { $_ -match '^WARNING' }).Count -gt 0) {
+        $frameworkSha = "$frameworkSha (nearest commit - built from a modified working tree)"
     }
 }
 

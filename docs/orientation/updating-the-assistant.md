@@ -69,7 +69,7 @@ separate step from moving:
 | **A model folder sitting inside the Assistant** — a folder with a `.csproj` in it | The serious one. Your model should be *beside* the Assistant, never inside it, but if it ended up in here then deleting the old Assistant later would delete your model with it |
 | **`model-knowledge\`** | What your assistant has learned about your models. It is inside the folder you are about to replace, and nothing else carries it across |
 | **Loose notes** — a `.txt` or `.md` at the root that you or your assistant wrote | |
-| **A file you edited** — most often `CLAUDE.md` at the root, if you ever used the `#` shortcut to tell your assistant to remember something | |
+| **A file you edited** — most often `CLAUDE.md` at the root, if you ever used the `#` shortcut to tell your assistant to remember something | Saved for reference, **not** copied back over the new one. Step 4 says what to do with it |
 
 **Ignore `bin\` and `obj\`.** Those are build output and there will be a great many of them. They
 are not yours, nothing is lost by leaving them, and an engineer who tries to preserve "everything
@@ -122,9 +122,16 @@ Open it in File Explorer and copy the path out of the address bar.
 
 ### 4. Copy your notes back in
 
-`model-knowledge\` and anything else from step 2 goes back into the new folder.
+`model-knowledge\` and your loose notes from step 2 go back into the new folder.
 
 **Your model folder does not.** It is beside the Assistant now, and that is where it stays.
+
+**And a file you edited that also exists in the new release does not go back either — most often
+`CLAUDE.md` at the root.** Copying your old one over the new one puts the new release's instructions
+back to the old ones, and nothing tells you: the file looks exactly like a `CLAUDE.md` should.
+Open your saved copy, find the part *you* added, and paste that into
+`model-knowledge\<YourModelName>.md` instead. That is where a note about your model belongs anyway,
+and it is the one place an update carries across.
 
 ### 5. Refresh your model's framework references
 

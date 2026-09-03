@@ -122,7 +122,7 @@ careless update, and neither failure produces an error message.
 instruction on it is *unpack the new folder to exactly the same absolute path* — get that right and
 almost nothing is lost; get it wrong and no amount of copying helps.
 
-Three things ride along with a new version:
+Three things to be clear about when a new version arrives:
 
 - **`refs\` is replaced too**, so the framework update comes with it. Each release is stamped with
   the framework build it carries, in [`../../refs/FRAMEWORK-VERSION.txt`](../../refs/FRAMEWORK-VERSION.txt),

@@ -96,8 +96,14 @@ model untouched, rather than leaving an emptied folder behind. `-Project` is a p
 typed and `..\` resolves against a terminal folder they cannot see, so the `.csproj` requirement is
 what stops a typo emptying some other folder's `refs`.
 
-Exit `0` clean, `1` if the source is missing `.xml` files or the copy did not complete, `2` if it
-could not run at all.
+**That includes checking the folder can be emptied at all**, which is the refusal an engineer will
+actually meet. Windows will not delete a file another process has open, and VS Code holds a model's
+reference assemblies open the whole time the model is loaded; a `Remove-Item` that stops half way
+leaves a folder the model cannot build against. So every file in the target is probed first and the
+run refuses, untouched, naming what is held.
+
+Exit `0` clean, `1` if the source is missing `.xml` files, the target is held open, or the copy did
+not complete, `2` if it could not run at all.
 
 **This is not the only thing that overwrites a model's `refs/`.** The debug sidecar stages its own,
 larger set into it during a debug run — roughly ten times as many files, because it also stages NuGet

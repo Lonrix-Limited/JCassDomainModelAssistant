@@ -125,6 +125,17 @@ if (-not (Test-Path -LiteralPath $Project -PathType Container)) {
 
 $projectPath = (Resolve-Path -LiteralPath $Project).Path
 
+# This one is checked before the .csproj test, not after it. The Assistant root holds no
+# .csproj, so the generic "that is not a model project" message would otherwise be the only
+# thing an engineer who pointed -Project at the Assistant ever saw.
+if ($projectPath -eq $repoRoot) {
+    Write-Host ''
+    Write-Host 'That is the Assistant folder itself, not a model.' -ForegroundColor Red
+    Write-Host 'Your model is a separate folder beside this one - normally  ..\MyRoadModel .' -ForegroundColor Red
+    Write-Host ''
+    exit 2
+}
+
 $csprojFiles = @(Get-ChildItem -LiteralPath $projectPath -Filter '*.csproj' -File)
 if ($csprojFiles.Count -eq 0) {
     Write-Host ''
@@ -137,15 +148,46 @@ if ($csprojFiles.Count -eq 0) {
     exit 2
 }
 
-if ($projectPath -eq $repoRoot) {
-    Write-Host ''
-    Write-Host 'That is the Assistant folder itself, not a model.' -ForegroundColor Red
-    Write-Host 'Your model is a separate folder beside this one - normally  ..\MyRoadModel .' -ForegroundColor Red
-    Write-Host ''
-    exit 2
-}
-
 $target = Join-Path $projectPath 'refs'
+
+# ---------------------------------------------------------------------------
+# AND CHECK THE FOLDER CAN ACTUALLY BE EMPTIED, BEFORE EMPTYING ANY OF IT.
+#
+# Remove-Item -Recurse deletes files one at a time and stops dead at the first
+# one something else has open - which on Windows is the ordinary state of a
+# refs\ folder whenever VS Code has the model loaded, because the C# extension
+# holds the assemblies it is reading. Without this the folder is left half
+# deleted and the model no longer builds, which is precisely the outcome every
+# other refusal in this script is written to avoid.
+# ---------------------------------------------------------------------------
+
+if (Test-Path -LiteralPath $target -PathType Container) {
+    $heldOpen = @()
+    foreach ($file in Get-ChildItem -LiteralPath $target -File -Recurse) {
+        try {
+            $handle = [System.IO.File]::Open($file.FullName, 'Open', 'Read', 'None')
+            $handle.Close()
+        }
+        catch {
+            $heldOpen += $file.Name
+        }
+    }
+
+    if ($heldOpen.Count -gt 0) {
+        Write-Host ''
+        Write-Host 'REFUSING TO REPLACE. Something else has these files open:' -ForegroundColor Red
+        Write-Host ("  {0}" -f ((@($heldOpen) | Select-Object -Unique) -join ', ')) -ForegroundColor Red
+        Write-Host ''
+        Write-Host 'Windows will not let the folder be emptied while they are held, and emptying half of' -ForegroundColor Red
+        Write-Host 'it would leave your model unable to build - worse than the stale state this was' -ForegroundColor Red
+        Write-Host 'called to fix. Close VS Code, all of it, and any terminal sitting inside your model' -ForegroundColor Red
+        Write-Host 'folder. Then run this again.' -ForegroundColor Red
+        Write-Host ''
+        Write-Host 'Your model has NOT been touched.' -ForegroundColor Red
+        Write-Host ''
+        exit 1
+    }
+}
 
 Write-Host ''
 Write-Host 'Refreshing framework reference assemblies'
@@ -169,7 +211,23 @@ if (Test-Path -LiteralPath $target -PathType Container) {
         Write-Host ("Replacing {0} assembly/assemblies built from: {1}" -f $existingDlls.Count, (@($oldShas.Keys) -join ', '))
     }
 
-    Remove-Item -LiteralPath $target -Recurse -Force
+    # The probe above covers everything that was open a moment ago. If something grabbed a file
+    # in between, say what happened in words rather than letting a raw PowerShell error land in
+    # front of a civil engineer - and be honest that the folder is now incomplete.
+    try {
+        Remove-Item -LiteralPath $target -Recurse -Force
+    }
+    catch {
+        Write-Host ''
+        Write-Host 'THE FOLDER COULD NOT BE EMPTIED, and it is now incomplete.' -ForegroundColor Red
+        Write-Host ("  {0}" -f $_.Exception.Message) -ForegroundColor Red
+        Write-Host ''
+        Write-Host 'Something opened a file while this was running. Close VS Code, all of it, and any' -ForegroundColor Red
+        Write-Host 'terminal sitting inside your model folder, then run this again - a second run will' -ForegroundColor Red
+        Write-Host 'finish the job and your model will build.' -ForegroundColor Red
+        Write-Host ''
+        exit 1
+    }
 }
 
 New-Item -ItemType Directory -Path $target -Force | Out-Null
