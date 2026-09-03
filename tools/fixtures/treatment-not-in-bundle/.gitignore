@@ -9,10 +9,18 @@ obj/
 # you IntelliSense the moment somebody clones or unzips it - a model folder that opens to red
 # squiggles has failed before it starts.
 #
-# They arrive with the Domain Model Assistant and are replaced wholesale when you download a
-# newer one. Never edit them, and never mix assemblies from two framework releases in one folder:
-# the reference in the .csproj is a wildcard, so a leftover gets compiled against rather than
-# ignored.
+# THIS COPY IS YOURS. It was made when this project was scaffolded, and nothing refreshes it
+# for you: downloading a newer Domain Model Assistant replaces the Assistant's own refs\, not
+# this one, and leaves you compiling against the older framework with no error to notice.
+# Refresh it from a PowerShell terminal in your Assistant folder:
+#
+#     .\scripts\refresh-model-refs.ps1 -Project "<full path to this project folder>"
+#
+# Use the script rather than copying files in by hand - it empties the folder before it fills
+# it, and that matters: the reference in the .csproj is a wildcard, so an assembly left behind
+# from another framework release is compiled against rather than ignored. Never edit them.
+#
+# jcass-dm check reports a NOTE when this folder and the Assistant's disagree.
 #
 # Symbols are the one thing not carried.
 refs/*.pdb
