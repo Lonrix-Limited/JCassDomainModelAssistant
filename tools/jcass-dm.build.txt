@@ -2,7 +2,7 @@
 
 version:        jcass-dm 1.1.0
 runtime:        win-x64, self-contained, single file, compressed, not trimmed
-built from:     13685a2575612feb720e6fe8a64553f1c0e4a22d
+built from:     213ef3df79557aabf32a3e26ff0ea9d7670ba37e
 built on:       2026-09-03
 size:           37.5 MB
 
