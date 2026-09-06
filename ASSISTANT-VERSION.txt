@@ -2,9 +2,9 @@
 
 WHICH VERSION OF THE ASSISTANT IS THIS?
 
-release          : 2026-09-03b
-assistant commit : 381fe189089cc8a0348caa7c398f81714ab6fd3d
-stamped on       : 2026-09-03
+release          : 2026-09-07
+assistant commit : 17f6e3adbfc26dabfcb286700bd774f2df69e7a0
+stamped on       : 2026-09-07
 framework commit : 05feae12f9040bbfa7ed718f5ed7f104b0b85eba (nearest commit - built from a modified working tree)
 
 Quote the release and the assistant commit when you email support@lonrix.com. They say
