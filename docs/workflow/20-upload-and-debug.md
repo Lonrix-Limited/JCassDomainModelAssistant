@@ -75,8 +75,12 @@ the overlay so the editor can mount; it does not upload anything by itself.
 > both ways — and if the overlay's wording makes it look like a choice, say so plainly rather than
 > offering it. See [`../design-rules.md`](../design-rules.md) rule 8.
 
-That overlay also mentions **Restricted Mode**. The editor opens folders untrusted until you tell
-it otherwise, which is normal and gets in the way of building. Trust the workspace when it asks.
+That overlay also mentions **Restricted Mode**. The editor opens folders untrusted until you tell it
+otherwise. **If it asks, trust the folder and then reload the window** — command palette
+(**Ctrl+Shift+P**) → *Developer: Reload Window*. Trusting alone has no visible effect, and the cost
+of skipping the reload is not obvious: building still works perfectly, and only **F5 fails**, with a
+message that reads like a broken installation. See step 7. Newer editor profiles are set up so the
+question never comes up at all.
 
 ## Step 4 — Pick the model version, then upload
 
@@ -154,6 +158,20 @@ At the end:
   `.csproj` just built. That is deliberate — under debugging your source has moved on from the
   published assembly. It is also why a name mismatch can hide here and first surface at publish:
   see [`40-publish.md`](40-publish.md#the-refusal-that-catches-people).
+
+### If F5 says it cannot find a debug adapter
+
+*"Couldn't find a debug adapter descriptor for debug type 'coreclr'"* means the editor has the
+folder in **Restricted Mode**, not that anything is broken. Trust the folder and then **reload the
+window** — both, in that order, because trusting alone has no visible effect and looks like it did
+not work:
+
+1. **Ctrl+Shift+P** → **Workspaces: Manage Workspace Trust** → **Trust**
+2. **Ctrl+Shift+P** → **Developer: Reload Window**
+
+Then press F5 again. Leave `launch.json` alone — Initialize workspace owns it, and nothing in it is
+the cause. Full note, including why the obvious checks all pass while this is happening:
+[`../orientation/reading-errors.md`](../orientation/reading-errors.md#checks-that-look-like-evidence-and-are-not).
 
 ### If the breakpoint does not bind
 

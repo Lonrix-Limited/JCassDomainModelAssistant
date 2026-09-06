@@ -15,6 +15,51 @@ before you download.
 
 ---
 
+## 2026-09-07
+
+**Headline: if F5 in the browser editor ever tells you it cannot find a debug adapter, the fix is to
+trust the folder *and* reload the window — and the reload is the half everybody misses.**
+
+Documentation only. **Nothing to re-check in your model** — no rule changed, no tool changed, no
+reference assembly moved. If your model builds and debugs today it is unaffected.
+
+### Added — one more error worth recognising on sight
+
+- **"Couldn't find a debug adapter descriptor for debug type 'coreclr'"** now has an entry in
+  [`docs/orientation/reading-errors.md`](docs/orientation/reading-errors.md). It means the editor has
+  your folder in **Restricted Mode**, not that anything is broken, and it is cleared by *Manage
+  Workspace Trust → Trust* followed by *Developer: Reload Window*.
+  [`docs/workflow/20-upload-and-debug.md`](docs/workflow/20-upload-and-debug.md) carries the short
+  version at the step where you would meet it.
+- **Why trusting the folder appears to do nothing.** The editor does not reload its extensions when
+  trust is granted, so the trust page says *"You trust this folder"* while F5 fails in exactly the
+  same way as before. Trust, retry, no change, conclude trust was not the problem — that reasoning is
+  natural and it is wrong, and it cost several days of investigation before it was written down.
+  Reload the window before you believe it.
+- **You may never see any of this.** Editor profiles created from September 2026 onward no longer ask
+  the question. The entry is here for profiles that predate that, and for anyone who meets the
+  message and searches for it.
+
+### Added — a way of judging your own checks
+
+- **[`docs/orientation/reading-errors.md`](docs/orientation/reading-errors.md) § *Checks that look
+  like evidence and are not*.** In the case above, four checks were run and all four came back
+  clean while debugging was impossible: the project built, the breakpoint showed as a solid red dot,
+  the launch configuration validated, and the C# extension reported itself active. Not one of them
+  touches the debugger. The section says why each is hollow and gives the habit that catches the
+  next one — *before offering a check as evidence, ask which step of the failing path it actually
+  exercises.*
+
+### Changed — the support request asks for two things first
+
+- **[`docs/support-request-template.md`](docs/support-request-template.md)** now names the two
+  one-minute checks to rule out before escalating anything on the Debug Model page: trust-and-reload,
+  and one click of *Initialize workspace*. Both are the recipient's first two questions, so a
+  request that has already answered them saves a day of turnaround. They belong under *what we
+  tried*, not under *hypothesis*.
+
+---
+
 ## 2026-09-03b
 
 > **The second release of 2026-09-03**, and the trailing `b` exists only because two went out

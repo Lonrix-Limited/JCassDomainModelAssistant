@@ -22,7 +22,7 @@ logic — a bundle sheet, a lookup, a column name — and the message text matte
 
 ---
 
-## The four failures worth recognising on sight
+## The five failures worth recognising on sight
 
 ### "Object reference not set to an instance of an object"
 
@@ -53,12 +53,66 @@ The four names disagree. Not a code problem at all —
 [`../conventions/four-names.md`](../conventions/four-names.md). Run `jcass-dm check`; it names which
 of the four are out of step.
 
+### "Couldn't find a debug adapter descriptor for debug type 'coreclr'"
+
+Usually followed by *(extension might have failed to activate)*, with buttons offering to open
+`launch.json`. **Nothing is wrong with the model, and nothing is wrong with the installation.** The
+browser editor is running the folder in **Restricted Mode**, and in that state its C# support loads
+but cannot supply a debugger. F5 — or the **Run and Debug** ▶ button, which fails identically —
+then reports the debugger as missing.
+
+**The fix is two steps, and the second one is what everybody misses:**
+
+1. **Ctrl+Shift+P** → **Workspaces: Manage Workspace Trust** → **Trust**
+2. **Ctrl+Shift+P** → **Developer: Reload Window**
+
+**Trusting on its own changes nothing you can see.** The editor does not reload its extensions when
+trust is granted, so the trust page will say *"You trust this folder"* while F5 goes on failing in
+exactly the same way. Anyone who trusts the folder, tries again, and sees no change will reasonably
+conclude that trust was not the problem — and be wrong. **Reload the window before you believe
+that.** This has cost several days of the wrong investigation.
+
+Do not touch `launch.json`. It is written for you by **Initialize workspace** and there is nothing
+in it that can supply a debugger.
+
+**You may never meet this.** Editor profiles created from September 2026 onward are set up so the
+question is never asked. If you do meet it, it is on a profile that predates that, and it is a
+one-off — once the folder is trusted and the window reloaded, it stays fixed.
+
+If trust and a reload do not clear it, stop. That is the moment for
+[`../support-request-template.md`](../support-request-template.md), and say in it that you did both.
+
 ### A build error, before anything runs
 
 Build errors are the friendly kind: the compiler names the file, the line, and usually the fix.
 Read the **first** error and ignore the rest — later ones are frequently consequences of the first.
 
 Give the engineer the file, the line, and the corrected line. Do not explain the compiler.
+
+---
+
+## Checks that look like evidence and are not
+
+The failure above is worth a second look, because of *how* it hid. In one real case it survived days
+of investigation and more than one support call, and in that time four separate checks were run and
+all four came back clean while debugging was flatly impossible:
+
+| The check | Why it proved nothing |
+|---|---|
+| `dotnet build` succeeded in the editor's terminal | That is the .NET SDK compiling a project. It never touches the debugger. |
+| The breakpoint appeared as a solid red dot | The editor allows breakpoints in C# because a declaration in the extension's manifest says the language supports them. That declaration is read whether or not the extension is running. |
+| `launch.json` was accepted and **Debug domain model** appeared in the dropdown | Same reason. The debug type is declared in a manifest; the code that supplies the actual debugger is separate, and it was the part not running. |
+| The C# extension was listed as active, with an activation time | Restricted activation is still activation. It loads, reports itself, and does almost nothing. |
+
+**The habit worth keeping: before offering a check as evidence, ask which step of the failing path it
+actually exercises.** If the honest answer is "none of it", the check is reassurance rather than
+information — and reassurance forwarded in a support request costs somebody else an afternoon
+chasing a fault that was already ruled out on paper and never in fact.
+
+The same reasoning applies well beyond this one error. A model that builds is not a model that runs.
+A parameter that is declared is not a parameter that is written —
+[`../conventions/silent-failures.md`](../conventions/silent-failures.md) is the same idea applied to
+results instead of tooling.
 
 ---
 

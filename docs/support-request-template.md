@@ -64,6 +64,28 @@ anyone thinks to ask for.
 
 ---
 
+## If the failure is on the Debug Model page, rule two things out first
+
+Both take under a minute, and a request that says they were done is worth much more than one that
+leaves them open — the recipient's first two questions are these, and asking them costs a day of
+turnaround.
+
+1. **Trust the folder and reload the window.** Manage Workspace Trust → Trust, then Developer:
+   Reload Window. **Both**, because trusting alone has no visible effect. This is the whole cause of
+   *"Couldn't find a debug adapter descriptor for debug type 'coreclr'"* —
+   [`orientation/reading-errors.md`](orientation/reading-errors.md).
+2. **Click Initialize workspace once, then retry.** It re-writes the editor's launch files with a
+   current login. A stale one shows up as a pre-launch step failing with an exit code rather than as
+   an error you can read.
+
+**Say in WHAT WE TRIED that you did both**, and say what happened. "Trusted the folder, reloaded the
+window, same error" is a fact somebody can act on. Silence on the point reads as not having tried.
+
+And write these under WHAT WE TRIED, not under HYPOTHESIS. A step actually taken is evidence; the
+hypothesis section is for what you think it means, and the two get weighed very differently.
+
+---
+
 ## Handing it over
 
 **The filled-in text goes in the reply.** One sentence in front of it — *"here is a support request,
