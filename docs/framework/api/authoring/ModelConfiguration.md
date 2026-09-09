@@ -74,7 +74,11 @@ Largest number of treatment strategies that will be generated for a single eleme
 public string BCAOptimisationMethod { get; set; }
 ```
 
-Optimisation method to use for Benefit-Cost Analysis types. Set in setup using the treatment selection key in the Meta setup file. Valid values are:
+Which method a Benefit-Cost Analysis run uses to choose treatments under the budget constraint. All three rank candidates on the incremental benefit-cost ratio and build the programme from the bottom up, so they differ less than their names suggest: what changes is which of an element's treatments may be considered, and the order they are walked in. The older spellings `bca_ibcr`, `bca-egal` and `bca_egal` are also accepted so that configurations written against earlier releases keep working; the web Configurations editor offers the three canonical names. Any other value is reported as a setup error before the run starts. Only used by `bca_optimised` runs, but the setting must carry a value in every configuration. The three canonical values are:
+
+- the standard choice - the steepest increments anywhere on the network are bought first, in one pass over a single ranking
+- re-ranks the whole network after every selection, over a slightly wider set of options per element
+- gives every element a turn before any element gets a second, which spreads treatment across more of the network at some cost in total benefit
 
 ### BCAStrategyPeriodsToSkip
 

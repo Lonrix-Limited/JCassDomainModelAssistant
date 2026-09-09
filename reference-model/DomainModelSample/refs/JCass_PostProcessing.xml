@@ -176,6 +176,13 @@
             First key is parameter code, second key is config run key, value is data for parameter
             </summary>
         </member>
+        <member name="P:JCass_PostProcessing.Objects.OutputSet.ParameterData">
+            <summary>
+            Model output per parameter, keyed by parameter name. Each table is column-oriented: read a
+            cell with <see cref="M:JCass_PostProcessing.Objects.ParameterTable.GetNumber(System.Int32,System.String)"/> or <see cref="M:JCass_PostProcessing.Objects.ParameterTable.GetText(System.Int32,System.String)"/>,
+            and never build a whole row inside a per-element loop.
+            </summary>
+        </member>
         <member name="P:JCass_PostProcessing.Objects.OutputSet.TreatmentsDictWithMaintenance">
             <summary>
             Dictionary of treatments (INCLUDING Routine Maintenance) for quick lookup on element index and period. First key is element index. Second key is treatment period. Value returned 
@@ -191,6 +198,303 @@
             </summary>    
             <returns>First key is element index. Second key is treatment period.Value returned 
             is the Treatment Row as exported, </returns>    
+        </member>
+        <member name="M:JCass_PostProcessing.Objects.OutputSet.LoadData(JCass_ModelCore.ModelObjects.ModelConfiguration,System.String,JCass_Data.Objects.jcDataSet,System.Action{System.String})">
+            <summary>
+            Loads every output file of one config tag - parameter tables, treatments, the treatment
+            lookups and the raw input data.
+            </summary>
+            <param name="modConfig">Model configuration for the client's work folder.</param>
+            <param name="runKey">Config tag to load.</param>
+            <param name="parameterSetups">Parameter setup sheet, which declares each parameter's type.</param>
+            <param name="onWarning">
+            Called with a message for each recoverable problem found while reading parameter files.
+            Defaults to a trace warning, which is invisible outside a debugger - <b>a host with a log of
+            its own should pass a sink</b>, or an outputs folder holding files from two different
+            exports will load silently.
+            </param>
+        </member>
+        <member name="T:JCass_PostProcessing.Objects.ParameterTable">
+            <summary>
+            Column-oriented store for one model parameter's wide-format output file: one row per element,
+            one column for the element index, one per element identifier, and one per calendar year.
+            </summary>
+            <remarks>
+            <para>
+            This replaces the one-<c>Dictionary&lt;string, object&gt;</c>-per-row shape that
+            <c>CSVHelper</c> produces. That shape stores the column name again for every row and holds
+            every value as a <c>string</c>, which measured at 68 bytes to hold an 8-byte number. Here a
+            numeric column is a <c>double[]</c> and a text column is an <c>int[]</c> of codes over a
+            pooled <c>string[]</c>, so the same data costs 8 and ~4 bytes per cell respectively.
+            </para>
+            <para>
+            A table is immutable once built. Build one from a file with
+            <c>JCass_PostProcessing.Utilities.ParameterCsvReader</c>, or in memory with
+            <see cref="T:JCass_PostProcessing.Objects.ParameterTableBuilder"/>.
+            </para>
+            <para>
+            <b>Choosing an accessor matters in a loop.</b> <see cref="M:JCass_PostProcessing.Objects.ParameterTable.GetNumber(System.Int32,System.String)"/> and
+            <see cref="M:JCass_PostProcessing.Objects.ParameterTable.GetText(System.Int32,System.String)"/> allocate nothing. <see cref="M:JCass_PostProcessing.Objects.ParameterTable.GetValue(System.Int32,System.String)"/> and
+            <see cref="M:JCass_PostProcessing.Objects.ParameterTable.TryGetValue(System.Int32,System.String,System.Object@)"/> box a numeric cell (a text cell is returned as the pooled string,
+            which costs nothing). <see cref="M:JCass_PostProcessing.Objects.ParameterTable.MaterialiseRow(System.Int32)"/> allocates a whole dictionary per call and
+            must never be used inside a per-element loop.
+            </para>
+            </remarks>
+        </member>
+        <member name="M:JCass_PostProcessing.Objects.ParameterTable.#ctor(System.Int32,System.Collections.Generic.Dictionary{System.String,System.Int32},JCass_PostProcessing.Objects.ParameterColumn[])">
+            <summary>
+            Creates a table over already-built columns. Callers inside this assembly own the arrays and
+            must not mutate them afterwards; columns may be shared between tables.
+            </summary>
+            <param name="rowCount">Number of rows every column holds.</param>
+            <param name="columns">Column name to ordinal. Taken by reference, not copied.</param>
+            <param name="byOrdinal">Column storage, indexed by the ordinals in <paramref name="columns"/>.</param>
+        </member>
+        <member name="P:JCass_PostProcessing.Objects.ParameterTable.RowCount">
+            <summary>
+            Number of rows (elements) in the table.
+            </summary>
+        </member>
+        <member name="P:JCass_PostProcessing.Objects.ParameterTable.Columns">
+            <summary>
+            Column name to ordinal position, in file order. Read-only: hand out a copy if a caller
+            needs a mutable dictionary, because this one is shared with every reader of the cached set.
+            </summary>
+        </member>
+        <member name="M:JCass_PostProcessing.Objects.ParameterTable.IsNumeric(System.String)">
+            <summary>
+            Reports whether a column holds numbers (as opposed to text).
+            </summary>
+            <param name="column">Column name.</param>
+            <returns>True if the column is stored as numbers.</returns>
+            <exception cref="T:System.Collections.Generic.KeyNotFoundException">Thrown if the column is not in the table.</exception>
+        </member>
+        <member name="M:JCass_PostProcessing.Objects.ParameterTable.GetNumber(System.Int32,System.String)">
+            <summary>
+            Reads a numeric cell without allocating.
+            </summary>
+            <param name="row">Zero-based row index.</param>
+            <param name="column">Column name. Must be a numeric column.</param>
+            <returns>The stored value. NaN if the cell was blank in the source file.</returns>
+            <exception cref="T:System.Collections.Generic.KeyNotFoundException">Thrown if the column is not in the table.</exception>
+            <exception cref="T:System.InvalidOperationException">Thrown if the column holds text.</exception>
+        </member>
+        <member name="M:JCass_PostProcessing.Objects.ParameterTable.GetText(System.Int32,System.String)">
+            <summary>
+            Reads a text cell without allocating - the pooled string is returned directly.
+            </summary>
+            <param name="row">Zero-based row index.</param>
+            <param name="column">Column name. Must be a text column.</param>
+            <returns>The stored value.</returns>
+            <exception cref="T:System.Collections.Generic.KeyNotFoundException">Thrown if the column is not in the table.</exception>
+            <exception cref="T:System.InvalidOperationException">Thrown if the column holds numbers.</exception>
+        </member>
+        <member name="M:JCass_PostProcessing.Objects.ParameterTable.GetValue(System.Int32,System.String)">
+            <summary>
+            Reads a cell without the caller having to know its type. A numeric cell is boxed on every
+            call; prefer <see cref="M:JCass_PostProcessing.Objects.ParameterTable.GetNumber(System.Int32,System.String)"/> where the type is known.
+            </summary>
+            <param name="row">Zero-based row index.</param>
+            <param name="column">Column name.</param>
+            <returns>A boxed double for a numeric column, the pooled string for a text column.</returns>
+            <exception cref="T:System.Collections.Generic.KeyNotFoundException">Thrown if the column is not in the table.</exception>
+        </member>
+        <member name="M:JCass_PostProcessing.Objects.ParameterTable.TryGetValue(System.Int32,System.String,System.Object@)">
+            <summary>
+            Reads a cell, returning false for a column the table does not have instead of throwing.
+            </summary>
+            <param name="row">Zero-based row index.</param>
+            <param name="column">Column name.</param>
+            <param name="value">The cell value, or null if the column is absent.</param>
+            <returns>True if the column exists.</returns>
+            <remarks>
+            This is the one-for-one replacement for <c>jcDataSet.Row(i).TryGetValue(col, out v)</c>,
+            which two live epoch-by-element loops use - <c>ParameterBreakdownByCategoryOperation</c>
+            and the <c>parameter-distinct-values</c> endpoint - at roughly a million iterations per
+            request on production data. Reaching for <see cref="M:JCass_PostProcessing.Objects.ParameterTable.MaterialiseRow(System.Int32)"/> there instead would
+            allocate a dictionary per iteration and undo the saving this store exists to produce.
+            </remarks>
+        </member>
+        <member name="M:JCass_PostProcessing.Objects.ParameterTable.MaterialiseRow(System.Int32)">
+            <summary>
+            Copies a whole row into a fresh dictionary, in column order, for the two consumers that
+            need to rewrite cells before rendering them.
+            </summary>
+            <param name="row">Zero-based row index.</param>
+            <returns>
+            A new dictionary of column name to value - a boxed double for a numeric column, the pooled
+            string for a text column. The caller owns it; changing it does not affect the table.
+            </returns>
+            <remarks>
+            <b>Never call this inside a per-element loop.</b> It allocates a dictionary and boxes every
+            numeric cell. Only <c>ParameterForecast</c> and <c>ElemDebug</c> need it, and both call it
+            once per rendered row.
+            </remarks>
+        </member>
+        <member name="M:JCass_PostProcessing.Objects.ParameterTable.GetColumn(System.String)">
+            <summary>
+            Gets the storage for a named column.
+            </summary>
+            <param name="column">Column name.</param>
+            <returns>The column storage.</returns>
+            <exception cref="T:System.Collections.Generic.KeyNotFoundException">Thrown if the column is not in the table.</exception>
+        </member>
+        <member name="T:JCass_PostProcessing.Objects.ParameterColumn">
+            <summary>
+            Storage for one column of a <see cref="T:JCass_PostProcessing.Objects.ParameterTable"/>. Immutable once built, so a single
+            instance can be shared by several tables.
+            </summary>
+        </member>
+        <member name="P:JCass_PostProcessing.Objects.ParameterColumn.IsNumeric">
+            <summary>
+            True if the column holds numbers, false if it holds text.
+            </summary>
+        </member>
+        <member name="M:JCass_PostProcessing.Objects.ParameterColumn.GetNumber(System.Int32)">
+            <summary>
+            Reads a cell as a number.
+            </summary>
+            <param name="row">Zero-based row index.</param>
+            <returns>The stored value.</returns>
+        </member>
+        <member name="M:JCass_PostProcessing.Objects.ParameterColumn.GetText(System.Int32)">
+            <summary>
+            Reads a cell as text.
+            </summary>
+            <param name="row">Zero-based row index.</param>
+            <returns>The stored value.</returns>
+        </member>
+        <member name="M:JCass_PostProcessing.Objects.ParameterColumn.GetValue(System.Int32)">
+            <summary>
+            Reads a cell as an object - boxed for a numeric column.
+            </summary>
+            <param name="row">Zero-based row index.</param>
+            <returns>The stored value.</returns>
+        </member>
+        <member name="M:JCass_PostProcessing.Objects.ParameterColumn.ContentEquals(JCass_PostProcessing.Objects.ParameterColumn)">
+            <summary>
+            Compares this column's contents with another's, cell by cell.
+            </summary>
+            <param name="other">Column to compare against.</param>
+            <returns>True if both hold the same kind, the same number of rows and equal values.</returns>
+        </member>
+        <member name="T:JCass_PostProcessing.Objects.NumericParameterColumn">
+            <summary>
+            A column of numbers, held as a plain double array - 8 bytes per cell.
+            </summary>
+        </member>
+        <member name="M:JCass_PostProcessing.Objects.NumericParameterColumn.#ctor(System.Double[])">
+            <summary>
+            Creates the column over an array the caller must not mutate afterwards.
+            </summary>
+            <param name="values">One value per row.</param>
+        </member>
+        <member name="P:JCass_PostProcessing.Objects.NumericParameterColumn.IsNumeric">
+            <inheritdoc/>
+        </member>
+        <member name="M:JCass_PostProcessing.Objects.NumericParameterColumn.GetNumber(System.Int32)">
+            <inheritdoc/>
+        </member>
+        <member name="M:JCass_PostProcessing.Objects.NumericParameterColumn.GetText(System.Int32)">
+            <inheritdoc/>
+        </member>
+        <member name="M:JCass_PostProcessing.Objects.NumericParameterColumn.GetValue(System.Int32)">
+            <inheritdoc/>
+        </member>
+        <member name="M:JCass_PostProcessing.Objects.NumericParameterColumn.ContentEquals(JCass_PostProcessing.Objects.ParameterColumn)">
+            <inheritdoc/>
+        </member>
+        <member name="T:JCass_PostProcessing.Objects.TextParameterColumn">
+            <summary>
+            A column of text, dictionary-encoded: an int array of codes over a pooled string array.
+            Parameter columns repeat their values heavily, so this costs ~4 bytes per cell plus one string
+            per distinct value.
+            </summary>
+        </member>
+        <member name="M:JCass_PostProcessing.Objects.TextParameterColumn.#ctor(System.Int32[],System.String[])">
+            <summary>
+            Creates the column over arrays the caller must not mutate afterwards.
+            </summary>
+            <param name="codes">One index into <paramref name="pool"/> per row.</param>
+            <param name="pool">The distinct values, in first-seen order.</param>
+        </member>
+        <member name="P:JCass_PostProcessing.Objects.TextParameterColumn.IsNumeric">
+            <inheritdoc/>
+        </member>
+        <member name="M:JCass_PostProcessing.Objects.TextParameterColumn.GetNumber(System.Int32)">
+            <inheritdoc/>
+        </member>
+        <member name="M:JCass_PostProcessing.Objects.TextParameterColumn.GetText(System.Int32)">
+            <inheritdoc/>
+        </member>
+        <member name="M:JCass_PostProcessing.Objects.TextParameterColumn.GetValue(System.Int32)">
+            <inheritdoc/>
+        </member>
+        <member name="M:JCass_PostProcessing.Objects.TextParameterColumn.ContentEquals(JCass_PostProcessing.Objects.ParameterColumn)">
+            <inheritdoc/>
+        </member>
+        <member name="T:JCass_PostProcessing.Objects.ParameterTableBuilder">
+            <summary>
+            Builds a <see cref="T:JCass_PostProcessing.Objects.ParameterTable"/> from values already in memory, for callers that do not
+            have a CSV file to read - tests, and any consumer that synthesises a parameter.
+            </summary>
+            <remarks>
+            Columns keep the order in which they are added, which is the order a table read from file
+            takes from the header row. Loading a real parameter file goes through
+            <c>JCass_PostProcessing.Utilities.ParameterCsvReader</c> instead, which parses straight into
+            the column arrays without building intermediate rows.
+            </remarks>
+        </member>
+        <member name="M:JCass_PostProcessing.Objects.ParameterTableBuilder.#ctor(System.Int32)">
+            <summary>
+            Starts a table of a fixed number of rows.
+            </summary>
+            <param name="rowCount">Number of rows every column must have.</param>
+            <exception cref="T:System.ArgumentOutOfRangeException">Thrown if the row count is negative.</exception>
+        </member>
+        <member name="M:JCass_PostProcessing.Objects.ParameterTableBuilder.AddNumericColumn(System.String,System.Collections.Generic.IReadOnlyList{System.Double})">
+            <summary>
+            Adds a column of numbers.
+            </summary>
+            <param name="name">Column name. Must not already be in the table.</param>
+            <param name="values">One value per row. Copied, so the caller may reuse the array.</param>
+            <returns>This builder, so calls can be chained.</returns>
+            <exception cref="T:System.ArgumentException">Thrown if the name is a duplicate or the length is wrong.</exception>
+        </member>
+        <member name="M:JCass_PostProcessing.Objects.ParameterTableBuilder.AddTextColumn(System.String,System.Collections.Generic.IReadOnlyList{System.String})">
+            <summary>
+            Adds a column of text, pooling the distinct values as it goes.
+            </summary>
+            <param name="name">Column name. Must not already be in the table.</param>
+            <param name="values">One value per row. A null entry is stored as an empty string.</param>
+            <returns>This builder, so calls can be chained.</returns>
+            <exception cref="T:System.ArgumentException">Thrown if the name is a duplicate or the length is wrong.</exception>
+        </member>
+        <member name="M:JCass_PostProcessing.Objects.ParameterTableBuilder.Build">
+            <summary>
+            Produces the finished table, which gets its own copy of the column map and column array.
+            </summary>
+            <returns>The table.</returns>
+            <remarks>
+            The copy is what makes a builder safe to keep adding to after a <c>Build</c>: an already
+            returned table keeps the width it was built with, instead of reporting a column its storage
+            array does not have.
+            </remarks>
+        </member>
+        <member name="M:JCass_PostProcessing.Objects.ParameterTableBuilder.CheckColumn(System.String,System.Int32)">
+            <summary>
+            Checks that a column may be added under the given name and length.
+            </summary>
+            <param name="name">Proposed column name.</param>
+            <param name="valueCount">Number of values supplied.</param>
+            <exception cref="T:System.ArgumentException">Thrown if the name is a duplicate or the length is wrong.</exception>
+        </member>
+        <member name="M:JCass_PostProcessing.Objects.ParameterTableBuilder.Add(System.String,JCass_PostProcessing.Objects.ParameterColumn)">
+            <summary>
+            Appends built column storage under a name.
+            </summary>
+            <param name="name">Column name.</param>
+            <param name="column">Column storage.</param>
         </member>
         <member name="M:JCass_PostProcessing.Treatments.PreTreatCondition.GetElementsWithPreTreatmentValuesPassThreshold(JCass_PostProcessing.Objects.OutputSet,System.String,System.String,System.Double,System.String,System.Boolean)">
             <summary>
@@ -223,17 +527,6 @@
             <param name="numDecimals">Number of decimals to round statistics values to</param>
             <returns></returns>
         </member>
-        <member name="M:JCass_PostProcessing.Treatments.PreTreatVsThreshold.GetPreTreatmentVsThreshold(JCass_ModelCore.ModelObjects.ModelConfiguration,System.String,System.String,System.Double,System.String)">
-            <summary>
-            Gets the details for elements for which the number of treatments over the modelling period is less than or greater than a specified threshold
-            </summary>
-            <param name="modConfig">Model Configuration</param>
-            <param name="runKey">Model Run Key</param>
-            <param name="paramCode">Parameter code whose pre-treatment value is checked against the threshold.</param>
-            <param name="threshold">Threshold against which to check the parameter value before treatment.</param>
-            <param name="conditionOperator">Condition for comparison. Valid values are 'lt' or 'gt'</param>
-            <returns></returns>
-        </member>
         <member name="M:JCass_PostProcessing.Treatments.TreatmentQuantityOverTime.GetSpendingInfoOverTime(JCass_ModelCore.ModelObjects.ModelConfiguration,System.String,System.String,System.Double)">
             <summary>
             Gets the Spending Info Over Time, grouped by treatment name, budget category or treatment category
@@ -254,6 +547,11 @@
             <param name="conditionOperator">Condition for comparison. Valid values are 'lt' or 'gt'</param>
             <returns></returns>
         </member>
+        <member name="F:JCass_PostProcessing.Utilities.FileUtils.ElementIndexColumn">
+            <summary>
+            Name of the zero-based element index column that heads every parameter output file.
+            </summary>
+        </member>
         <member name="M:JCass_PostProcessing.Utilities.FileUtils.GetSpending(JCass_ModelCore.ModelObjects.ModelConfiguration,System.String,System.Boolean)">
             <summary>
             Gets dictionary of treatments
@@ -273,6 +571,390 @@
             <param name="includeRoutineMaintenance">If true, routine maintenance entries are included in the result.</param>
             <returns>First key is element index. Second key is treatment period.</returns>
             <exception cref="T:System.Exception"></exception>
+        </member>
+        <member name="M:JCass_PostProcessing.Utilities.FileUtils.GetSharedColumnSpecs(JCass_ModelCore.ModelObjects.ModelConfiguration)">
+            <summary>
+            Describes the columns every parameter file of a run shares - the element index and the
+            element identifiers - and how each is stored in a <see cref="T:JCass_PostProcessing.Objects.ParameterTable"/>.
+            </summary>
+            <param name="modConfig">Model configuration, for the identifier column names.</param>
+            <returns>One spec per shared column, in file order.</returns>
+            <remarks>
+            <b><c>elem_index</c> is stored as a number and the identifiers as text.</b> The exporter
+            writes <c>elem_index</c> as the zero-based element position, so it is genuinely numeric and
+            dictionary-encoding it would give a pool as large as the column. Identifiers are kept as
+            text whatever they look like, so their on-disk spelling survives a round trip - a leading
+            zero, a fixed number of decimal places, an identifier that is numeric on one network and
+            alphanumeric on the next.
+            </remarks>
+        </member>
+        <member name="M:JCass_PostProcessing.Utilities.FileUtils.GetParameterData(JCass_ModelCore.ModelObjects.ModelConfiguration,System.String,System.String,System.Boolean,System.Action{System.String})">
+            <summary>
+            Reads one parameter's wide-format output file into a column store.
+            </summary>
+            <param name="modConfig">Model configuration, for the work folder and identifier columns.</param>
+            <param name="runKey">Config tag the file belongs to.</param>
+            <param name="paramCode">Model parameter name.</param>
+            <param name="valuesAreNumeric">
+            True if the parameter's declared data type is "number", so its calendar-year columns are
+            stored as numbers rather than text.
+            </param>
+            <param name="onWarning">
+            Called with a message for each recoverable problem. Defaults to a trace warning.
+            </param>
+            <returns>The parsed table.</returns>
+        </member>
+        <member name="M:JCass_PostProcessing.Utilities.FileUtils.GetAllParameterData(JCass_ModelCore.ModelObjects.ModelConfiguration,System.String,System.Collections.Generic.List{System.String},System.Collections.Generic.IReadOnlyDictionary{System.String,System.String},System.Action{System.String})">
+            <summary>
+            Reads every parameter's wide-format output file into column stores, sharing one copy of the
+            identifier columns across the whole set.
+            </summary>
+            <param name="modConfig">Model configuration, for the work folder and identifier columns.</param>
+            <param name="runKey">Config tag the files belong to.</param>
+            <param name="parameterNames">Parameters to read, in declaration order.</param>
+            <param name="parameterDataTypes">
+            Declared data type per parameter - "number" or "text". <b>Only an exact "number" is read as
+            numeric.</b> A parameter missing from this dictionary, or carrying any other spelling, is
+            read as text, which is how it was held before the column store existed and how every other
+            classifier in the codebase treats an unrecognised type. Nothing validates this cell of the
+            parameter setup sheet, so a mis-cased "Text" must not fall through to a numeric parse - that
+            would read every one of its cells back as NaN.
+            </param>
+            <param name="onWarning">
+            Called with a message for each recoverable problem - a file whose identifier columns differ
+            from the rest of the set, or a value column holding something that will not parse as a
+            number. Defaults to a trace warning, so a caller with a log of its own should pass a sink.
+            </param>
+            <returns>One table per parameter, keyed by parameter name.</returns>
+        </member>
+        <member name="T:JCass_PostProcessing.Utilities.ParameterColumnSpec">
+            <summary>
+            Names one of the columns that every parameter file of a run shares - the element index and the
+            element identifiers - and says how it is stored.
+            </summary>
+            <param name="Name">Column name as it appears in the file header.</param>
+            <param name="IsNumeric">True to store the column as numbers, false to store it as text.</param>
+        </member>
+        <member name="M:JCass_PostProcessing.Utilities.ParameterColumnSpec.#ctor(System.String,System.Boolean)">
+            <summary>
+            Names one of the columns that every parameter file of a run shares - the element index and the
+            element identifiers - and says how it is stored.
+            </summary>
+            <param name="Name">Column name as it appears in the file header.</param>
+            <param name="IsNumeric">True to store the column as numbers, false to store it as text.</param>
+        </member>
+        <member name="P:JCass_PostProcessing.Utilities.ParameterColumnSpec.Name">
+            <summary>Column name as it appears in the file header.</summary>
+        </member>
+        <member name="P:JCass_PostProcessing.Utilities.ParameterColumnSpec.IsNumeric">
+            <summary>True to store the column as numbers, false to store it as text.</summary>
+        </member>
+        <member name="T:JCass_PostProcessing.Utilities.ParameterFileRequest">
+            <summary>
+            One parameter file to read as part of a set.
+            </summary>
+            <param name="ParameterName">Model parameter name, used as the key of the returned set.</param>
+            <param name="FilePath">Full path to the wide-format output CSV.</param>
+            <param name="ValuesAreNumeric">
+            True if the parameter's declared data type is "number", so its calendar-year columns are
+            stored as numbers rather than text.
+            </param>
+        </member>
+        <member name="M:JCass_PostProcessing.Utilities.ParameterFileRequest.#ctor(System.String,System.String,System.Boolean)">
+            <summary>
+            One parameter file to read as part of a set.
+            </summary>
+            <param name="ParameterName">Model parameter name, used as the key of the returned set.</param>
+            <param name="FilePath">Full path to the wide-format output CSV.</param>
+            <param name="ValuesAreNumeric">
+            True if the parameter's declared data type is "number", so its calendar-year columns are
+            stored as numbers rather than text.
+            </param>
+        </member>
+        <member name="P:JCass_PostProcessing.Utilities.ParameterFileRequest.ParameterName">
+            <summary>Model parameter name, used as the key of the returned set.</summary>
+        </member>
+        <member name="P:JCass_PostProcessing.Utilities.ParameterFileRequest.FilePath">
+            <summary>Full path to the wide-format output CSV.</summary>
+        </member>
+        <member name="P:JCass_PostProcessing.Utilities.ParameterFileRequest.ValuesAreNumeric">
+            <summary>
+            True if the parameter's declared data type is "number", so its calendar-year columns are
+            stored as numbers rather than text.
+            </summary>
+        </member>
+        <member name="T:JCass_PostProcessing.Utilities.ParameterCsvReader">
+            <summary>
+            Reads wide-format parameter output files straight into <see cref="T:JCass_PostProcessing.Objects.ParameterTable"/> columns.
+            </summary>
+            <remarks>
+            <para>
+            <b>Nothing here builds a <c>jcDataSet</c> on the way.</b> Reading into rows first and
+            converting afterwards would lower resident memory but leave peak memory and load time exactly
+            where they are, which is half of what the column store exists to fix. Fields go into the typed
+            arrays directly.
+            </para>
+            <para>
+            <b>There are two read paths and they must agree.</b> A file is read by splitting lines on
+            commas, which read the production snapshot roughly three times faster than tokenising it did.
+            The moment a <c>"</c> appears anywhere in a line, that pass is abandoned and the <em>whole</em>
+            file is re-read with <see cref="T:Microsoft.VisualBasic.FileIO.TextFieldParser"/> - never just the offending line, because a
+            quoted field may contain a newline and a line is then no longer a row. The fast path therefore
+            has to reproduce two behaviours of <see cref="T:Microsoft.VisualBasic.FileIO.TextFieldParser"/> that are easy to miss: it
+            skips blank lines, and it trims white space from every field.
+            </para>
+            <para>
+            <b>Every parse pins <see cref="P:System.Globalization.CultureInfo.InvariantCulture"/>.</b> The reader this replaces
+            went through <c>Convert.ToDouble(string)</c> at the point of use, which follows the current
+            culture - a latent bug on a host whose locale uses a comma decimal separator.
+            </para>
+            <para>
+            <b>A cell that will not parse becomes NaN, and never stops the load.</b> A blank cell is a
+            missing value and is silently NaN. A non-blank cell that will not parse is also NaN, but warns
+            once per column, naming the file, the column and the first offending row. Throwing here would
+            take down the whole config tag - the parameter set is loaded inside <c>OutputSet.LoadData</c>
+            alongside treatments, spending and raw input - and so would break operations that never read
+            parameter data at all.
+            </para>
+            </remarks>
+        </member>
+        <member name="F:JCass_PostProcessing.Utilities.ParameterCsvReader.InitialRowCapacity">
+            <summary>
+            Initial row capacity of a column accumulator. Doubling from here reaches a typical
+            production file (~30,000 elements) in five growths.
+            </summary>
+        </member>
+        <member name="M:JCass_PostProcessing.Utilities.ParameterCsvReader.ReadFile(System.String,System.Boolean,System.Collections.Generic.IReadOnlyList{JCass_PostProcessing.Utilities.ParameterColumnSpec},System.Action{System.String})">
+            <summary>
+            Reads one wide-format parameter file into a column store.
+            </summary>
+            <param name="filePath">Full path to the CSV.</param>
+            <param name="valuesAreNumeric">True if the parameter's calendar-year columns hold numbers.</param>
+            <param name="sharedColumns">
+            The element index and identifier columns, with the kind each is stored as. Any header not
+            named here is treated as a calendar-year value column.
+            </param>
+            <param name="onWarning">
+            Called with a message for each recoverable problem. Defaults to
+            <see cref="M:System.Diagnostics.Trace.TraceWarning(System.String)"/> when not supplied.
+            </param>
+            <returns>The parsed table.</returns>
+            <exception cref="T:System.IO.FileNotFoundException">Thrown if the file does not exist.</exception>
+            <exception cref="T:System.IO.InvalidDataException">Thrown on a duplicate header or a short or long data row.</exception>
+        </member>
+        <member name="M:JCass_PostProcessing.Utilities.ParameterCsvReader.ReadSet(System.Collections.Generic.IReadOnlyList{JCass_PostProcessing.Utilities.ParameterFileRequest},System.Collections.Generic.IReadOnlyList{JCass_PostProcessing.Utilities.ParameterColumnSpec},System.Action{System.String})">
+            <summary>
+            Reads every parameter file of a run, holding one copy of the identifier columns for the
+            whole set instead of one copy per file.
+            </summary>
+            <param name="files">The files to read, in the order the parameters are declared.</param>
+            <param name="sharedColumns">
+            The element index and identifier columns, with the kind each is stored as. These are
+            written from one source in one pass by the exporter, so they are identical in every file.
+            </param>
+            <param name="onWarning">
+            Called with a message for each recoverable problem. Defaults to
+            <see cref="M:System.Diagnostics.Trace.TraceWarning(System.String)"/> when not supplied.
+            </param>
+            <returns>One table per parameter, keyed by parameter name.</returns>
+            <remarks>
+            Identifier columns are parsed from every file and compared against the first file's, then
+            discarded. The comparison costs nothing - the parser hands over the text either way and the
+            duplicate dies in gen 0 - and it buys full verification for no storage.
+            <para>
+            <b>A file whose identifiers differ keeps its own, and only warns.</b> It cannot arise from a
+            normal export, but an interrupted or partial re-export can produce it, and such a folder
+            loads and answers every question correctly today - no consumer cross-references identifiers
+            between parameter files. Throwing would take the client's whole config tag offline to save
+            a few megabytes.
+            </para>
+            </remarks>
+        </member>
+        <member name="M:JCass_PostProcessing.Utilities.ParameterCsvReader.DefaultWarn(System.String)">
+            <summary>
+            Default warning sink, used when the caller supplies none. Writes to
+            <see cref="T:System.Diagnostics.Trace"/>, which is the only channel this library has - it takes no logging
+            dependency, so a caller that wants warnings in its own log must pass a sink.
+            </summary>
+            <param name="message">Warning text.</param>
+        </member>
+        <member name="M:JCass_PostProcessing.Utilities.ParameterCsvReader.ShareIdentifierColumns(JCass_PostProcessing.Utilities.ParameterCsvReader.ParsedFile,System.Collections.Generic.IReadOnlyList{JCass_PostProcessing.Utilities.ParameterColumnSpec},System.Collections.Generic.Dictionary{System.String,JCass_PostProcessing.Objects.ParameterColumn},JCass_PostProcessing.Utilities.ParameterFileRequest,System.Action{System.String})">
+            <summary>
+            Replaces a file's identifier columns with the set's shared copies, provided every one of
+            them matches. On any difference the file keeps all of its own, and one warning is issued.
+            </summary>
+            <param name="parsed">The freshly parsed file, modified in place.</param>
+            <param name="sharedColumns">The identifier columns to consider.</param>
+            <param name="canonical">The first file's identifier columns, by name.</param>
+            <param name="file">The file being read, for the warning message.</param>
+            <param name="warn">Warning sink.</param>
+        </member>
+        <member name="M:JCass_PostProcessing.Utilities.ParameterCsvReader.ReadColumns(System.String,System.Boolean,System.Collections.Generic.IReadOnlyList{JCass_PostProcessing.Utilities.ParameterColumnSpec},System.Action{System.String})">
+            <summary>
+            Parses a file into column storage, without wrapping it in a table.
+            </summary>
+            <param name="filePath">Full path to the CSV.</param>
+            <param name="valuesAreNumeric">True if the calendar-year columns hold numbers.</param>
+            <param name="sharedColumns">The element index and identifier columns, with their kinds.</param>
+            <param name="warn">Warning sink.</param>
+            <returns>Row count, column ordinals and column storage.</returns>
+            <exception cref="T:System.IO.FileNotFoundException">Thrown if the file does not exist.</exception>
+            <exception cref="T:System.IO.InvalidDataException">Thrown on a duplicate header or a short or long data row.</exception>
+        </member>
+        <member name="M:JCass_PostProcessing.Utilities.ParameterCsvReader.TryReadColumnsFast(System.String,System.Boolean,System.Collections.Generic.IReadOnlyDictionary{System.String,System.Boolean},System.Action{System.String})">
+            <summary>
+            Reads a file by splitting each line on commas, which is correct only while no field in
+            the file is quoted.
+            </summary>
+            <param name="filePath">Full path to the CSV.</param>
+            <param name="valuesAreNumeric">True if the calendar-year columns hold numbers.</param>
+            <param name="sharedKinds">Identifier column names to the kind each is stored as.</param>
+            <param name="warn">Warning sink, called only if this pass completes.</param>
+            <returns>
+            The parsed file, or <see langword="null"/> if a quote character was seen, meaning the
+            caller must re-read the whole file with <see cref="M:JCass_PostProcessing.Utilities.ParameterCsvReader.ReadColumnsQuoted(System.String,System.Boolean,System.Collections.Generic.IReadOnlyDictionary{System.String,System.Boolean},System.Action{System.String})"/> instead.
+            </returns>
+            <exception cref="T:System.IO.InvalidDataException">Thrown on a duplicate header or a short or long data row.</exception>
+        </member>
+        <member name="M:JCass_PostProcessing.Utilities.ParameterCsvReader.ReadColumnsQuoted(System.String,System.Boolean,System.Collections.Generic.IReadOnlyDictionary{System.String,System.Boolean},System.Action{System.String})">
+            <summary>
+            Reads a file with <see cref="T:Microsoft.VisualBasic.FileIO.TextFieldParser"/>, which handles quoted fields.
+            </summary>
+            <param name="filePath">Full path to the CSV.</param>
+            <param name="valuesAreNumeric">True if the calendar-year columns hold numbers.</param>
+            <param name="sharedKinds">Identifier column names to the kind each is stored as.</param>
+            <param name="warn">Warning sink.</param>
+            <returns>Row count, column ordinals and column storage.</returns>
+            <exception cref="T:System.IO.InvalidDataException">Thrown on a duplicate header or a short or long data row.</exception>
+        </member>
+        <member name="M:JCass_PostProcessing.Utilities.ParameterCsvReader.ReadNonBlankLine(System.IO.StreamReader)">
+            <summary>
+            Returns the next line that is not blank, or <see langword="null"/> at end of file.
+            </summary>
+            <remarks>
+            <see cref="T:Microsoft.VisualBasic.FileIO.TextFieldParser"/> skips blank lines, so the fast path has to as well.
+            Without this a file with a trailing newline - which is every file the exporter writes -
+            would gain a spurious one-field row and be rejected by the field-count check, even
+            though it reads correctly today.
+            </remarks>
+            <param name="reader">Reader positioned at the start of a line.</param>
+            <returns>The line, or <see langword="null"/> if the file ended.</returns>
+        </member>
+        <member name="M:JCass_PostProcessing.Utilities.ParameterCsvReader.SplitAndTrim(System.String)">
+            <summary>
+            Splits a line on commas and trims each field.
+            </summary>
+            <remarks>
+            The trim is not cosmetic. <see cref="P:Microsoft.VisualBasic.FileIO.TextFieldParser.TrimWhiteSpace"/> defaults to
+            <see langword="true"/>, so every parameter file has always been read with its cells
+            trimmed; splitting without trimming would change the stored value of any padded cell,
+            turning a numeric column into NaN wherever a space had crept in.
+            </remarks>
+            <param name="line">One line of the file, known to contain no quote character.</param>
+            <returns>The trimmed fields, in order.</returns>
+        </member>
+        <member name="M:JCass_PostProcessing.Utilities.ParameterCsvReader.BuildAccumulators(System.String[],System.String,System.Boolean,System.Collections.Generic.IReadOnlyDictionary{System.String,System.Boolean},System.Action{System.String},System.Collections.Generic.Dictionary{System.String,System.Int32}@,System.Collections.Generic.List{JCass_PostProcessing.Utilities.ParameterCsvReader.ColumnAccumulator}@)">
+            <summary>
+            Builds the column ordinal map and one accumulator per header, shared by both read paths.
+            </summary>
+            <param name="headers">Header fields, in file order.</param>
+            <param name="filePath">Full path to the CSV, for message text.</param>
+            <param name="valuesAreNumeric">True if the calendar-year columns hold numbers.</param>
+            <param name="sharedKinds">Identifier column names to the kind each is stored as.</param>
+            <param name="warn">Warning sink handed to each accumulator.</param>
+            <param name="columns">Receives column name to ordinal, in header order.</param>
+            <param name="accumulators">Receives one accumulator per column, in header order.</param>
+            <exception cref="T:System.IO.InvalidDataException">Thrown if two columns share a name.</exception>
+        </member>
+        <member name="M:JCass_PostProcessing.Utilities.ParameterCsvReader.BuildParsedFile(System.Collections.Generic.Dictionary{System.String,System.Int32},System.Collections.Generic.List{JCass_PostProcessing.Utilities.ParameterCsvReader.ColumnAccumulator},System.Int32)">
+            <summary>
+            Closes off every accumulator and packages the result.
+            </summary>
+            <param name="columns">Column name to ordinal.</param>
+            <param name="accumulators">One accumulator per column, in header order.</param>
+            <param name="rowCount">Number of data rows read.</param>
+            <returns>The finished parsed file.</returns>
+        </member>
+        <member name="T:JCass_PostProcessing.Utilities.ParameterCsvReader.ParsedFile">
+            <summary>
+            The pieces of a parsed file, before they are wrapped in a <see cref="T:JCass_PostProcessing.Objects.ParameterTable"/>, so
+            that identifier columns can still be swapped for the set's shared copies.
+            </summary>
+            <param name="RowCount">Number of data rows read.</param>
+            <param name="Columns">Column name to ordinal, in header order.</param>
+            <param name="ByOrdinal">Column storage, indexed by ordinal.</param>
+        </member>
+        <member name="M:JCass_PostProcessing.Utilities.ParameterCsvReader.ParsedFile.#ctor(System.Int32,System.Collections.Generic.Dictionary{System.String,System.Int32},JCass_PostProcessing.Objects.ParameterColumn[])">
+            <summary>
+            The pieces of a parsed file, before they are wrapped in a <see cref="T:JCass_PostProcessing.Objects.ParameterTable"/>, so
+            that identifier columns can still be swapped for the set's shared copies.
+            </summary>
+            <param name="RowCount">Number of data rows read.</param>
+            <param name="Columns">Column name to ordinal, in header order.</param>
+            <param name="ByOrdinal">Column storage, indexed by ordinal.</param>
+        </member>
+        <member name="P:JCass_PostProcessing.Utilities.ParameterCsvReader.ParsedFile.RowCount">
+            <summary>Number of data rows read.</summary>
+        </member>
+        <member name="P:JCass_PostProcessing.Utilities.ParameterCsvReader.ParsedFile.Columns">
+            <summary>Column name to ordinal, in header order.</summary>
+        </member>
+        <member name="P:JCass_PostProcessing.Utilities.ParameterCsvReader.ParsedFile.ByOrdinal">
+            <summary>Column storage, indexed by ordinal.</summary>
+        </member>
+        <member name="T:JCass_PostProcessing.Utilities.ParameterCsvReader.ColumnAccumulator">
+            <summary>
+            Accumulates one column's cells as they are parsed, growing its backing array as it goes,
+            and produces the finished immutable column at the end of the file.
+            </summary>
+        </member>
+        <member name="M:JCass_PostProcessing.Utilities.ParameterCsvReader.ColumnAccumulator.#ctor(System.String,System.Boolean,System.String,System.Action{System.String})">
+            <summary>
+            Starts an accumulator for one column.
+            </summary>
+            <param name="name">Column name, for warning messages.</param>
+            <param name="isNumeric">True to store the column as numbers.</param>
+            <param name="filePath">Source file, for warning messages.</param>
+            <param name="warn">Warning sink.</param>
+        </member>
+        <member name="M:JCass_PostProcessing.Utilities.ParameterCsvReader.ColumnAccumulator.Add(System.String,System.Int32)">
+            <summary>
+            Appends one cell.
+            </summary>
+            <param name="field">Raw text from the file.</param>
+            <param name="row">Zero-based row index, for warning messages.</param>
+        </member>
+        <member name="M:JCass_PostProcessing.Utilities.ParameterCsvReader.ColumnAccumulator.ToColumn(System.Int32)">
+            <summary>
+            Produces the finished column, trimmed to the file's actual row count.
+            </summary>
+            <param name="rowCount">Number of rows the file turned out to have.</param>
+            <returns>The column storage.</returns>
+        </member>
+        <member name="M:JCass_PostProcessing.Utilities.ParameterCsvReader.ColumnAccumulator.ParseNumber(System.String,System.Int32)">
+            <summary>
+            Parses a numeric cell, pinning the invariant culture.
+            </summary>
+            <param name="field">Raw text from the file.</param>
+            <param name="row">Zero-based row index, for the warning message.</param>
+            <returns>The parsed value, or NaN if the cell is blank or will not parse.</returns>
+        </member>
+        <member name="M:JCass_PostProcessing.Utilities.ParameterCsvReader.ColumnAccumulator.Encode(System.String)">
+            <summary>
+            Maps a text cell onto the column's pool of distinct values.
+            </summary>
+            <param name="value">Cell text.</param>
+            <returns>Index into the pool.</returns>
+        </member>
+        <member name="M:JCass_PostProcessing.Utilities.ParameterCsvReader.ColumnAccumulator.EnsureNumericCapacity">
+            <summary>
+            Doubles the numeric backing array when it is full.
+            </summary>
+        </member>
+        <member name="M:JCass_PostProcessing.Utilities.ParameterCsvReader.ColumnAccumulator.EnsureTextCapacity">
+            <summary>
+            Doubles the code backing array when it is full.
+            </summary>
         </member>
         <member name="M:JCass_PostProcessing.Utilities.PostProcUtils.GetStatisticsCodesAllowed">
             <summary>

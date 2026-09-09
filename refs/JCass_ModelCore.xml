@@ -924,15 +924,19 @@
         </member>
         <member name="P:JCass_ModelCore.ModelObjects.ModelConfiguration.BCAOptimisationMethod">
             <summary>
-            Optimisation method to use for Benefit-Cost Analysis types. Set in setup using the treatment selection key in the Meta setup file.
-            Valid values are:
+            Which method a Benefit-Cost Analysis run uses to choose treatments under the budget constraint.
+            All three rank candidates on the incremental benefit-cost ratio and build the programme from the
+            bottom up, so they differ less than their names suggest: what changes is which of an element's
+            treatments may be considered, and the order they are walked in. The older spellings
+            <c>bca_ibcr</c>, <c>bca-egal</c> and <c>bca_egal</c> are also accepted so that configurations
+            written against earlier releases keep working; the web Configurations editor offers the three
+            canonical names. Any other value is reported as a setup error before the run starts. Only used by
+            <c>bca_optimised</c> runs, but the setting must carry a value in every configuration. The three
+            canonical values are:
             <list type="bullet">
-            <listheader><term>Method</term><description>Description</description>
-            <item><term>moora</term><description>Multi-Criteria Decision Analysis ranking using the MOORA (multi-opjective optimisation using ratio analysis) method</description></item>
-            <item><term>bca-greedy</term><description>Benefit-Cost Analysis optimisation using the Bottom-Up Greedy algorithm</description></item>
-            <item><term>bca-egal</term><description>Benefit-Cost Analysis optimisation using the Bottom-Up Egalitarian algorithm</description></item>
-            <item><term>bca-ibcr</term><description>Benefit-Cost Analysis optimisation using the Bottom-Up decreasing Incremenal Cost Benefit algorithm</description></item>
-            </listheader>
+            <item><term>bca-ibcr</term><description>the standard choice - the steepest increments anywhere on the network are bought first, in one pass over a single ranking</description></item>
+            <item><term>bca-greedy</term><description>re-ranks the whole network after every selection, over a slightly wider set of options per element</description></item>
+            <item><term>bca-egalitarian</term><description>gives every element a turn before any element gets a second, which spreads treatment across more of the network at some cost in total benefit</description></item>
             </list>
             </summary>
         </member>
