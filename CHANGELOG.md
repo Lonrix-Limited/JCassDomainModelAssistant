@@ -15,7 +15,7 @@ before you download.
 
 ---
 
-## Unreleased
+## 2026-09-16
 
 **Headline: ask your assistant to refactor a model you have inherited and it now tells you what is
 wrong with it first — then asks for your notes before changing anything.**
