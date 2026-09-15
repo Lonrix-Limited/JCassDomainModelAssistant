@@ -45,7 +45,22 @@ changes your model and tells you exactly which row to add.**
 - **If an assistant has ever written to your `lookups.xlsx`**, open it in Excel, save it, and upload it
   again on **Files → Inputs**. That puts back the stored result of every formula. A file an assistant
   touched that has no formulas in it is unaffected.
-- **Nothing else in your model needs changing.**
+- **Refresh your model's `refs\` folder and rebuild** —
+  `.\scripts\refresh-model-refs.ps1 -Project ..\YourModel`, in your PowerShell terminal in the
+  Assistant folder. See below for why this release needs it.
+
+### Also in this release — the framework reference now matches what the server runs
+
+- **The reference assemblies in `refs\` and the generated API reference in `docs\framework\api\` moved
+  from a framework build of 17 August to the one running on the server.** Until your model's own
+  `refs\` is refreshed, it compiles against the older one.
+- **Three public types and one method no longer exist in the framework:** `PreTreatVsThreshold`,
+  `JunoViewerFwpPrepV2`, `PlotSetup` and `OutputSet.GetParameterPlotData`, all from post-processing.
+  A domain model rarely touches these. **If yours does, it will stop compiling after the refresh** —
+  which is the point: it would already fail on the server.
+- **Nothing about `TreatmentInstance`, triggers, resets or lookups changed.** The only other prose
+  change is a clearer description of the benefit-cost treatment-selection setting on
+  `ModelConfiguration`.
 
 ---
 
