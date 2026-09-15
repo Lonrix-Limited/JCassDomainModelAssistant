@@ -15,6 +15,27 @@ before you download.
 
 ---
 
+## Unreleased
+
+**Headline: ask your assistant to refactor a model you have inherited and it now tells you what is
+wrong with it first — then asks for your notes before changing anything.**
+
+### Changed — taking over a model
+
+- **"Help me refactor the model in folder X" now gets a diagnosis on the first reply.** Your assistant
+  runs `jcass-dm check`, tells you what it found, and then — if it has no notes on that model — asks
+  for them and waits before renaming or refactoring anything. Until now it asked for the notes first
+  and told you nothing, which is a poor answer to somebody who has just been handed a model.
+- **It also says, up front, that publishing replaces the model your client is already running.** That
+  warning was always in the adoption procedure; your assistant was stopping before it got there.
+
+### What to re-check in your model
+
+- **Nothing in your model needs changing.** This release changes how your assistant behaves, not what
+  it writes.
+
+---
+
 ## 2026-09-15
 
 **Headline: your assistant no longer edits your client's spreadsheets, even when you ask it to. It

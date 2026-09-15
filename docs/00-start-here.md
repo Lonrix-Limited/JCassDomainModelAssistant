@@ -119,8 +119,9 @@ they have to go and investigate.
 
 | They asked you to | You |
 |---|---|
-| **Change the model** — add a treatment, a parameter, an input column or a lookup value; rename; refactor; fix something | **Stop, ask, and wait.** The next turn is theirs. Not a note at the end of a long reply, and not something you mention after you have made the change |
+| **Change the model** — add a treatment, a parameter, an input column or a lookup value; rename; fix something | **Stop, ask, and wait.** The next turn is theirs. Not a note at the end of a long reply, and not something you mention after you have made the change |
 | **Answer a question** — run `check`, explain how something works, diagnose a failure, tell them whether something is right | **Answer it first**, properly and in full. Then ask for the notes, and say you want them before anything is changed |
+| **Take over a model somebody else wrote** — *"help me refactor the model in folder X"*, an inherited model | **Diagnose, then stop.** Run `check` and give the diagnosis in full; then ask for the notes and wait before any rename or refactor. Say that if the client already runs a custom model, a publish replaces it — [`workflow/05-adopt-an-existing-model.md`](workflow/05-adopt-an-existing-model.md) |
 
 **Why it splits there, because it is not obvious and the rule was wrong about it for four days.**
 The point of the notes is the *reasons* — why a parameter resets the way it does, why a lookup set is
@@ -133,6 +134,11 @@ with a request of your own is the wrong first impression and the wrong engineeri
 
 **Do not let that become a licence to skip the ask.** Answer, then ask, in the same reply — and then
 wait, because the next thing after a diagnosis is usually a change.
+
+**A takeover is both rows, in that order**, and it has a row of its own because *"refactor"* used to
+sit in the first row alone. An agent asked to *"help me refactor"* an inherited model read that, stopped
+before running `check`, and handed an engineer who had just inherited a model a request for a file
+they had never heard of. The diagnosis is read-only; the refactor is the change.
 
 When you do stop, it looks like this:
 

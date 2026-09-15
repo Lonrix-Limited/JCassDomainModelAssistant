@@ -38,14 +38,17 @@ reading their code.**
 
 | They asked you to | You |
 |---|---|
-| **Change the model** — add a treatment, a parameter, an input column or a lookup value; rename; refactor; fix something | **Stop.** Ask them to copy the notes across — naming the exact folder if step 2 found one — and **wait for their reply before making the change.** Not a remark at the end, and not after the edit |
+| **Change the model** — add a treatment, a parameter, an input column or a lookup value; rename; fix something | **Stop.** Ask them to copy the notes across — naming the exact folder if step 2 found one — and **wait for their reply before making the change.** Not a remark at the end, and not after the edit |
 | **Answer a question** — run `check`, explain how something works, diagnose a failure, tell them whether something is right | **Answer it first.** Then say the notes file is missing and ask for it **before anything is changed** |
+| **Take over a model somebody else wrote** — *"help me refactor the model in folder X"*, an inherited model | **Diagnose first, then stop.** Run `jcass-dm check` and give them what it found; then say the notes file is missing, ask for it, and **wait before any rename or refactor**. And say plainly that if the client already runs a custom model, a publish replaces it — so nothing is published while they are learning the workflow |
 
 **Why the split.** A read-only answer cannot be wrong for lack of notes — `check` reads the project
 file, the bundle and the C#, and no note an engineer writes changes what it reports. A stop in front
 of it costs a round trip, buys nothing, and lands on what is often somebody's first contact with the
 Assistant. **An edit is different**: the notes are where the reasons behind the model's decisions
-are, and changing it without them is how a deliberate choice gets tidied away.
+are, and changing it without them is how a deliberate choice gets tidied away. **A takeover is both
+rows in order**: the diagnosis is what they came for and cannot be wrong for lack of notes; the
+refactor is the change, and waits.
 
 If they say the model is new to them too, believe them, offer to start the file, and do not raise it
 again in that session.

@@ -4,7 +4,7 @@
 reasoning that produced it. The first twenty-six were settled while the Assistant was built, between
 9 and 28 August 2026; rules 27 and 28 were added on 2026-09-03 from watching it in real use, and
 several of the originals were amended the same day. Rule 28 gained its write half, and rule 22 its one
-exception, on 2026-09-15. They are live rules rather than history.
+exception, on 2026-09-15; rule 26 gained a row for taking over a model on 2026-09-16. They are live rules rather than history.
 
 ## Who this file is for
 
@@ -627,7 +627,8 @@ theirs and stateful. It is never for *the Assistant*, which is replaced wholesal
 > Added 2026-08-28, from the question of how a client who has worked for two months takes an update
 > without losing what their agent learned. **Rewritten the same day** — see *Why not the model
 > folder* below. **Amended 2026-09-03** — see *The stop is keyed on changing a model, not on touching
-> one*, which is where the rule was wrong.
+> one*, which is where the rule was wrong. **Amended again 2026-09-16** — a takeover got a row of its
+> own, because the table still listed *refactor* as a plain change.
 
 Rule 18 says improvements arrive by re-download, and justifies it with rule 2: the model is a
 sibling folder, so the Assistant is stateless with respect to the engineer's work and can be swapped
@@ -690,8 +691,9 @@ risk is closable without machinery:
 
 | The request | What the agent does |
 |---|---|
-| **Changes the model** — a treatment, a parameter, an input column, a lookup value, a rename, a refactor | Look, then **stop and ask**, and wait. Before the edit, never after it |
+| **Changes the model** — a treatment, a parameter, an input column, a lookup value, a rename | Look, then **stop and ask**, and wait. Before the edit, never after it |
 | **Only reads it** — `check`, a diagnosis, an explanation, *"is this right?"* | **Answer first**, then say the notes are missing and ask for them before anything is changed |
+| **Takes it over** — *"help me refactor the model in folder X"*, an inherited model | **Both, in order:** run `check` and give the diagnosis, then ask for the notes and wait before any rename or refactor — and say that a publish replaces the client's running model (rule 13) |
 
 **Why the first version was wrong.** It keyed the stop on *"have I seen this model before?"*, which
 sounds like the same question and is not. Asked *"check my model and tell me what is wrong with
@@ -717,6 +719,17 @@ complete without it.
 check and mentions the notes afterwards. `adopt-existing-model` does both in order — the diagnosis
 is read-only and comes first, the ask lands before any rename or refactor — which is also what rule
 19 requires of it.
+
+**Why a takeover has its own row — amended 2026-09-16.** Until then *"a refactor"* sat in the
+*changes* row, and the table in the root instruction files said the same. `adopt-existing-model` and
+`workflow/05` both said *diagnose first*, but an agent reads the root file before it reaches a skill,
+and it obeyed the root file: asked to *"help me refactor the CDM in the folder ..\InheritedModel"*, it
+stopped for the notes before running `check`, three runs out of three, with the skill present and
+without it. **The rule contradicted the procedure built on it, and the rule won.** The same runs never
+once gave rule 13's takeover warning, which lived only in the skill and the workflow page that the
+stop prevented anyone reaching — so one sentence of it now sits in the row itself. The general lesson
+is the one rule 28's first failure taught: **what must happen before the agent opens anything else
+belongs in the root files, and nothing further down may contradict them.**
 
 ### Two rules bind the agent
 
