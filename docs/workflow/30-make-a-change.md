@@ -34,7 +34,10 @@ and queue a new run.
 
 **If the number is not in `lookups.xlsx` yet, that is the actual task**, and it is three steps:
 
-1. `inputs\lookups.xlsx` → the right `lkp_` sheet → add a row with a set name and a setting key.
+1. `inputs\lookups.xlsx` → the right `lkp_` sheet → add a row with a set name and a setting key, in
+   Excel, then upload the file on **Files → Inputs**. The Tuning page cannot add a row. **You add it,
+   not your assistant** — it gives you the row and leaves the file alone, even if you ask it to write
+   it ([`../conventions/input-files-in-scope.md`](../conventions/input-files-in-scope.md) § 3).
 2. `Objects\Constants.cs` → read it in the constructor, next to its neighbours:
    ```csharp
    this.ResealAgeGreaterThan = GetNumber(lookupSets, ResealThresholds, "age_gt");
@@ -109,8 +112,9 @@ reason, and the numbers that legitimately *do* stay in C#:
    [`../conventions/silent-failures.md` § 11](../conventions/silent-failures.md#11-a-treatment-with-no-arm-in-the-reset-switch).
 
 5. **`inputs\lookups.xlsx`** — add the `unit_rates` row keyed `reseal` **in the `lkp_unit_rates`
-   sheet**, and any thresholds the trigger reads in whichever `lkp_` sheet suits. Upload it on
-   **Files → Inputs**, or edit it on the **Tuning** page.
+   sheet**, and any thresholds the trigger reads in whichever `lkp_` sheet suits. Add the rows in
+   Excel and upload the file on **Files → Inputs**; the **Tuning** page can change their values
+   afterwards but cannot add them. You make this edit, not your assistant.
 
    **The sheet name matters for the rate and only for the rate.** Tuning's *Treatment Rates* tab
    reads `lkp_unit_rates` by name; a rate in another sheet still loads and still costs the

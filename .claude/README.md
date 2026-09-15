@@ -29,7 +29,7 @@ skill should link to it.
 | `package-for-upload` | [`workflow/20-upload-and-debug.md`](../docs/workflow/20-upload-and-debug.md) · `package` |
 | `draft-support-request` | [`support-request-template.md`](../docs/support-request-template.md) |
 
-Four properties every one of them inherits, because they are properties of the Assistant rather
+Five properties every one of them inherits, because they are properties of the Assistant rather
 than of any skill:
 
 - **It says where a command runs and what a path resolves to.** Every command block is introduced
@@ -44,6 +44,9 @@ than of any skill:
   gets built and the question gets asked.
 - **The answer goes in `lookups.xlsx`, not in C#.** Being told a value is not permission to
   hard-code it — [`docs/conventions/where-numbers-live.md`](../docs/conventions/where-numbers-live.md).
+- **It never writes the client's setup files.** A skill changes the model; the engineer adds the
+  row to `lookups.xlsx`, however directly they asked the skill to —
+  [`docs/conventions/input-files-in-scope.md`](../docs/conventions/input-files-in-scope.md) § 3.
 
 And every one of them defers to
 [`docs/conventions/when-to-stop.md`](../docs/conventions/when-to-stop.md) rather than restating it.

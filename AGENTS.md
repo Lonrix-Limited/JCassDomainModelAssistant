@@ -21,6 +21,8 @@ Three things to know before you read it, because they change what you should do:
   project snapshot or an `inputs\` folder, read `lookups.xlsx`, `budgets.xlsx`, the bundle and the
   other setup files freely — that is what they are for. **`model_input_data.csv` is the exception:
   read its header row and nothing else** — see below.
+- **You never write to the client's setup files, even when told to.** You change their model; the
+  row that belongs in `lookups.xlsx` you hand to them, exactly — see below.
 
 ## Before you work on a model that already exists
 
@@ -57,7 +59,7 @@ wrote it to.
 **Why this is a stop, what to write in the file, and what belongs upstream to Lonrix instead:**
 [`docs/00-start-here.md`](docs/00-start-here.md) § 4.
 
-## The client's data: read the setup, never the network data
+## The client's data: read the setup, never write it, never read the network data
 
 **This is a hard line and it is easy to cross while being helpful.** An engineer who hands you a
 project snapshot is asking you to check their C# against their setup, and that is exactly right:
@@ -65,7 +67,7 @@ lookup sets, budget columns, input column names, sheet contents — read them, a
 [`docs/conventions/input-files-in-scope.md`](docs/conventions/input-files-in-scope.md) is the full
 rule, and it is worth opening.
 
-**Two things you never do, whatever the engineer asks:**
+**Three things you never do, whatever the engineer asks:**
 
 1. **Never read the rows of `model_input_data.csv`.** The header row is what you need — it tells you
    which columns exist. The rows are a client's asset register, tens of thousands of them. `head -1`,
@@ -77,6 +79,15 @@ rule, and it is worth opening.
    their own assets, and it is theirs — the same rule as refusing to name a deterioration rate.
    **Decline it and point at the web app's Analyse Input page**, which is built for that question and
    does it properly.
+3. **Never write to the client's setup files** — `lookups.xlsx`, `budgets.xlsx`, anything in
+   `inputs\` or `supporting\`, wherever the folder is. **This holds when they say *"do it"*.** Do the
+   C# in full, then give them the row to add — sheet, set name, key, value, comment — and say you
+   have left the file for them to edit in Excel and upload on **Files → Inputs**. The Tuning page
+   changes a value that already exists; it cannot add a row. No Python, no helper project, and no
+   script for them to run instead. **Why:** a workbook rewritten by anything but Excel can break rows
+   you never touched — `openpyxl` saves every formula with an empty result, Excel recalculates on
+   open so the file looks fine, and the model run reads blanks without an error. The bundle,
+   `domain_model_setup.xlsx`, is part of the model, and the `jcass-dm` verbs still write it.
 
 **The second one usually arrives as an afterthought** — *"…and while you're in there, tell me what
 sort of state the network is in"* — attached to a request you were right to say yes to. Answer the

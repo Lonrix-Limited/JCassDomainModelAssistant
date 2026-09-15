@@ -95,9 +95,12 @@ Two mechanics from the same page that are not optional: **guard before you index
 and the key, and **`Convert.ToDouble`, never a cast** — `setting_value` arrives as text whatever the
 cell looks like in Excel.
 
-**There is no `jcass-dm` verb for this, deliberately.** `lookups.xlsx` is the client's file, and the
-route to prefer is the engineer editing it on the web app's **Tuning** page — because that is the
-route they will use again, every time they recalibrate.
+**There is no `jcass-dm` verb for this, deliberately — and you do not write the row by any other
+means either**, not with Python, not with a helper project, and not when they say *"do it"*.
+`lookups.xlsx` is the client's file. Hand them the sheet, set, key, value and `comment`; they add it in
+Excel and upload the file on **Files → Inputs** (the Tuning page edits existing rows and cannot add
+one), and every recalibration after that happens on the **Tuning** page. Say that you have left the
+file for them. Why: [`docs/conventions/input-files-in-scope.md`](../../../docs/conventions/input-files-in-scope.md) § 3.
 
 ## 4. Then
 
@@ -113,7 +116,9 @@ The `lookup sets` rule compares the set names the C# asks for against the ones t
 
 - **Never write the number into C# because the engineer told you what it is.** Being told is not
   permission — `where-numbers-live.md` § *Asking the engineer for the value is not enough*.
-- **Never choose the value.** If they have not given one, the row and the property still get
-  scaffolded and the value is theirs to supply.
+- **Never choose the value.** If they have not given one, the property still gets written, the row
+  still gets specified, and the value is theirs to supply.
+- **Never write `lookups.xlsx` yourself, even when told to.** A workbook rewritten by a script can
+  blank formulas in rows you never touched, and nothing reports it — § 3.
 - **Never read the counterexamples in the reference model as a shape to copy.** `DomainModelSample`
   hard-codes three numbers on purpose and labels each one at the point of use.

@@ -3,7 +3,8 @@
 **This is the "why" behind everything else in this repository.** Twenty-eight rules, each with the
 reasoning that produced it. The first twenty-six were settled while the Assistant was built, between
 9 and 28 August 2026; rules 27 and 28 were added on 2026-09-03 from watching it in real use, and
-several of the originals were amended the same day. They are live rules rather than history.
+several of the originals were amended the same day. Rule 28 gained its write half, and rule 22 its one
+exception, on 2026-09-15. They are live rules rather than history.
 
 ## Who this file is for
 
@@ -533,6 +534,13 @@ evening when support is closed.
 One principle with two settings, not two disjoint behaviours: the explanation is always present, and
 only *who types it* varies.
 
+**The direct verb reaches the model, never the client's files.** Added 2026-09-15 with rule 28's
+write half. *"Do it"* covers the C#, the bundle through the `jcass-dm` verbs, and `model-knowledge/`.
+It does not cover a client setup file: there the agent hands over the exact row and the engineer
+writes it, however directly they asked. This is the one place the verb does not decide, and rule 28
+carries the reason — the harm is invisible to the person approving the write, so their approval
+cannot be what protects them.
+
 **The tooling serves this rather than replacing it.** `jcass-dm check` in a guided session is not a
 shortcut past the teaching — it is the feedback that proves the lesson landed, and explaining what
 it just verified is part of the lesson. Likewise a skill invoked during a guided session still
@@ -820,8 +828,53 @@ forecast to form an opinion about it is the same crossing in a different folder.
   **Check bundle** on the Debug Model page runs the same validators against the bundle being edited.
   Rule 6 already says the local check is a subset — this rule adds that an agent with the files in
   front of it must still not reimplement those validators locally.
-- **The engineer makes the edits.** Guide them, name the sheet and the row, and prefer the Tuning
-  page over Excel wherever both would work — it is the route they will use again every time they
-  recalibrate. Rule 22's reasoning, applied to spreadsheets.
+- **The engineer makes the edits, and the agent never does** — the write half below. Guide them,
+  name the sheet and the row, and send them to the Tuning page for any value that already exists — it
+  is the route they will use again every time they recalibrate.
 - **Nothing is ever written into the snapshot.** It is a download, it goes stale the moment the client
   changes anything, and an edit there reaches nothing at all.
+
+### The write half — the agent never writes a client setup file, even when told to
+
+> Added 2026-09-15, from a real session. Asked to *"convert all hard coded thresholds and penalty
+> factors … to lookup values with good explanations"*, an agent did the C# correctly, then added the
+> rows to the client's `lookups.xlsx` itself with Python's `openpyxl`, and later removed some
+> redundant ones the same way. Every value it wrote was right.
+
+**The damage was to rows it never touched.** `openpyxl` cannot calculate, so when it saves a workbook
+it writes every formula with an *empty* stored result. Excel recalculates when a file is opened, so
+the workbook looked correct to everyone who checked it. The framework reads the stored result rather
+than recalculating, so three expected-surface-life values that were formulas in that workbook reached
+the model as blanks — and **nothing errored**. It was found by somebody noticing that a forecast was
+wrong and working backwards to the spreadsheet.
+
+**So the line is: `lookups.xlsx`, `budgets.xlsx` and every other file in the client's `inputs\` or
+`supporting\` are read, and never written, by any means, wherever the folder sits.** Not with
+`openpyxl` or `pandas`, not with a ClosedXML helper project, not through a script handed to the
+engineer to run instead. Three reasons, and the first is the one that makes it a line rather than a
+preference:
+
+1. **The harm is invisible to the person who would approve it.** The engineer in the observed session
+   asked in the most direct words available and would have said yes to the write. Rule 22 lets the
+   verb decide *who types*; here the approval cannot protect them, because nothing about the result
+   looks wrong. A risk the approver cannot see is not one an approval manages.
+2. **The local file is not the one that runs.** The web app runs what was uploaded on **Files →
+   Inputs**, or edited on the Tuning page. A local edit reaches nothing until it is uploaded, and an
+   upload of a stale copy silently overwrites whatever a modeller changed online since. Only the
+   engineer knows which copy is current.
+3. **Rule 22's own reason, applied to spreadsheets.** An engineer who has never added a lookup row
+   cannot maintain the model.
+
+**What the agent does instead.** The C# in full — the `Constants` property, the reference at the point
+of use — and the spreadsheet half as an instruction precise enough to follow without asking: the
+sheet, the set, the key, the value and a `comment`. **And it says it has left the file for them.** A
+silent skip reads as a finished change, and the first sign would be a setup failure naming the set.
+
+**A wrong fact came out with it, and it had four copies.** Several pages said a new lookup row could be
+added on the Tuning page. It cannot: the Tuning page changes values in rows that already exist. A new
+row is added in Excel, and the file uploaded on **Files → Inputs**.
+
+**What this does not cover.** `domain_model_setup.xlsx` is the bundle — part of the model, not the
+client's setup — and the `jcass-dm` verbs that write it are how rule 3 keeps its names from drifting.
+`model-knowledge/` is the Assistant's own (rule 26). Reading any client setup file — `check --lookups`,
+`dump`, opening it to cross-check — is unchanged and is the point of this rule.

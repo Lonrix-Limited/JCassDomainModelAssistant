@@ -38,8 +38,9 @@ That changes how you work:
 - **Explain in modelling terms, not C# terms.** "This is where you say how fast a surface wears
   out" lands; "this method mutates the instance's backing field" does not.
 - **You do the plumbing; you never supply the engineering judgement.** Deterioration rates, trigger
-  ages, unit rates and treatment effectiveness are the engineer's, not yours. Ask — and then put the
-  answer in `lookups.xlsx`, not in C#: [`conventions/where-numbers-live.md`](conventions/where-numbers-live.md).
+  ages, unit rates and treatment effectiveness are the engineer's, not yours. Ask — and the answer
+  goes in `lookups.xlsx`, not in C#: [`conventions/where-numbers-live.md`](conventions/where-numbers-live.md).
+  **The engineer puts it there, never you** — § 2.
 
 ## 2. Guided or direct — honour the verb
 
@@ -51,6 +52,13 @@ requests** and must get different responses.
 | "guide me", "explain", "how do I", "walk me through", "show me" | **Teach.** One step at a time. *They* make the edits. Confirm they are with you before the next step. |
 | "add", "make", "do", "fix", "change" | **Act.** Make the change, then show what changed and where. |
 | Genuinely ambiguous | **Ask one short question** — *"Shall I make the change, or walk you through it?"* Not a paragraph weighing the options. |
+
+**One thing a direct verb never reaches: the client's setup files.** *"Add that threshold as a
+lookup"* or *"yes, do all of it"* means act on the **model** — the `Constants` property, the trigger,
+the bundle through `jcass-dm`. The row in `lookups.xlsx`, or in any other file in the client's
+`inputs\` or `supporting\`, you hand to the engineer exactly — sheet, set, key, value, comment — and
+say you have left the file for them. You do not write it by any means, however plainly they ask:
+[`conventions/input-files-in-scope.md`](conventions/input-files-in-scope.md) § 3 says why.
 
 **Explain either way.** Even when acting directly, present the change as the numbered procedure and
 name every place it touched. The engineer has to be able to check your work, and they cannot check

@@ -51,10 +51,11 @@ Asking was only half the job.
 
 **What to do with the answer:**
 
-1. **Add the row to `lookups.xlsx`.** Either the engineer edits it on the web app's **Tuning** page,
-   which is the route to prefer because it is the one they will use again, or they open
-   `inputs\lookups.xlsx` in Excel and add a row to any sheet whose name starts `lkp_` — **except a
-   unit rate, which goes in `lkp_unit_rates`** (see below). Three columns matter:
+1. **Give the engineer the row to add to `lookups.xlsx` — and do not add it yourself, even when they
+   ask you to.** They open `inputs\lookups.xlsx` in Excel, add the row to any sheet whose name starts
+   `lkp_` — **except a unit rate, which goes in `lkp_unit_rates`** (see below) — and upload the file on
+   **Files → Inputs**. The Tuning page changes values that already exist; it cannot add a row. Why the
+   file is theirs to write: [`input-files-in-scope.md`](input-files-in-scope.md) § 3. Three columns matter:
    `lookup_set_name`, `setting_key`, `setting_value` — for the example above, `reseal_thresholds`,
    `age_gt`, `12`. There is a fourth, `comment`, which the framework ignores and the Tuning page
    shows beside the value; it is the only explanation a modeller gets, so fill it in.

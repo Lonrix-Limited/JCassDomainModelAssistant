@@ -163,10 +163,12 @@ for against the ones the file actually has, before you upload anything.
 An engineer says *"replace anything worse than grade 4."* You now have the number. Asking was the
 right thing to do — **and writing `private const double ReplaceGrade = 4.0;` next would undo it.**
 
-1. **Add the row to `lookups.xlsx`.** Either they edit it on the Tuning page, which is the route to
-   prefer because it is the one they will use again, or they open `inputs\lookups.xlsx` and add a
-   row to any `lkp_` sheet: `replace_thresholds`, `cond_gt`, `4`. **A unit rate is the exception —
-   that goes in `lkp_unit_rates`**, for the reason above.
+1. **Give them the row for `lookups.xlsx` — they add it, you never do, even when asked.** They open
+   `inputs\lookups.xlsx` in Excel, add a row to any `lkp_` sheet — `replace_thresholds`, `cond_gt`,
+   `4`, and a `comment` — and upload it on **Files → Inputs**. The Tuning page edits existing rows and
+   cannot add one. **A unit rate is the exception — that goes in `lkp_unit_rates`**, for the reason
+   above. Why the file is theirs:
+   [`../conventions/input-files-in-scope.md`](../conventions/input-files-in-scope.md) § 3.
 2. **Add a property to `Constants`** that reads it, guarded, naming the set and the key.
 3. **Reference that property** from the trigger, in place of the literal.
 4. **Tell them where the number now lives** and that they can change it on the Tuning page without

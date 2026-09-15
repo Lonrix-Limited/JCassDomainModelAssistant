@@ -160,7 +160,9 @@ and your assistant has the pattern with a working example.
 > *"A reseal triggers when rut depth is over 10 mm. Where does the 10 go?"*
 
 Into `inputs\lookups.xlsx`, so you can change it yourself on the Tuning page and re-run in minutes.
-Your assistant will put it there rather than into the code, and this is worth watching it do once.
+Your assistant will wire the code to read it from there and tell you exactly which row to add — and
+then leave the spreadsheet to you, even if you ask it to write the row. That is deliberate: a
+workbook rewritten by a script can quietly blank formulas elsewhere in it.
 
 **When something breaks**
 

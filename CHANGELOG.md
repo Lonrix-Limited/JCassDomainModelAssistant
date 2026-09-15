@@ -15,6 +15,40 @@ before you download.
 
 ---
 
+## Unreleased
+
+**Headline: your assistant no longer edits your client's spreadsheets, even when you ask it to. It
+changes your model and tells you exactly which row to add.**
+
+### Changed — who writes `lookups.xlsx`
+
+- **Ask your assistant to turn a number into a lookup and it now does the code, then hands you the
+  row** — sheet, set name, key, value and comment — and says it has left the file for you. You add the
+  row in Excel and upload the file on **Files → Inputs**. This holds for every file in `inputs\` and
+  `supporting\`, and it holds when you say *"do it"*.
+- **Why, because it will feel like a step backwards.** An assistant that wrote the rows itself did so
+  with a Python spreadsheet library that cannot calculate. The rows it added were correct, but saving
+  the workbook wiped the stored result of **every formula in it**. Excel recalculates when you open a
+  file, so the workbook looked fine; the model run reads the stored results, so it ran with blank
+  lookup values and reported nothing.
+  [`docs/conventions/input-files-in-scope.md`](docs/conventions/input-files-in-scope.md) § 3.
+- **Your model's `domain_model_setup.xlsx` is not affected.** It is part of the model, and the
+  `jcass-dm` verbs still write it.
+
+### Fixed
+
+- **The Tuning page cannot add a lookup row.** Four pages said it could. It changes values in rows that
+  already exist; a new row goes in through Excel and **Files → Inputs**.
+
+### What to re-check in your model
+
+- **If an assistant has ever written to your `lookups.xlsx`**, open it in Excel, save it, and upload it
+  again on **Files → Inputs**. That puts back the stored result of every formula. A file an assistant
+  touched that has no formulas in it is unaffected.
+- **Nothing else in your model needs changing.**
+
+---
+
 ## 2026-09-07
 
 **Headline: if F5 in the browser editor ever tells you it cannot find a debug adapter, the fix is to

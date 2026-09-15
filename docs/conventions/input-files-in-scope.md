@@ -1,10 +1,11 @@
 # The client's setup files are in scope — as evidence, never as data
 
-**Ask for the project snapshot. Read the setup files in it. Do not read the network data.**
+**Ask for the project snapshot. Read the setup files in it. Do not read the network data. Write to
+none of it.**
 
-Those three sentences are the whole rule, and the third one is the one that needs the reasoning,
-because it looks like caution and is actually the difference between the rule being usable and being
-switched off.
+Those four sentences are the whole rule. The third and fourth are the ones that need the reasoning,
+because each looks like caution and is actually the difference between the rule being usable and
+being switched off.
 
 Where the snapshot comes from, and how to unzip it:
 [`../workflow/02-the-starter-model.md`](../workflow/02-the-starter-model.md) § step 3.
@@ -132,10 +133,37 @@ runs them against the bundle being edited rather than the last one staged.
 **Do not reimplement any of that locally.** Two implementations of one rule drift, and the one the
 engineer runs first is the one that will be wrong.
 
-**3. Let them make the edits.** These are the client's files and the engineer's job. Guide, explain
-what a sheet is for, say exactly which row to add and where — and prefer the **Tuning** page over
-Excel whenever both would work, because that is the route they will use again every time they
-recalibrate. An engineer who has never added a lookup row cannot maintain the model.
+**3. They make the edits — and you never do, even when they tell you to.** These are the client's
+files and the engineer's job, and **this holds for every file in `inputs\` and `supporting\`,
+wherever the folder sits** — a snapshot, a working copy, a folder they keep beside the model. *"Add
+it"*, *"yes, do all of it"* — a direct request changes the **model** (the C#, the bundle through
+`jcass-dm`), and never these files. Not with Python's `openpyxl` or `pandas`, not with a helper
+project, and not through a script you hand them to run instead.
+
+What you hand over is an instruction they can follow without asking: **the sheet, the set name, the
+key, the value, and a `comment`** saying what the number means. Then say, in a sentence, that you have
+left the file for them — a silent skip reads as a finished change.
+
+How they make it depends on the edit:
+
+| The edit | Where |
+|---|---|
+| **A new row** | Excel, then upload the file on **Files → Inputs**. The Tuning page cannot add a row |
+| **A value that already exists** | The **Tuning** page — the route they will use again every time they recalibrate |
+
+**Why this is a hard line and not a preference, because it looks like fussiness and is not.**
+
+- **A workbook rewritten by anything but Excel can break rows you never touched.** Observed, not
+  hypothetical: an agent added correct rows with `openpyxl`, which cannot calculate, so it saved every
+  formula in the workbook with an empty result. Excel recalculates on open, so the file looked right
+  to everyone who checked. The framework reads the stored result, so the model ran with blank lookup
+  values and reported nothing.
+- **The local file is not the one that runs.** The web app runs what was uploaded. A local edit
+  reaches nothing until then, and uploading a stale copy overwrites whatever a modeller changed online.
+- **An engineer who has never added a lookup row cannot maintain the model.**
+
+The engineer approving the write is not a way round this: they cannot see the damage either. Design
+rule 28 carries the full reasoning.
 
 **4. Never write into the snapshot.** It is a download, it is stale the moment the client changes
 anything, and an edit there reaches nothing. Real changes go through the web app, or through a file
