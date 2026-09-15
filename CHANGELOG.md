@@ -15,7 +15,7 @@ before you download.
 
 ---
 
-## Unreleased
+## 2026-09-15
 
 **Headline: your assistant no longer edits your client's spreadsheets, even when you ask it to. It
 changes your model and tells you exactly which row to add.**
