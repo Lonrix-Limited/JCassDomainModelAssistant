@@ -148,10 +148,12 @@ apply it. Your domain model does, or nothing does.** A model that never reads th
 and no error says so. The reference model and scaffolded models do not check it, so add the check if
 the project relies on the setting.
 
-**Follow what the framework's `DefaultDomainModel` does:**
+**Write the check like this:**
 
 - **The score must be strictly greater than the minimum.** A score equal to it is left out, so with a
   minimum of 0 an unscored candidate is left out too.
+- **A `NaN` score fails this comparison.** The candidate is dropped with no error, so the framework's
+  check on MCDA scores never sees it. Stop the calculation producing one, as the guard above does.
 - **Forced treatments skip the check.** Test `force` first, then the score.
 - **Check it in the trigger and return early** rather than adding the candidate. The trigger also runs
   in benefit-cost models, where this keeps candidates out of the strategy rollout, which is worth real

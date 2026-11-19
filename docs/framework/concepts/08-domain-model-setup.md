@@ -339,7 +339,7 @@ Next you need to specify which of the available network functions is to be used 
 
 > **Important**
 >
-> The position of a parameter in the 'parameters' sheet does not matter for Network Functions, but the order of rows on the 'network_functions' sheet does. Rows are calculated from top to bottom. If one Network Function uses the output of another as its input, **put the row that produces the value higher on the sheet**. Otherwise the function finds no result for that period yet, and no error is reported.
+> The position of a parameter in the 'parameters' sheet does not matter for Network Functions, but the order of rows on the 'network_functions' sheet does. Rows are calculated from top to bottom. If one Network Function uses the output of another as its input, **put the row that produces the value higher on the sheet**. Otherwise the function uses the previous period's result instead, or zero in the first calculation, and no error is reported.
 
 Network Functions are calculated once after the model is initialised, then again at the end of every period. In any period, your Domain Model therefore sees the result from the end of the previous period. Any value your Domain Model writes to the output parameter is replaced. In a Benefit-Cost Analysis, Network Functions are not recalculated while a strategy is rolled forward.
 

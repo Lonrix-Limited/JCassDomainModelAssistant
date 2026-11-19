@@ -29,7 +29,7 @@ description: Run jcass-dm check on a domain model and explain the result in mode
 
 ## 1. Read
 
-- [`docs/conventions/silent-failures.md`](../../../docs/conventions/silent-failures.md) — what each rule is defending against, and the five failures nothing detects.
+- [`docs/conventions/silent-failures.md`](../../../docs/conventions/silent-failures.md) — what each rule is defending against, and the six failures nothing detects.
 - [`tools/README.md`](../../../tools/README.md) § `check` is an explicit subset — and the exit codes.
 
 ## 2. Run
