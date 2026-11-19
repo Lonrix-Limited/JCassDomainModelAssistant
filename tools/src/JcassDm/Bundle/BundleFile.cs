@@ -147,6 +147,17 @@ internal sealed class BundleFile : IDisposable
     public void RequireWritable(SheetSpec spec)
     {
         SheetTable table = this.Sheet(spec);
+
+        if (table.RowWithEmptyFirstCell is int partialRow)
+        {
+            throw new BundleFailure(
+                $"Sheet '{spec.Name}' has values on row {partialRow}, but its first column " +
+                $"('{table.Columns[0]}') is empty." + Environment.NewLine +
+                "The framework stops reading at that row, and writing a new row here would land on " +
+                "top of it." + Environment.NewLine +
+                "Open the sheet in Excel, fill in the first column or clear the row, then re-run.");
+        }
+
         if (table.StrayContentRow is not int strayRow) return;
 
         throw new BundleFailure(
@@ -234,6 +245,14 @@ internal sealed class BundleFile : IDisposable
                     $"Sheet '{spec.Name}' is missing column{(missing.Count > 1 ? "s" : "")} " +
                     string.Join(", ", missing.Select(c => $"'{c}'")) + ". " +
                     $"It has: {string.Join(", ", table.Columns)}");
+            }
+
+            if (table.RowWithEmptyFirstCell is int partialRow)
+            {
+                this._warnings.Add(
+                    $"Sheet '{spec.Name}': row {partialRow} has values but its first column " +
+                    $"('{table.Columns[0]}') is empty. The framework stops reading there, so that " +
+                    "row and every row below it are ignored.");
             }
 
             if (table.StrayContentRow is int strayRow)

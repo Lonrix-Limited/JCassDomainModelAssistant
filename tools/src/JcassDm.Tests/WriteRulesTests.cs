@@ -128,6 +128,22 @@ public class WriteRulesTests
         before.AssertOnlyDifferenceIsAppendedRows(after);
     }
 
+    [Fact]
+    public void A_row_with_an_empty_first_cell_is_not_written_over()
+    {
+        // The next appended row lands exactly here, so it would overwrite what the row holds.
+        using var bundle = TestBundle.FromReferenceModel();
+        DumpTests.SetCell(bundle.Path, "treatments", row: 5, column: 2, value: "resurfacing");
+        string before = bundle.Dump();
+
+        ToolResult result = bundle.Run(
+            "add-treatment", bundle.Path, "--name", "reseal", "--budget-category", "resurfacing");
+
+        Assert.Equal(ExitCode.BundleInvalid, result.ExitCode);
+        Assert.Contains("row 5", result.All, StringComparison.Ordinal);
+        Assert.Equal(before, bundle.Dump());
+    }
+
     private static string[] WithBundle(string[] args, TestBundle bundle)
         => new[] { args[0], bundle.Path }.Concat(args.Skip(1)).ToArray();
 }

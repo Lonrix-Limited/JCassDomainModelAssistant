@@ -54,6 +54,7 @@ public class VerbTests
     {
         using var bundle = TestBundle.FromReferenceModel();
         DumpTests.SetCell(bundle.Path, "meta", row: 4, column: 1, value: "");   // drop model_name
+        DumpTests.SetCell(bundle.Path, "meta", row: 4, column: 2, value: "");
 
         ToolResult result = bundle.Run("set-meta", bundle.Path, "--display-name", "Restored");
 

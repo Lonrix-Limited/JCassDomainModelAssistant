@@ -23,9 +23,10 @@ namespace {{NAMESPACE}};
 /// generator rolls each candidate forward into multi-period strategies - do it now, do it in
 /// three years, do nothing - before the optimiser scores them. You do not write that part.</para>
 ///
-/// <para><b>Set <c>TreatmentSuitabilityScore</c> on every instance you build.</b> The optimiser
-/// ranks candidates by it. A candidate with no score set will never be chosen ahead of one that
-/// has one, and nothing reports that it was passed over.</para>
+/// <para><b>Set <c>TreatmentSuitabilityScore</c> on every instance you build.</b> In an MCDA run
+/// it is one of the criteria candidates are ranked on. A candidate with no score counts as zero,
+/// and nothing reports that. The project's minimum score has no effect unless your code checks
+/// <c>Configuration.MinimumTreatmentSuitabilityScoreAllowed</c>.</para>
 ///
 /// <para>Every threshold in this file comes from <see cref="Constants"/>, which reads it from the
 /// client's <c>inputs\lookups.xlsx</c>. A trigger age written here as a literal is a trigger age

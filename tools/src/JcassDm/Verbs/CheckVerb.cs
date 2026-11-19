@@ -260,35 +260,46 @@ internal static class CheckVerb
     /// parameter that is never written is zero for every element in every period, and the run
     /// completes normally. This rule is therefore the only defence there is, which is why its
     /// message says so rather than pointing downstream at a framework error that never arrives.</para>
+    ///
+    /// <para>The outputs of the <c>network_functions</c> sheet are the exception. The framework
+    /// writes those itself at the end of each period, so the C# has no need to.</para>
     /// </summary>
     private static void CheckParameters(BundleFile bundle, SourceFacts facts, CheckReport report)
     {
         SheetTable sheet = bundle.Sheet(SheetSpec.Parameters);
         var declared = Rows(sheet, "parameter_name").ToList();
+        var networkOutputs = Rows(bundle.Sheet(SheetSpec.NetworkFunctions), "output_parameter")
+            .ToHashSet(StringComparer.Ordinal);
+        var mustBeWritten = declared.Where(p => !networkOutputs.Contains(p)).ToList();
+        int setByNetworkFunctions = declared.Count - mustBeWritten.Count;
 
         if (!facts.FoundSetParameterValues)
         {
-            if (declared.Count == 0)
+            if (mustBeWritten.Count == 0)
             {
-                report.Pass("parameters vs C#", "none declared, none written");
+                report.Pass("parameters vs C#", declared.Count == 0
+                    ? "none declared, none written"
+                    : $"{declared.Count} declared, all set by network functions");
                 return;
             }
 
             report.Problem("parameters vs C#",
-                $"The bundle declares {declared.Count} parameter{(declared.Count == 1 ? "" : "s")} " +
+                $"The bundle declares {mustBeWritten.Count} parameter{(mustBeWritten.Count == 1 ? "" : "s")} " +
                 "and there is no SetParameterValues method anywhere in the project.",
                 "Every parameter on the bundle's parameters sheet must be written through the " +
                 "framework's sinks. Nothing reports it if one is not: the framework allocates the " +
                 "parameter and leaves it at zero for every element in every period, and the run " +
                 "completes with a column of zeros in the outputs.",
-                "Declared: " + string.Join(", ", declared));
+                "Declared: " + string.Join(", ", mustBeWritten));
             return;
         }
 
-        var missing = declared.Where(p => !facts.ParametersWritten.Contains(p)).ToList();
+        var missing = mustBeWritten.Where(p => !facts.ParametersWritten.Contains(p)).ToList();
         if (missing.Count == 0)
         {
-            report.Pass("parameters vs C#", $"{declared.Count} declared, all written");
+            report.Pass("parameters vs C#", setByNetworkFunctions == 0
+                ? $"{declared.Count} declared, all written"
+                : $"{declared.Count} declared: {mustBeWritten.Count} written, {setByNetworkFunctions} set by network functions");
             return;
         }
 

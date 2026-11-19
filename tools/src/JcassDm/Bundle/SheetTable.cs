@@ -35,6 +35,7 @@ internal sealed class SheetTable
         this.ReadHeaders();
         this.RowCount = this.CountDataRows();
         this.StrayContentRow = this.FindStrayContentBelowData();
+        this.RowWithEmptyFirstCell = this.FindRowWithEmptyFirstCell();
     }
 
     /// <summary>Sheet name as spelled in the workbook.</summary>
@@ -52,6 +53,13 @@ internal sealed class SheetTable
     /// at the blank. Worth reporting, never worth silently deleting.
     /// </summary>
     public int? StrayContentRow { get; }
+
+    /// <summary>
+    /// The row that ended the data when that row has values in the table's other columns, or
+    /// null when it does not. It looks like data and the framework never reads it, because its
+    /// first cell is empty. Cells beyond the last header are notes and do not count.
+    /// </summary>
+    public int? RowWithEmptyFirstCell { get; }
 
     /// <summary>True when the sheet has a column of that exact name.</summary>
     public bool HasColumn(string columnName) => this._columnNumbers.ContainsKey(columnName);
@@ -210,6 +218,14 @@ internal sealed class SheetTable
             if (!this._sheet.Row(row).IsEmpty()) return row;
         }
         return null;
+    }
+
+    private int? FindRowWithEmptyFirstCell()
+    {
+        int row = FirstDataRow + this.RowCount;
+        bool hasValues = this._columnNumbers.Values.Any(
+            column => !string.IsNullOrEmpty(this._sheet.Cell(row, column).GetFormattedString()));
+        return hasValues ? row : null;
     }
 
     private static object? ReadCell(IXLCell cell)

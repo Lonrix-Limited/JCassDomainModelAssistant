@@ -156,6 +156,33 @@ public class DumpTests
     }
 
     [Fact]
+    public void A_row_with_values_and_an_empty_first_cell_is_reported()
+    {
+        // The framework stops at this row, so the row itself is lost as well as those below it.
+        using var bundle = TestBundle.FromReferenceModel();
+        SetCell(bundle.Path, "treatments", row: 5, column: 2, value: "resurfacing");
+
+        ToolResult result = bundle.Run("dump", bundle.Path);
+
+        Assert.Equal(ExitCode.Ok, result.ExitCode);
+        Assert.Contains("row 5 has values but its first column", result.Output, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_note_to_the_right_of_the_table_is_not_reported()
+    {
+        // Notes beside a table are allowed: the framework stops reading headers at the first
+        // empty one, so it never sees them.
+        using var bundle = TestBundle.FromReferenceModel();
+        SetCell(bundle.Path, "network_functions", row: 2, column: 6, value: "a note");
+
+        ToolResult result = bundle.Run("dump", bundle.Path);
+
+        Assert.Equal(ExitCode.Ok, result.ExitCode);
+        Assert.DoesNotContain("its first column", result.Output, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void An_unknown_verb_is_a_usage_error()
     {
         using var bundle = TestBundle.FromReferenceModel();

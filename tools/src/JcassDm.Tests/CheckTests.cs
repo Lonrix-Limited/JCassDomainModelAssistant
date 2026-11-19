@@ -100,6 +100,48 @@ public class CheckTests
     }
 
     [Fact]
+    public void A_network_function_output_does_not_have_to_be_written()
+    {
+        // The framework writes these itself, after every element has been stepped. Reporting one
+        // as unwritten told the engineer to write it or delete its row, and deleting the row
+        // breaks the model.
+        using TemporaryModel model = FixtureModels.Copy("parameter-not-written");
+        SetNetworkFunction(model, input: "par_condition", output: "par_obj");
+
+        ToolResult result = model.Run("check", "--project", model.Folder);
+
+        Assert.Equal(ExitCode.Ok, result.ExitCode);
+        Assert.DoesNotContain("never written", result.Output, StringComparison.Ordinal);
+        Assert.Contains("set by network functions", result.Output, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_network_function_input_still_has_to_be_written()
+    {
+        // The control for the test above: only the OUTPUT is the framework's job.
+        using TemporaryModel model = FixtureModels.Copy("parameter-not-written");
+        SetNetworkFunction(model, input: "par_obj", output: "par_rank");
+
+        ToolResult result = model.Run("check", "--project", model.Folder);
+
+        Assert.Equal(ExitCode.CheckFailed, result.ExitCode);
+        Assert.Contains("never written in SetParameterValues: par_obj", result.Output, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_row_the_framework_will_not_read_is_reported()
+    {
+        using TemporaryModel model = FixtureModels.Copy("healthy");
+        string bundle = model.PathTo("domain_model_setup.xlsx");
+        DumpTests.SetCell(bundle, "network_functions", row: 2, column: 2, value: "percent_rank");
+
+        ToolResult result = model.Run("check", "--project", model.Folder);
+
+        Assert.Equal(ExitCode.Ok, result.ExitCode);
+        Assert.Contains("row 2 has values but its first column", result.Output, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void A_treatment_with_no_reset_arm_is_named()
     {
         ToolResult result = Run("missing-reset-arm");
@@ -186,6 +228,14 @@ public class CheckTests
 
         Assert.Equal(ExitCode.CheckFailed, result.ExitCode);
         Assert.Contains("reset switch for: repair", result.Output, StringComparison.Ordinal);
+    }
+
+    private static void SetNetworkFunction(TemporaryModel model, string input, string output)
+    {
+        string bundle = model.PathTo("domain_model_setup.xlsx");
+        DumpTests.SetCell(bundle, "network_functions", row: 2, column: 1, value: input);
+        DumpTests.SetCell(bundle, "network_functions", row: 2, column: 2, value: "percent_rank");
+        DumpTests.SetCell(bundle, "network_functions", row: 2, column: 3, value: output);
     }
 
     private static ToolResult Run(string fixture, params string[] extra)
