@@ -184,7 +184,7 @@ Three things, each of which has caught somebody:
 
 | Not set | Consequence | Set it via |
 |---|---|---|
-| `TreatmentSuitabilityScore` | In an MCDA model the candidate is never preferred over a scored one, and nothing reports that it was passed over | [`treatment-suitability-scoring.md`](treatment-suitability-scoring.md) |
+| `TreatmentSuitabilityScore` | In an MCDA model the candidate is ranked on a score of zero, and nothing reports it | [`treatment-suitability-scoring.md`](treatment-suitability-scoring.md) |
 | `RankParamSimple` | Maintenance funding order becomes whatever the element loop produced — stable enough to look deliberate | [`treatment-suitability-scoring.md`](treatment-suitability-scoring.md) |
 | `Cost` | Zero until the framework multiplies quantity by unit rate and applies the present-worth factor | Nothing — the framework does it. Just do not read `Cost` straight after construction and expect a number |
 

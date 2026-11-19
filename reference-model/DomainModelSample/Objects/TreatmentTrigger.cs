@@ -107,8 +107,8 @@ public static class TreatmentTrigger
 
     /// <summary>
     /// Assembles a <see cref="TreatmentInstance"/> and gives it the element's objective value as
-    /// its suitability score. The optimiser ranks candidates on that score, so a treatment with no
-    /// score set will never be chosen ahead of one that has one.
+    /// its suitability score. In an MCDA run that score is one of the criteria candidates are
+    /// ranked on, and a treatment with no score set is ranked on zero.
     ///
     /// <para>Cost is <c>Quantity × UnitRate</c>. The unit rate is the element's material-derived
     /// base rate multiplied by the rate for this treatment from <c>lookups.xlsx</c>, so a modeller

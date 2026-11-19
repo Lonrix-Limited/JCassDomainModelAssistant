@@ -15,7 +15,7 @@ when the reasoning changes.
 |---|---|---|
 | **A Windows PC** | `jcass-dm` ships as a Windows executable and every command in `workflow\` is PowerShell. | Windows 10 or 11. |
 | **VS Code** | Where the work happens. They open this repository by double-clicking [`assistant.code-workspace`](../../assistant.code-workspace), and add their model folder to that same window once it exists — **File → Add Folder to Workspace…**. | Free. |
-| **The .NET 9 SDK** | Builds the model. `dotnet build` comes from it. | Free. Check with `dotnet --version`. |
+| **The latest .NET 9 SDK** | Builds the model. `dotnet build` comes from it. | Free. Check with `dotnet --version`. Update an older 9.0 copy, because each release carries security fixes. |
 | **This repository** | The framework reference assemblies, the API reference, the conventions, and `jcass-dm`. | Download the ZIP; no account needed. |
 | **A folder they can read *and write*** | Both this repository and their model folder are written into — the build alone creates thousands of files. | Under **Documents** is always safe. See below. |
 | **A paid AI coding assistant** | See below. | Theirs to choose and to pay for. |

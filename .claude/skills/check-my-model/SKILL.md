@@ -51,7 +51,7 @@ including the rule that the CSV's rows are never read.
 
 ## 3. Explain the result
 
-Read it back rule by rule, in modelling terms. Three things to get right:
+Read it back rule by rule, in modelling terms. Four things to get right:
 
 - **`NOTE` and `SKIPPED` are not passes and are not failures.** A `SKIPPED` rule is one the tool
   could not apply — say which, and what would let it. A rule that quietly became a no-op is worse
@@ -59,13 +59,17 @@ Read it back rule by rule, in modelling terms. Three things to get right:
 - **A `parameters vs C#` finding is a bug, never a tidiness note.** It is the only defence that
   exists anywhere against a column of zeros that looks like a result —
   [`silent-failures.md` § 1](../../../docs/conventions/silent-failures.md#1-a-parameter-declared-in-the-bundle-but-never-written).
+  Outputs on the `network_functions` sheet are not reported, because the framework writes those.
+- **A `NOTE` that a row has an empty first column means rows are being lost.** The framework stops
+  reading the sheet there —
+  [`silent-failures.md` § 14](../../../docs/conventions/silent-failures.md#14-a-row-with-an-empty-first-cell).
 - **Green does not mean the model is right.** It means nothing locally visible is inconsistent. Say
   so in your own words rather than paraphrasing it into "the model is fine". The web app's
   **Check Setup** is authoritative and sees the client's real data.
 
 ## 4. Say what it did not look at
 
-Five entries on the silent-failures list have **no detection mechanism at all**, so nothing will
+Six entries on the silent-failures list have **no detection mechanism at all**, so nothing will
 raise them for you. Raise them in conversation instead, whenever the model has just changed in a way
 that touches one:
 
@@ -76,6 +80,7 @@ that touches one:
 | [5](../../../docs/conventions/silent-failures.md#5-an-input-column-or-parameter-added-to-one-factory-method-but-not-the-other) | Does every property appear in **both** factory methods? |
 | [10](../../../docs/conventions/silent-failures.md#10-a-privately-constructed-random-instead-of-rando) | Is there a `new Random()` anywhere? |
 | [12](../../../docs/conventions/silent-failures.md#12-reading-a-model-parameter-at-or-above-the-period-you-were-handed) | Does any parameter read use an epoch at or above the period it was handed? |
+| [15](../../../docs/conventions/silent-failures.md#15-a-minimum-suitability-score-your-model-never-checks) | Does the project rely on a minimum suitability score, and does the model check it? |
 
 ## 5. Never
 

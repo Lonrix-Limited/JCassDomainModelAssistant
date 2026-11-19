@@ -11,7 +11,7 @@ command:
 .\tools\jcass-dm.exe check --project ..\TheirModel --lookups <path to their inputs\lookups.xlsx>
 ```
 
-Five entries are **not** mechanically detectable and are marked so. Those are the ones to raise out
+Six entries are **not** mechanically detectable and are marked so. Those are the ones to raise out
 loud, because nothing will raise them for you.
 
 ---
@@ -33,6 +33,8 @@ loud, because nothing will raise them for you.
 | [11](#11-a-treatment-with-no-arm-in-the-reset-switch) | A treatment is funded and reported, and changes nothing | `jcass-dm check` — when the reset is a `switch`. Loud in a scaffolded model; silent in some inherited ones |
 | [12](#12-reading-a-model-parameter-at-or-above-the-period-you-were-handed) | A look-back calculation quietly reads zero | Nothing, outside a benefit-cost rollout. Inside one it throws |
 | [13](#13-your-models-refs-folder-left-behind-by-an-assistant-update) | The documentation beside you describes a framework your code is not compiled against | `jcass-dm check` — **only** this |
+| [14](#14-a-row-with-an-empty-first-cell) | A row in a setup sheet has no effect, and neither does anything below it | `jcass-dm check` as a `NOTE`, for the five bundle sheets only |
+| [15](#15-a-minimum-suitability-score-your-model-never-checks) | Changing the minimum suitability score changes nothing | Nothing |
 
 ---
 
@@ -60,6 +62,9 @@ That rule is **the only defence there is.** Treat a `parameters vs C#` finding a
 tidiness note. Note also that it can only see parameters written with a literal name; a name
 assembled at run time is invisible to it.
 
+**One exception.** An output on the `network_functions` sheet is written by the framework, so your
+code does not write it and the rule does not report it.
+
 ---
 
 ## 2. A parameter whose clamp range is too narrow
@@ -80,6 +85,10 @@ the quantity can genuinely take.
 **Detection.** `jcass-dm add-parameter` refuses to write a numeric parameter with no `--min` and
 `--max`, so the range is at least a decision rather than a default. After that it is inspection: if
 a parameter looks suspiciously flat, open its row first.
+
+**Network function outputs are clamped too.** A `z_score` is negative below the network mean, so an
+output with a minimum of 0 turns every below-average result into 0. A percent rank needs a range
+covering 0 to 100.
 
 ---
 
@@ -398,6 +407,50 @@ which is the point of it.
 
 ---
 
+## 14. A row with an empty first cell
+
+**Symptom.** A row is plainly there in Excel and has no effect, and neither does anything below it. A
+network function is never calculated, or a lookup the model needs seems to be missing.
+
+**Cause.** The framework reads a setup sheet from row 2 down and **stops at the first row where column
+A is empty**, with no error. The row with the gap is lost, and so is every row after it. An optional
+column makes this easy to do: move `comment` to column A of `network_functions`, leave one comment
+blank, and that row and all those below it are gone.
+
+**It applies well beyond one sheet.** The bundle sheets, `lookups.xlsx`, `budgets.xlsx`,
+`mcda_setups.xlsx` and the configurations are all read this way. The header row has the same rule: an
+empty header cell hides every column to its right.
+
+**What happens next varies.** A lost parameter or lookup usually surfaces later as an error about
+something missing. A lost network function does not: its output simply is not calculated.
+
+**Detection.**
+
+```
+jcass-dm check → NOTE: row 5 has values but its first column ('input_parameter') is empty
+```
+
+That covers the five bundle sheets, and `jcass-dm dump` prints the same warning. **Nothing checks the
+client's workbooks for this**, so look for it when you read them. The fix is the engineer's to make in
+Excel: fill in column A or remove the blank row.
+
+---
+
+## 15. A minimum suitability score your model never checks
+
+**Symptom.** The project sets `Minimum Treatment Suitability Score`, and changing it changes nothing.
+
+**Cause.** The framework reads the setting and does not apply it. **Only domain model code can**, by
+comparing each candidate's score with `model.Configuration.MinimumTreatmentSuitabilityScoreAllowed`. A
+model that never does this ignores the setting. The reference model and scaffolded models are among
+those that do not check it.
+
+**Nothing catches this**, in the framework or in `jcass-dm`. If the project relies on the setting, add
+the check:
+[`../patterns/treatment-suitability-scoring.md`](../patterns/treatment-suitability-scoring.md#the-configured-minimum).
+
+---
+
 ## What `jcass-dm check` does not cover
 
 `check` is a **local subset**, and it says so in its own output. It reads the project folder — the
@@ -416,6 +469,6 @@ The web app's **Check Setup** page is authoritative and sees the client's actual
 wholesale at every update, so a local edit is lost; a reported one reaches every other client.
 
 Say plainly whether anything detects it. **An entry with no detection mechanism is an entry that
-gets forgotten** — five on this list have none, and those are the ones to raise in conversation
+gets forgotten** — six on this list have none, and those are the ones to raise in conversation
 rather than trust a checklist to surface. If a new one looks mechanically checkable, say so: that
 is a gap in `jcass-dm` and it can be closed.

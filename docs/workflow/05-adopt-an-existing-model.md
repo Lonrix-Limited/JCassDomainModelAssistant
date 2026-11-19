@@ -84,7 +84,7 @@ Read the result out to the engineer in plain terms. What each rule is telling yo
 | `the four names` | **Deal with this before anything else** — see step 3 |
 | `<AssemblyName>` | Set explicitly, which breaks the four names silently. [`silent-failures.md` § 6](../conventions/silent-failures.md#6-assemblyname-set-in-the-csproj) |
 | `bundle structure` | The setup spreadsheet is missing a sheet or a column. The model will not load at all |
-| `parameters vs C#` | A declared parameter is never written — a column of zeros in the outputs that looks like a result. **The single most valuable thing this tool finds** |
+| `parameters vs C#` | A declared parameter is never written — a column of zeros in the outputs that looks like a result. **The single most valuable thing this tool finds.** Network function outputs are written by the framework and are not reported |
 | `treatments vs C#` | A treatment name typed differently in the bundle and the C#. It will simply never be produced |
 | `treatment reset arms` | A treatment with no `case` arm. This one fails loudly, the first time it is applied |
 | `budget categories` | Reported as a `NOTE`; the tool cannot see the client's budget sheet |

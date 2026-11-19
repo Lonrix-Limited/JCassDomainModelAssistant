@@ -1,6 +1,6 @@
 # 30 — Make a change
 
-**Goal of this page:** the four changes you will make over and over, each one with **every place it
+**Goal of this page:** the five changes you will make over and over, each one with **every place it
 touches listed up front**.
 
 Almost every mistake in a domain model is a change made in three places out of four. So the shape
@@ -93,8 +93,8 @@ reason, and the numbers that legitimately *do* stay in C#:
 
    The construction has one constructor and eight parameters, two of them consecutive `double`s —
    **name every argument**: [`../patterns/treatment-instances.md`](../patterns/treatment-instances.md).
-   Set `TreatmentSuitabilityScore` while you are there, or the candidate is never preferred over a
-   scored one and nothing says so:
+   Set `TreatmentSuitabilityScore` while you are there, or an MCDA run ranks the candidate on a
+   score of zero and nothing says so:
    [`../patterns/treatment-suitability-scoring.md`](../patterns/treatment-suitability-scoring.md).
    Whether to offer this treatment *alongside* an existing one, so the optimiser has a real choice:
    [`../patterns/candidate-strategies.md`](../patterns/candidate-strategies.md).
@@ -224,7 +224,8 @@ parameters, it does not need to be one.
    > is allocated and left at **zero for every element in every period**. The run completes, the
    > outputs carry a column of zeros, and that column looks exactly like a modelling result.
    > Nothing in the framework catches it — `jcass-dm check`'s `parameters vs C#` rule is the only
-   > defence that exists anywhere.
+   > defence that exists anywhere. The exception is a
+   > [network function output](#add-a-network-function), which the framework writes.
    > [`../conventions/silent-failures.md` § 1](../conventions/silent-failures.md#1-a-parameter-declared-in-the-bundle-but-never-written).
 
 3. **`Objects\ModelElementFactory.cs`** → `GetFromModelData` — read it back into the element, from
@@ -245,6 +246,47 @@ parameters, it does not need to be one.
 
 `dump` prints the sheet as text so you can compare it against `SetParameterValues` without opening
 Excel. `check` compares the two for you and is the rule that matters here.
+
+---
+
+## Add a network function
+
+A network function gives each element a value relative to the rest of the network, such as a percent
+rank. Your code sees one element at a time, so the framework calculates it for you.
+
+| # | Where | What |
+|---|---|---|
+| 1 | `domain_model_setup.xlsx` → `parameters` | The numeric **input** must exist. Add a numeric **output** with a range that suits the function |
+| 2 | `domain_model_setup.xlsx` → `network_functions` | One row: `input_parameter`, `function_type`, `output_parameter` |
+| 3 | `Objects\ModelElementFactory.cs` → `GetFromModelData` | Read the output, like any other parameter |
+
+**Do not write the output in `SetParameterValues`.** The framework replaces it at the end of every
+period, and `jcass-dm check` does not expect it there.
+
+### What to get right
+
+- **The function name** is `z_score`, `percent_rank` or `percent_rank_approx`, spelled exactly. Prefer
+  `percent_rank_approx` on a large network, because `percent_rank` slows down as the network grows.
+- **The output range is a clamp.** A percent rank needs 0 to 100. A `z_score` is negative below the
+  mean, so its minimum must be below zero.
+- **Column A must be filled on every row, with no blank rows between functions.**
+  [`../conventions/silent-failures.md` § 14](../conventions/silent-failures.md#14-a-row-with-an-empty-first-cell).
+- **Rows run from top to bottom.** If one function uses another's output, put the row that produces it
+  higher on the sheet.
+- **Your code sees the result from the end of the previous period.** It is not available while
+  elements are being initialised.
+
+`jcass-dm` has no command for this sheet, so the row is added in Excel. Then:
+
+```powershell
+.\tools\jcass-dm.exe dump ..\MyRoadModel\domain_model_setup.xlsx --sheet network_functions
+.\tools\jcass-dm.exe check --project ..\MyRoadModel
+```
+
+Neither command checks the names or the function type. A run stops at setup if they are wrong, with
+the messages in
+[`../orientation/reading-errors.md`](../orientation/reading-errors.md#network-function-setup-errors).
+The full reference is in the web app: **Help** → *Network functions*.
 
 ---
 

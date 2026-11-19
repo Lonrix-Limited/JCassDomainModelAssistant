@@ -117,8 +117,8 @@ empty list is how you say it.
 ### Score every candidate
 
 `TreatmentSuitabilityScore` is left at zero by the constructor. In an MCDA model an unscored
-candidate is never preferred over a scored one, and **nothing reports that it was passed over** — the
-treatment simply never happens. [`treatment-suitability-scoring.md`](treatment-suitability-scoring.md).
+candidate is ranked on a score of zero, and **nothing reports it**.
+[`treatment-suitability-scoring.md`](treatment-suitability-scoring.md).
 
 ---
 

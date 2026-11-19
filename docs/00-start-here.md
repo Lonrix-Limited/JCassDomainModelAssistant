@@ -244,6 +244,7 @@ What the folder is, in the engineer's terms:
 | **Add a treatment** | [`workflow/30-make-a-change.md`](workflow/30-make-a-change.md#add-a-treatment) — five places, and missing one is silent in four of them |
 | **Add an input column** | [`workflow/30-make-a-change.md`](workflow/30-make-a-change.md#add-an-input-column) — **both** factory methods |
 | **Add a model parameter** | [`workflow/30-make-a-change.md`](workflow/30-make-a-change.md#add-a-model-parameter) — bundle row, `SetParameterValues`, factory read-back |
+| **Add a network function** — a percent rank or z-score across the network | [`workflow/30-make-a-change.md`](workflow/30-make-a-change.md#add-a-network-function) — two bundle sheets and a read-back, and the framework writes the output |
 | Change a threshold or a rate | [`workflow/30-make-a-change.md`](workflow/30-make-a-change.md#change-a-threshold-or-a-rate) — usually no code change at all |
 | Build, package and upload to the Debug Model page | [`workflow/20-upload-and-debug.md`](workflow/20-upload-and-debug.md) |
 | **Publish** — and know what it overwrites | [`workflow/40-publish.md`](workflow/40-publish.md) — **read it before you press anything** |

@@ -22,7 +22,7 @@ logic — a bundle sheet, a lookup, a column name — and the message text matte
 
 ---
 
-## The five failures worth recognising on sight
+## The failures worth recognising on sight
 
 ### "Object reference not set to an instance of an object"
 
@@ -81,6 +81,17 @@ one-off — once the folder is trusted and the window reloaded, it stays fixed.
 
 If trust and a reload do not clear it, stop. That is the moment for
 [`../support-request-template.md`](../support-request-template.md), and say in it that you did both.
+
+### Network function setup errors
+
+The run stops at setup, and the message names the problem. Each one is fixed in
+`domain_model_setup.xlsx`.
+
+| The message says | What to change |
+|---|---|
+| `Network Function error: Input parameter 'x' is not defined on the parameters sheet.` | The `network_functions` row names a parameter that does not exist. Correct the name or add the parameter. It can say `Output` instead |
+| `Network Function error: Output parameter 'x' is not a numeric parameter.` | Set that parameter's `data_type` to `number`, or name a numeric one. It can say `Input` instead |
+| `Network function type 'x' is not valid.` | Use `z_score`, `percent_rank` or `percent_rank_approx`, spelled exactly |
 
 ### A build error, before anything runs
 
@@ -145,13 +156,14 @@ condition above it was ever true.
 outputs. Work the checklist rather than reading code:
 [`../conventions/silent-failures.md`](../conventions/silent-failures.md).
 
-The three shapes worth recognising immediately:
+The shapes worth recognising immediately:
 
 | The outputs show | Start at |
 |---|---|
 | A column that is all zeros | A declared parameter never written — § 1 |
 | A parameter that is flat or pinned to a round number | A clamp range that is too narrow — § 2 |
 | Correct in period 0, wrong from period 1 | One factory method updated and not the other — § 5 |
+| A row in a setup sheet seems to do nothing | An empty cell in column A at or above it — § 14 |
 
 ---
 

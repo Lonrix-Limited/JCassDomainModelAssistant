@@ -88,8 +88,8 @@ forgetting to **call it** from `GetTriggeredTreatments`, and the `Resetter` case
 
 ## 4. The trigger stub sets `TreatmentSuitabilityScore`
 
-The constructor leaves it at zero, and at zero the candidate is never preferred over a scored one
-and **nothing reports that it was passed over** — the treatment simply never happens.
+The constructor leaves it at zero. In an MCDA run the candidate is then ranked on a score of zero,
+and **nothing reports it**.
 [`docs/patterns/treatment-suitability-scoring.md`](../../../docs/patterns/treatment-suitability-scoring.md).
 
 The same page covers `RankParamSimple` for anything returned from routine maintenance: that list is

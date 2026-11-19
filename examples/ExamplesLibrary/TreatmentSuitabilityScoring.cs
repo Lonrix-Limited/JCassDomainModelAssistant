@@ -16,10 +16,9 @@ namespace ExamplesLibrary;
 /// <para><b>Two properties, two different mechanisms, and both fail silently when left
 /// unset.</b></para>
 ///
-/// <para><c>TreatmentSuitabilityScore</c> is what an MCDA model ranks capital candidates by.
-/// Leave it at its default of zero and the candidate is never preferred over one that has a
-/// score, and nothing anywhere reports that it was passed over. The run completes; the treatment
-/// simply never happens.</para>
+/// <para><c>TreatmentSuitabilityScore</c> is one of the criteria an MCDA run ranks capital
+/// candidates on, alongside cost and any others the project has weighted. Leave it at its default
+/// of zero and the candidate is ranked on a score of zero, and nothing anywhere reports it.</para>
 ///
 /// <para><c>RankParamSimple</c> is the equivalent for routine maintenance, and it works
 /// differently: maintenance is not optimised, it is sorted by this value descending and funded
@@ -36,11 +35,10 @@ public static class TreatmentSuitabilityScoring
     /// <summary>
     /// Score for a replacement candidate.
     ///
-    /// <para><b>Score the element's need, not the treatment's merit.</b> The optimiser is
-    /// deciding which elements to spend on, so a score that varies with the treatment rather than
-    /// with the element makes every element look equally urgent and the ranking stops meaning
-    /// anything. Here the two curves differ in shape - replacement climbs with need, relining
-    /// peaks in the middle band - but both are driven by the same underlying rank.</para>
+    /// <para><b>Score this treatment on this element.</b> A score says how right the treatment is
+    /// for the element right now, so it should depend on both. Here the two curves differ in shape
+    /// - replacement climbs with need, relining peaks in the middle band - and both are driven by
+    /// the same underlying rank.</para>
     /// </summary>
     /// <param name="segment">The segment being scored.</param>
     /// <param name="constants">Weights read from <c>lookups.xlsx</c>.</param>
@@ -98,8 +96,8 @@ public static class TreatmentSuitabilityScoring
 
         if (weightSum <= 0)
         {
-            // Both weights zeroed would divide by zero and produce NaN scores on every candidate,
-            // which the optimiser would treat as unrankable rather than as an error. Say so here.
+            // Both weights zeroed would divide by zero and produce NaN scores on every candidate.
+            // The framework's error could name the element but not these lookup rows, so say so here.
             throw new Exception(
                 "condition_weight and criticality_weight in lookup set 'scoring_weights' are both " +
                 "zero, so no candidate can be ranked. Set at least one of them above zero.");
@@ -131,13 +129,15 @@ public static class TreatmentSuitabilityScoring
     }
 
     /// <summary>
-    /// The configured floor a capital candidate must clear to be worth offering at all.
+    /// The configured minimum a capital candidate must beat to be worth offering at all.
     ///
     /// <para>The framework exposes this as
     /// <c>model.Configuration.MinimumTreatmentSuitabilityScoreAllowed</c>, set in the project's
-    /// configuration rather than in code. Checking it in the trigger - and returning early rather
-    /// than adding the candidate - keeps candidates the model would never fund out of the
-    /// strategy rollout entirely, which is worth real time on a large network.</para>
+    /// configuration rather than in code. <b>The framework does not apply it</b>: a model that
+    /// never checks it ignores the setting, with no error. The score must be strictly greater than
+    /// the minimum, and a forced treatment should skip this check. Checking it in the trigger - and
+    /// returning early rather than adding the candidate - also keeps those candidates out of the
+    /// strategy rollout, which is worth real time on a large network.</para>
     /// </summary>
     /// <param name="score">Score from one of the curves above.</param>
     /// <param name="frameworkModel">The framework model, for its configuration.</param>

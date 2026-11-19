@@ -69,8 +69,13 @@ bin\  obj\                  Build output. Git-ignored, regenerated, never upload
 ```
 
 The five bundle sheets are `meta`, `input_headers`, `parameters`, `treatments` and
-`network_functions` — the last one header-row-only in most models, and still required. Inspect any
-bundle as text without opening Excel:
+`network_functions` — the last one header-row-only in most models, and still required.
+
+**Column A must be filled on every row.** Each table starts in cell A1, and reading stops at the first
+row where column A is empty, with no error. That applies to the client's setup workbooks too —
+[`silent-failures.md` § 14](silent-failures.md#14-a-row-with-an-empty-first-cell).
+
+Inspect any bundle as text without opening Excel:
 
 ```powershell
 .\tools\jcass-dm.exe dump ..\MyRoadModel\domain_model_setup.xlsx

@@ -60,6 +60,9 @@ Both are in `workflow/30-make-a-change.md`. The one to get right is the **write*
 element in every period, the run completes, and the output column looks exactly like a modelling
 result. `jcass-dm check`'s `parameters vs C#` rule is the only defence that exists anywhere.
 
+**A network function output is the exception.** The framework writes it, so it needs no line in
+`SetParameterValues`. The same page has the procedure.
+
 The read-back belongs in `GetFromModelData` and comes from `numModelData` — the parameters this
 model wrote last period — **never from `numInputs`**. That page says what happens if you get it
 wrong, and it is the failure that looks like a modelling problem.

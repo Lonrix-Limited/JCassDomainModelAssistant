@@ -7,8 +7,8 @@
 
 ## When to reach for it
 
-**Whenever you return a candidate.** Both properties below default to zero, both are the model's only
-control over ordering, and **both fail silently when left there.**
+**Whenever you return a candidate.** Both properties below default to zero, and **both fail silently
+when left there.**
 
 ---
 
@@ -16,7 +16,7 @@ control over ordering, and **both fail silently when left there.**
 
 | Property | Applies to | Mechanism | Left at 0 |
 |---|---|---|---|
-| `TreatmentSuitabilityScore` | Capital candidates | What an MCDA model ranks by | The candidate is never preferred over one that has a score, and nothing reports that it was passed over |
+| `TreatmentSuitabilityScore` | Capital candidates | One of the criteria an MCDA run ranks on, alongside cost and any others the project has weighted | The candidate is ranked on a score of zero, and nothing reports it |
 | `RankParamSimple` | Routine maintenance | Maintenance is **sorted** by it, descending, and funded down the list | Every candidate compares equal, so funding order is whatever the element loop produced |
 
 Read the second one again. **Maintenance is not optimised.** There is no cleverness behind it: the
@@ -62,16 +62,18 @@ in the middle band, because a segment too good does not need it and one too far 
 helped by it. Both curves are [piecewise-linear models](piecewise-linear-models.md) built at setup
 from break points in `lookups.xlsx`, so a modeller reshapes either of them without a code change.
 
-### Score the element's need, not the treatment's merit
+### Score this treatment on this element
 
-This is the part that is easy to get backwards.
+**A score belongs to a pairing: how right is this treatment for this element, right now?** Two
+treatments proposed on one element each get their own score.
 
-The optimiser is deciding **which elements to spend on**. A score that varies with the treatment
-rather than with the element makes every element look equally urgent, and the ranking stops meaning
-anything — a network of a hundred thousand elements sorted by a value that is the same for all of
-them is sorted by nothing.
+Two shortcuts lose that. A fixed score per treatment makes every element look the same to the
+ranking. A score that is only the element's condition gives every treatment on it the same number,
+and turns the ranking into worst-first.
 
-So the input to every curve is the same underlying rank. Only the mapping differs.
+Here the input to every curve is the same underlying rank, and each treatment has its own curve, so
+the score depends on both the element and the treatment. What makes a treatment suitable is the
+engineer's judgement. The framework prescribes no formula and no scale.
 
 ### The weights are tunable; the scales are not
 
@@ -107,9 +109,9 @@ if (weightSum <= 0)
 }
 ```
 
-Both weights zeroed divides by zero and produces `NaN` on every candidate. The optimiser treats that
-as unrankable rather than as an error, so a model with two zeroed lookup rows funds nothing and
-completes. Name the set and both keys.
+Both weights zeroed divides by zero and produces `NaN` on every candidate. When the score has a weight
+in an MCDA run, the framework stops the run with an error naming the element and the treatment, but it
+cannot name the lookup rows that caused it. Name the set and both keys here.
 
 ---
 
@@ -134,20 +136,33 @@ segment and renewal to another.
 
 ---
 
-## The configured floor
+## The configured minimum
 
 ```csharp
 public static bool IsWorthOffering(double score, ModelBase frameworkModel)
     => score > frameworkModel.Configuration.MinimumTreatmentSuitabilityScoreAllowed;
 ```
 
-The project sets a minimum score in its configuration rather than in code. **Check it in the trigger
-and return early** rather than adding the candidate: candidates the model would never fund are kept
-out of the strategy rollout entirely, which is worth real time on a large network.
+The project sets `Minimum Treatment Suitability Score` in its configuration. **The framework does not
+apply it. Your domain model does, or nothing does.** A model that never reads the setting ignores it,
+and no error says so. The reference model and scaffolded models do not check it, so add the check if
+the project relies on the setting.
+
+**Follow what the framework's `DefaultDomainModel` does:**
+
+- **The score must be strictly greater than the minimum.** A score equal to it is left out, so with a
+  minimum of 0 an unscored candidate is left out too.
+- **Forced treatments skip the check.** Test `force` first, then the score.
+- **Check it in the trigger and return early** rather than adding the candidate. The trigger also runs
+  in benefit-cost models, where this keeps candidates out of the strategy rollout, which is worth real
+  time on a large network.
 
 ---
 
 ## Related
+
+- In the web app, **Help** → *The Treatment Suitability Score* and *The MCDA model* — what the score
+  means to a modeller, how candidates are ranked, and how to see the scores from a run
 
 - [`treatment-instances.md`](treatment-instances.md) — the properties the constructor leaves at zero
 - [`candidate-strategies.md`](candidate-strategies.md) — where the scores get set
