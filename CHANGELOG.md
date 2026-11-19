@@ -17,19 +17,10 @@ before you download.
 
 ## 2026-11-19
 
-**Headline: if your model uses the `z_score` network function, its results have changed because the
-old calculation was wrong. Re-check anything you built on them.**
+**Headline: a new procedure for network functions, clearer setup errors, and an updated `jcass-dm`.**
 
 ### What to re-check in your model
 
-- **Does your model use `z_score`?** List its network functions, in your PowerShell terminal in the
-  Assistant folder:
-  `.\tools\jcass-dm.exe dump ..\YourModel\domain_model_setup.xlsx --sheet network_functions`.
-  If it does:
-  - **Re-check every threshold, score or rule that reads the output.** The web app already runs the
-    corrected calculation, so forecasts will differ from those made with the old one.
-  - **Make sure the output parameter's `minimum` is below zero.** Results below the network mean are
-    negative, and a minimum of 0 turns them all into 0.
 - **Look for empty cells in column A of your setup sheets.** Reading stops at the first row where
   column A is empty, with no error, and that row and everything below it are ignored. This is how the
   framework has always worked, but `check` used to miss a row with values in its other columns. Run
@@ -46,9 +37,8 @@ old calculation was wrong. Re-check anything you built on them.**
 
 ### Changed in the framework
 
-- **`z_score` is now correct.** It used to give every element the same number, the network mean divided
-  by the standard deviation. It is now the element's value minus the mean, divided by the sample
-  standard deviation. It is 0 when every value is the same or the network has one element.
+- **Bug fix in the `z_score` network function.** It gave every element the same value. It now gives
+  each element's distance from the network mean, in standard deviations.
 - **Network function setup errors now name the problem.** A missing or non-numeric parameter gives, for
   example, *"Network Function error: Input parameter 'x' is not defined on the parameters sheet."* A
   missing parameter used to surface as a general dictionary error.
