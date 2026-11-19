@@ -35,6 +35,19 @@ public class PackageTests
     }
 
     [Fact]
+    public void A_bare_model_folder_is_packaged_the_same_as_project()
+    {
+        // Same fix as check's: until 2026-11-20 the path was dropped and the current folder used.
+        using TemporaryModel model = FixtureModels.Copy("healthy");
+        string zip = model.PathTo("out.zip");
+
+        ToolResult result = model.Run("package", model.Folder, "--output", zip);
+
+        Assert.Equal(ExitCode.Ok, result.ExitCode);
+        Assert.Contains("FixtureModel.csproj", EntriesIn(zip));
+    }
+
+    [Fact]
     public void Refs_bin_and_obj_are_left_out()
     {
         using TemporaryModel model = FixtureModels.Copy("healthy");

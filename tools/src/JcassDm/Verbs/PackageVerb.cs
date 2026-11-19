@@ -9,7 +9,7 @@ using JcassDm.Project;
 namespace JcassDm.Verbs;
 
 /// <summary>
-/// <c>jcass-dm package [--project &lt;path&gt;] [--output &lt;path to the .zip&gt;] [--force]</c>
+/// <c>jcass-dm package [[--project] &lt;path&gt;] [--output &lt;path to the .zip&gt;] [--force]</c>
 ///
 /// <para>Builds the zip the web Debug Model page wants: source only, and opening straight to the
 /// <c>.csproj</c>.</para>
@@ -39,7 +39,7 @@ internal static class PackageVerb
 
     public static int Run(ArgumentSet args, TextWriter output)
     {
-        string projectPath = args.Optional("--project") ?? ".";
+        string projectPath = args.ProjectPath();
         string? outputOption = args.Optional("--output");
         bool force = args.Flag("--force");
         args.CheckForUnknownOptions();

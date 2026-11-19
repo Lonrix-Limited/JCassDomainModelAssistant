@@ -45,6 +45,38 @@ public class CheckTests
     }
 
     [Fact]
+    public void A_bare_model_folder_is_checked_the_same_as_project()
+    {
+        // Until 2026-11-20 the path was silently dropped and the current folder checked instead:
+        // run from the Assistant, that reported "No .csproj file in ...JCassDomainModelAssistant",
+        // naming the wrong folder as the problem. Two behaviour-suite agents lost turns to it.
+        ToolResult result = RunArgs("check", FixtureModels.PathTo("names-disagree"));
+
+        Assert.Equal(ExitCode.CheckFailed, result.ExitCode);
+        Assert.Contains("the entry class is 'FixtureModel'", result.Output, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_model_folder_given_twice_is_refused()
+    {
+        string folder = FixtureModels.PathTo("healthy");
+
+        ToolResult result = RunArgs("check", folder, "--project", folder);
+
+        Assert.Equal(ExitCode.UsageError, result.ExitCode);
+        Assert.Contains("given the model folder twice", result.All, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Two_model_folders_are_refused()
+    {
+        ToolResult result = RunArgs("check", FixtureModels.PathTo("healthy"), FixtureModels.PathTo("two-csproj"));
+
+        Assert.Equal(ExitCode.UsageError, result.ExitCode);
+        Assert.Contains("takes one model folder", result.All, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Every_fixture_folder_is_covered_by_a_test()
     {
         // The list in FixtureModels.All and the folders on disk drift apart the moment somebody
@@ -241,8 +273,12 @@ public class CheckTests
 
     private static ToolResult Run(string fixture, params string[] extra)
     {
-        var args = new[] { "check", "--project", FixtureModels.PathTo(fixture) }.Concat(extra).ToArray();
+        return RunArgs(new[] { "check", "--project", FixtureModels.PathTo(fixture) }.Concat(extra).ToArray());
+    }
 
+    /// <summary>Runs the tool with exactly these arguments, for tests about the command line itself.</summary>
+    private static ToolResult RunArgs(params string[] args)
+    {
         var output = new StringWriter();
         var error = new StringWriter();
         int exitCode = JcassDm.Program.Run(args, output, error);

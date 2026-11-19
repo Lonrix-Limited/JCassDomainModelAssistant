@@ -48,6 +48,10 @@ version than referenced assembly …"*. It means your project targets .NET 9 and
   change. It is separate from the `framework reference` note, which is about which framework *build*
   your `refs\` holds. A model that is behind on both gets both findings.
 - **New scaffolded models target .NET 10.**
+- **`check` and `package` take the model folder without `--project` too.** `jcass-dm check ..\MyModel`
+  used to ignore the path and check the folder you were standing in, which from the Assistant
+  reported *"No .csproj file in …JCassDomainModelAssistant-main"* about the wrong folder. Both
+  spellings now do the same thing.
 - **The tool now carries .NET 10.0.15.**
 
 ### Changed in the scripts

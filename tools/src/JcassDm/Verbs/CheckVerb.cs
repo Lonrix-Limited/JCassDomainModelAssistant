@@ -10,7 +10,7 @@ using JcassDm.Project;
 namespace JcassDm.Verbs;
 
 /// <summary>
-/// <c>jcass-dm check [--project &lt;path&gt;] [--lookups &lt;path to lookups.xlsx&gt;]</c>
+/// <c>jcass-dm check [[--project] &lt;path&gt;] [--lookups &lt;path to lookups.xlsx&gt;]</c>
 ///
 /// <para>Reports whether a domain model's C#, its bundle and its lookups still agree.</para>
 ///
@@ -29,7 +29,7 @@ internal static class CheckVerb
 {
     public static int Run(ArgumentSet args, TextWriter output)
     {
-        string projectPath = args.Optional("--project") ?? ".";
+        string projectPath = args.ProjectPath();
         string? lookupsPath = args.Optional("--lookups");
         args.CheckForUnknownOptions();
 

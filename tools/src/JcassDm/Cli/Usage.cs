@@ -38,12 +38,12 @@ internal static class Usage
         output.WriteLine("      none of it does - a half-renamed model is worse than the original problem.");
         output.WriteLine("      --namespace moves the namespace too. The namespace is NOT one of the four.");
         output.WriteLine();
-        output.WriteLine("  check [--project <path>] [--lookups <path to lookups.xlsx>]");
+        output.WriteLine("  check [[--project] <path>] [--lookups <path to lookups.xlsx>]");
         output.WriteLine("      Report whether the C#, the bundle and the lookups still agree. Run this");
         output.WriteLine("      FIRST on a model you have inherited - it says what state it is in. It is a");
         output.WriteLine("      local subset: the web app's Check Setup is authoritative.");
         output.WriteLine();
-        output.WriteLine("  package [--project <path>] [--output <path>] [--force]");
+        output.WriteLine("  package [[--project] <path>] [--output <path>] [--force]");
         output.WriteLine("      Build the upload zip for the web Debug Model page: source only, no refs\\,");
         output.WriteLine("      and opening straight to the .csproj rather than to a folder containing it.");
         output.WriteLine();

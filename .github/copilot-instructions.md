@@ -96,6 +96,28 @@ rule, and it is worth opening.
 sort of state the network is in"* — attached to a request you were right to say yes to. Answer the
 first half; decline the second, in one sentence, and name Analyse Input.
 
+## A build that fails with CS1705, and the engineer's project file
+
+**CS1705 — *"… has a higher version than referenced assembly"* — means their model still targets
+.NET 9 and this Assistant's references are .NET 10.** The fix is one line in their `.csproj`, and it
+is still their file: **ask before you edit it, even when they said *"fix it"*.**
+
+1. **Say what happened in one sentence**, and say that **what they have already published keeps
+   running** — this is only about building on their machine.
+2. **Check for a .NET 10 SDK** — `dotnet --list-sdks`, in their PowerShell terminal. No line starting
+   `10.` → stop, and point them at the SDK download in `docs/orientation/prerequisites.md`.
+3. **Ask, naming the one line** — `<TargetFramework>net9.0</TargetFramework>` to
+   `<TargetFramework>net10.0</TargetFramework>` in their `.csproj` — **and wait for the yes.** Then
+   change that line and nothing else. Never a `<Reference>`, a `HintPath` or a package version, and
+   never older assemblies copied into `refs\`: each makes the build pass on a framework nobody
+   documents.
+4. **Refresh refs, rebuild, run `jcass-dm check`**, and tell them the `target framework` rule now
+   reads OK.
+
+**Why the ask, when the edit is obviously right:** an unexpected change to a project file is the kind
+an engineer cannot check, and *"fix it"* was said about an error they could not read, not about their
+`.csproj`. The full entry is [`docs/orientation/reading-errors.md`](../docs/orientation/reading-errors.md) § CS1705.
+
 ## Everything else
 
 Conventions, patterns, the `jcass-dm` tool, when to stop and escalate — all in `docs/`.

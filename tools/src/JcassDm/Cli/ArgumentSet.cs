@@ -201,6 +201,43 @@ public sealed class ArgumentSet
     }
 
     /// <summary>
+    /// The model folder for a verb that works on a whole project (<c>check</c>, <c>package</c>):
+    /// the value of <c>--project</c>, or a single positional path, or the current folder when
+    /// neither is given. Declares <c>--project</c>.
+    ///
+    /// <para><b>A bare path is accepted, never dropped.</b> Until 2026-11-20 these verbs read only
+    /// <c>--project</c>, so <c>check ..\MyModel</c> run from the Assistant checked the Assistant
+    /// folder and reported "No .csproj file in ...JCassDomainModelAssistant-main" - naming the
+    /// wrong folder as the problem. Two agents lost turns to it in one behaviour-suite run. Both
+    /// spellings now mean the same thing; giving the folder twice, or two folders, is refused.</para>
+    /// </summary>
+    public string ProjectPath()
+    {
+        string? option = this.Optional("--project");
+
+        if (this._positionals.Count > 1)
+        {
+            throw new UsageFailure(
+                $"'{this.Verb}' takes one model folder, but got {this._positionals.Count}: " +
+                string.Join(", ", this._positionals.Select(p => $"'{p}'")) + "." + Environment.NewLine +
+                "A path containing spaces needs quoting.");
+        }
+
+        if (this._positionals.Count == 1)
+        {
+            if (option is not null)
+            {
+                throw new UsageFailure(
+                    $"'{this.Verb}' was given the model folder twice: '{this._positionals[0]}' and " +
+                    $"--project '{option}'. Give it once.");
+            }
+            return this._positionals[0];
+        }
+
+        return option ?? ".";
+    }
+
+    /// <summary>
     /// The bundle path: the one positional argument every verb in this tool takes.
     /// </summary>
     public string BundlePath()
