@@ -90,6 +90,8 @@ internal static class AddParameterVerb
         output.WriteLine( "                          written there. Nothing tells you if one is not: it stays");
         output.WriteLine( "                          at zero for the whole run and the outputs look plausible.");
         output.WriteLine( "                          'jcass-dm check' is the only thing that catches it.");
+        output.WriteLine( "                          The exception is a network function output: the");
+        output.WriteLine( "                          framework writes that, so do not write it here.");
         output.WriteLine($"  2. The element factory - read '{name}' back when rebuilding the element.");
 
         if (isNumeric && !name.StartsWith("par_", StringComparison.Ordinal))

@@ -44,12 +44,15 @@ before you download.
   missing parameter used to surface as a general dictionary error.
   [`docs/orientation/reading-errors.md`](docs/orientation/reading-errors.md#network-function-setup-errors).
 
-### Changed in `jcass-dm` (now 1.1.1)
+### Changed in `jcass-dm` (now 1.1.2)
 
 - **`check` and `dump` report a row with values and an empty first column**, and commands that add a row
   refuse to write over it.
 - **`check` no longer reports network function outputs as unwritten.** The framework writes them, so
   your code does not need to. Ignore any earlier advice from `check` to write one or delete its row.
+- **`add-parameter` now says so too.** Its next steps tell you not to write a network function output.
+- **Notes to the right of a table are left alone.** They are no longer reported as stray content, and
+  they no longer stop commands from adding a row.
 - **The tool now carries .NET 9.0.23**, the latest security patch.
 - **New scaffolded models carry corrected comments** about the suitability score.
 

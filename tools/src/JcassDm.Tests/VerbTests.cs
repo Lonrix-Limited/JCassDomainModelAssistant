@@ -215,6 +215,20 @@ public class VerbTests
     }
 
     [Fact]
+    public void AddParameter_says_a_network_function_output_is_not_written_in_code()
+    {
+        // The row on network_functions is usually added afterwards, so the advice has to carry
+        // the exception. A value written during a benefit-cost rollout is not replaced.
+        using var bundle = TestBundle.FromReferenceModel();
+
+        ToolResult result = bundle.Run(
+            "add-parameter", bundle.Path, "--name", "par_iri", "--min", "0", "--max", "10");
+
+        Assert.Equal(ExitCode.Ok, result.ExitCode);
+        Assert.Contains("network function output", result.Output, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void AddParameter_insists_on_min_and_max_for_a_number()
     {
         // Because the framework clamps to them rather than validating against them, a

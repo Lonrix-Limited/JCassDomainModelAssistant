@@ -144,6 +144,36 @@ public class WriteRulesTests
         Assert.Equal(before, bundle.Dump());
     }
 
+    [Fact]
+    public void A_note_to_the_right_of_the_table_does_not_block_a_new_row()
+    {
+        // A new row only writes the table's columns, so it can never reach this note.
+        using var bundle = TestBundle.FromReferenceModel();
+        DumpTests.SetCell(bundle.Path, "treatments", row: 8, column: 20, value: "a note");
+
+        ToolResult result = bundle.Run(
+            "add-treatment", bundle.Path, "--name", "reseal", "--budget-category", "resurfacing");
+
+        Assert.Equal(ExitCode.Ok, result.ExitCode);
+        Assert.Contains("added", result.Output, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Content_in_a_later_table_column_below_the_blank_row_still_blocks_a_new_row()
+    {
+        // The control for the test above: new rows could reach this cell.
+        using var bundle = TestBundle.FromReferenceModel();
+        DumpTests.SetCell(bundle.Path, "treatments", row: 6, column: 2, value: "orphan");
+        string before = bundle.Dump();
+
+        ToolResult result = bundle.Run(
+            "add-treatment", bundle.Path, "--name", "reseal", "--budget-category", "resurfacing");
+
+        Assert.Equal(ExitCode.BundleInvalid, result.ExitCode);
+        Assert.Contains("row 6", result.All, StringComparison.Ordinal);
+        Assert.Equal(before, bundle.Dump());
+    }
+
     private static string[] WithBundle(string[] args, TestBundle bundle)
         => new[] { args[0], bundle.Path }.Concat(args.Skip(1)).ToArray();
 }

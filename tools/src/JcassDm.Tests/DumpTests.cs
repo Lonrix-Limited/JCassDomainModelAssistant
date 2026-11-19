@@ -183,6 +183,18 @@ public class DumpTests
     }
 
     [Fact]
+    public void A_note_to_the_right_of_the_table_and_below_the_data_is_not_reported()
+    {
+        using var bundle = TestBundle.FromReferenceModel();
+        SetCell(bundle.Path, "treatments", row: 8, column: 20, value: "a note");
+
+        ToolResult result = bundle.Run("dump", bundle.Path);
+
+        Assert.Equal(ExitCode.Ok, result.ExitCode);
+        Assert.DoesNotContain("below the blank row", result.Output, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void An_unknown_verb_is_a_usage_error()
     {
         using var bundle = TestBundle.FromReferenceModel();

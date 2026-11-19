@@ -48,9 +48,10 @@ internal sealed class SheetTable
     public int RowCount { get; private set; }
 
     /// <summary>
-    /// The first row holding content BELOW the blank row that ends the data, or null when
-    /// there is none. Content down there is invisible to the framework: it stopped reading
-    /// at the blank. Worth reporting, never worth silently deleting.
+    /// The first row holding content in the table's columns BELOW the blank row that ends the
+    /// data, or null when there is none. Content down there is invisible to the framework: it
+    /// stopped reading at the blank. Worth reporting, never worth silently deleting. Cells
+    /// beyond the last header are notes and do not count, because no new row can reach them.
     /// </summary>
     public int? StrayContentRow { get; }
 
@@ -215,7 +216,7 @@ internal sealed class SheetTable
         int firstBlank = FirstDataRow + this.RowCount;
         for (int row = firstBlank + 1; row <= lastUsed.RowNumber(); row++)
         {
-            if (!this._sheet.Row(row).IsEmpty()) return row;
+            if (this.HasValueInTableColumns(row)) return row;
         }
         return null;
     }
@@ -223,10 +224,12 @@ internal sealed class SheetTable
     private int? FindRowWithEmptyFirstCell()
     {
         int row = FirstDataRow + this.RowCount;
-        bool hasValues = this._columnNumbers.Values.Any(
-            column => !string.IsNullOrEmpty(this._sheet.Cell(row, column).GetFormattedString()));
-        return hasValues ? row : null;
+        return this.HasValueInTableColumns(row) ? row : null;
     }
+
+    private bool HasValueInTableColumns(int row)
+        => this._columnNumbers.Values.Any(
+            column => !string.IsNullOrEmpty(this._sheet.Cell(row, column).GetFormattedString()));
 
     private static object? ReadCell(IXLCell cell)
     {
