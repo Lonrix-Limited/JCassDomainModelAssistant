@@ -43,6 +43,12 @@ $toolsFolder = Join-Path $repoRoot 'tools'
 $exePath = Join-Path $toolsFolder 'jcass-dm.exe'
 $stampPath = Join-Path $toolsFolder 'jcass-dm.build.txt'
 
+# The .NET runtime carried inside the exe. Left to itself the SDK bundles the newest patch it
+# knows about, which can be behind the newest one released, so the version is stated here.
+# Raise it when a new .NET patch ships. It is passed to the publish only, not set in the
+# project, so that running the tests does not need this exact runtime installed.
+$bundledRuntimeVersion = '9.0.23'
+
 if (-not (Test-Path -LiteralPath $toolSource)) {
     Write-Host "Cannot find the tool source. Run this from the repository, as .\scripts\build-jcass-dm.ps1" -ForegroundColor Red
     exit 2
@@ -82,11 +88,12 @@ else {
 # ---------------------------------------------------------------------------
 $publishFolder = Join-Path ([System.IO.Path]::GetTempPath()) ("jcass-dm-publish-" + [guid]::NewGuid().ToString('N'))
 
-Write-Host "Publishing win-x64, self-contained, single file..."
+Write-Host "Publishing win-x64, self-contained, single file, on .NET $bundledRuntimeVersion..."
 & dotnet publish $toolSource `
     -c Release `
     -r win-x64 `
     --self-contained true `
+    -p:RuntimeFrameworkVersion=$bundledRuntimeVersion `
     -p:PublishSingleFile=true `
     -p:EnableCompressionInSingleFile=true `
     -p:IncludeNativeLibrariesForSelfExtract=true `
@@ -102,6 +109,18 @@ if ($LASTEXITCODE -ne 0) {
 $published = Join-Path $publishFolder 'jcass-dm.exe'
 if (-not (Test-Path -LiteralPath $published)) {
     Write-Host "The publish succeeded but produced no jcass-dm.exe." -ForegroundColor Red
+    exit 1
+}
+
+# ---------------------------------------------------------------------------
+# Confirm the runtime from the published file itself, whose embedded manifests name it.
+# ---------------------------------------------------------------------------
+$publishedText = [System.Text.Encoding]::GetEncoding(28591).GetString([System.IO.File]::ReadAllBytes($published))
+$runtimePattern = 'Microsoft\.NETCore\.App(?:\.Runtime\.win-x64)?["/]?[^0-9\r\n]{0,30}(\d+\.\d+\.\d+)'
+$foundVersions = @([regex]::Matches($publishedText, $runtimePattern) |
+    ForEach-Object { $_.Groups[1].Value } | Sort-Object -Unique)
+if ($foundVersions.Count -ne 1 -or $foundVersions[0] -ne $bundledRuntimeVersion) {
+    Write-Host "Expected .NET $bundledRuntimeVersion inside the exe, found: $($foundVersions -join ', '). tools\jcass-dm.exe is unchanged." -ForegroundColor Red
     exit 1
 }
 
@@ -133,7 +152,7 @@ $lines = @(
     "jcass-dm build stamp"
     ""
     "version:        $version"
-    "runtime:        win-x64, self-contained, single file, compressed, not trimmed"
+    "runtime:        .NET $bundledRuntimeVersion, win-x64, self-contained, single file, compressed, not trimmed"
     "built from:     $commit"
     "built on:       $(Get-Date -Format 'yyyy-MM-dd')"
     "size:           $sizeMb MB"

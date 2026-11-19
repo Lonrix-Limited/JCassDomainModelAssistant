@@ -166,8 +166,13 @@ what is left to do rather than attempting it.
 ```
 
 That runs the tests, publishes `win-x64` self-contained single-file, copies the result to
-`tools\jcass-dm.exe`, and writes `tools\jcass-dm.build.txt` recording the version, the commit
-it was built from, and the size. Commit the exe and the stamp together.
+`tools\jcass-dm.exe`, and writes `tools\jcass-dm.build.txt` recording the version, the .NET
+runtime inside it, the commit it was built from, and the size. Commit the exe and the stamp
+together.
+
+The exe carries its own .NET runtime, so a .NET security patch reaches it only through a
+rebuild. The version is set by `$bundledRuntimeVersion` at the top of the script, and the
+script refuses to install an exe that carries any other version.
 
 The source is in [`src/JcassDm/`](src/JcassDm/), the tests in
 [`src/JcassDm.Tests/`](src/JcassDm.Tests/). Run them directly with:

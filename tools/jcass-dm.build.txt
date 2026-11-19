@@ -1,9 +1,9 @@
 ﻿jcass-dm build stamp
 
-version:        jcass-dm 1.1.0
-runtime:        win-x64, self-contained, single file, compressed, not trimmed
-built from:     213ef3df79557aabf32a3e26ff0ea9d7670ba37e
-built on:       2026-09-03
+version:        jcass-dm 1.1.1
+runtime:        .NET 9.0.23, win-x64, self-contained, single file, compressed, not trimmed
+built from:     f6e4a7bbe8aaaa4c2da83c3680fec6f4c737bb3a
+built on:       2026-11-19
 size:           37.5 MB
 
 Rebuild with .\scripts\build-jcass-dm.ps1 - see tools/README.md.
