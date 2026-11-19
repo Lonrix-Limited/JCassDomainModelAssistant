@@ -55,7 +55,8 @@ version than referenced assembly …"*. It means your project targets .NET 9 and
 - **`refresh-model-refs.ps1` warns when your project's target does not match the references it just
   copied.** It changes your `.csproj` only if you answer `y` at its prompt or pass
   `-UpdateTargetFramework`. When an AI assistant runs it there is no prompt to answer, so the file is
-  left untouched.
+  left untouched. If your model folder holds two `.csproj` files it changes neither and sends you to
+  `jcass-dm check`.
 
 ### Newly documented
 

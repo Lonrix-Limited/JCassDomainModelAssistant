@@ -323,12 +323,25 @@ if (Test-Path -LiteralPath $stampPath) {
     }
 }
 
-$projectFile = $csprojFiles[0].FullName
-$projectText = [System.IO.File]::ReadAllText($projectFile)
-$withoutComments = [regex]::Replace($projectText, '<!--.*?-->', '', 'Singleline')
+# Two project files - typically a stray "MyModel - Copy.csproj" - mean there is no telling which one
+# is the model, and "the first one" is whichever sorts first, which is usually the copy. Compare and
+# edit nothing; jcass-dm check refuses two project files and says which.
 $projectTarget = $null
-$targetMatch = [regex]::Match($withoutComments, '<TargetFramework>\s*([^<]*?)\s*</TargetFramework>', 'IgnoreCase')
-if ($targetMatch.Success -and $targetMatch.Groups[1].Value.Length -gt 0) { $projectTarget = $targetMatch.Groups[1].Value }
+if ($csprojFiles.Count -gt 1) {
+    Write-Host "That folder holds $($csprojFiles.Count) .csproj files: $(($csprojFiles.Name) -join ', ')." -ForegroundColor Yellow
+    Write-Host 'So this did not compare their .NET target with the references, and changed none of them.' -ForegroundColor Yellow
+    Write-Host 'A model has exactly one. Remove the extra one, then run' -ForegroundColor Yellow
+    Write-Host ("  .\tools\jcass-dm.exe check --project `"{0}`"" -f $projectPath) -ForegroundColor Yellow
+    Write-Host ''
+    $targetMismatch = $true
+}
+else {
+    $projectFile = $csprojFiles[0].FullName
+    $projectText = [System.IO.File]::ReadAllText($projectFile)
+    $withoutComments = [regex]::Replace($projectText, '<!--.*?-->', '', 'Singleline')
+    $targetMatch = [regex]::Match($withoutComments, '<TargetFramework>\s*([^<]*?)\s*</TargetFramework>', 'IgnoreCase')
+    if ($targetMatch.Success -and $targetMatch.Groups[1].Value.Length -gt 0) { $projectTarget = $targetMatch.Groups[1].Value }
+}
 
 if ($refsTarget -and $projectTarget -and ($projectTarget -ne $refsTarget)) {
     $projectName = $csprojFiles[0].Name

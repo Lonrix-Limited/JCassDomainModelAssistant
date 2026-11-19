@@ -57,6 +57,26 @@ public class RefreshModelRefsScriptTests
     }
 
     [PowerShellFact]
+    public void Two_project_files_are_never_edited_even_with_permission()
+    {
+        // An Explorer copy sorts BEFORE the real file ("FixtureModel - Copy" < "FixtureModel."),
+        // so picking the first one would edit the copy and report success.
+        using TemporaryModel model = FixtureModels.Copy("target-framework-behind");
+        string csproj = model.PathTo("FixtureModel.csproj");
+        string copy = model.PathTo("FixtureModel - Copy.csproj");
+        File.Copy(csproj, copy);
+        byte[] before = File.ReadAllBytes(csproj);
+
+        ScriptResult result = RunScript(model, "-UpdateTargetFramework");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal(before, File.ReadAllBytes(csproj));
+        Assert.Equal(before, File.ReadAllBytes(copy));
+        Assert.Contains("changed none of them", result.Output, StringComparison.Ordinal);
+        Assert.DoesNotContain("Now rebuild your model", result.Output, StringComparison.Ordinal);
+    }
+
+    [PowerShellFact]
     public void A_project_already_on_the_right_target_hears_nothing_about_it()
     {
         using TemporaryModel model = FixtureModels.Copy("healthy");

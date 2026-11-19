@@ -98,7 +98,8 @@ asks whether to change that one line. It edits only on an explicit `y`, or when
 `-UpdateTargetFramework` was passed on purpose. With neither, and always when there is no console to
 ask on, the file is left byte for byte as it was. The edit, when made, changes the target value and
 nothing else: same encoding, same line endings. The project file is the engineer's, and the agent
-asks before touching it too.
+asks before touching it too. With two `.csproj` files in the folder it compares and edits neither,
+and points at `jcass-dm check`.
 
 **It validates everything before it deletes anything.** A missing source folder, a source missing its
 `.xml` files, a `-Project` path that does not exist or holds no `.csproj` — each refuses with the
