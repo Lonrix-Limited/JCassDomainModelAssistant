@@ -111,8 +111,10 @@ is still their file: **ask before you edit it, even when they said *"fix it"*.**
    change that line and nothing else. Never a `<Reference>`, a `HintPath` or a package version, and
    never older assemblies copied into `refs\`: each makes the build pass on a framework nobody
    documents.
-4. **Refresh refs, rebuild, run `jcass-dm check`**, and tell them the `target framework` rule now
-   reads OK.
+4. **Refresh refs, rebuild, check** — in their PowerShell terminal, from this Assistant folder:
+   `.\scripts\refresh-model-refs.ps1 -Project ..\<ModelName>`, then `dotnet build` in the model
+   folder, then `.\tools\jcass-dm.exe check --project ..\<ModelName>`. Tell them the
+   `target framework` rule now reads OK. There is no `jcass-dm` verb for refreshing refs.
 
 **Why the ask, when the edit is obviously right:** an unexpected change to a project file is the kind
 an engineer cannot check, and *"fix it"* was said about an error they could not read, not about their
