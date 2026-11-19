@@ -10,7 +10,7 @@ namespace JcassDm.Cli;
 internal static class Usage
 {
     /// <summary>Tool version, printed by <c>jcass-dm version</c>.</summary>
-    public const string Version = "1.1.2";
+    public const string Version = "1.2.0";
 
     public static void Write(TextWriter output)
     {

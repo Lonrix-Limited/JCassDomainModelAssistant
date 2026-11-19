@@ -1,0 +1,265 @@
+using System;
+using System.Collections.Generic;
+using JCass_ModelCore.DomainModels;
+using JCass_ModelCore.Treatments;
+
+namespace FixtureModel.Objects;
+
+/// <summary>
+/// Entry point of this domain model. The framework finds this class by reflection, creates one
+/// instance of it, and calls the methods below once per element per modelling period.
+///
+/// <para><b>The name of this class is load-bearing.</b> It must match the .csproj file stem, the
+/// assembly name, and <c>meta.main_class</c> in <c>domain_model_setup.xlsx</c> - all four must
+/// read <c>FixtureModel</c>. <c>jcass-dm scaffold</c> wrote all four from one name, so they agree
+/// today. If you ever need to change the name, use <c>jcass-dm rename</c> rather than editing
+/// them by hand: a regular run and a web debug (F5) run resolve this name by different routes,
+/// and they only ever agree when all four strings are identical.</para>
+///
+/// <para><b>Keep this class thin.</b> It is a switchboard. Each method builds a
+/// <see cref="ModelElement"/> from the framework's dictionaries, hands it to one collaborator, and
+/// writes the result back. Every modelling rule you add belongs in that collaborator, not here.
+/// The file to open is named after the stage:</para>
+///
+/// <list type="table">
+///   <item><term><see cref="Initialiser"/></term><description>starting state, before period 1</description></item>
+///   <item><term><see cref="TreatmentsTrigger"/></term><description>what work is due, and what it costs</description></item>
+///   <item><term><see cref="Incrementer"/></term><description>how an element decays when nothing is done</description></item>
+///   <item><term><see cref="Resetter"/></term><description>how it recovers when something is</description></item>
+///   <item><term><see cref="RoutineMaintenance"/></term><description>work that happens outside the budget</description></item>
+///   <item><term><see cref="Constants"/></term><description>every tunable number, read from lookups.xlsx</description></item>
+/// </list>
+///
+/// <para><b>Call order, per period.</b> <c>Initialise</c> runs once for every element before
+/// period 1. Then for each period: <c>GetTreatmentCandidates</c> for every element, the optimiser
+/// picks winners under the budget, then <c>Reset</c> for treated elements and <c>Increment</c>
+/// for untreated ones, then <c>GetTriggeredMaintenance</c>, then <c>DoEndOfPeriodCalculations</c>
+/// once for the whole network.</para>
+/// </summary>
+public class FixtureModel : DomainModelBase
+{
+    /// <summary>
+    /// Every tunable number this model uses, read from the client's <c>inputs\lookups.xlsx</c>.
+    /// Populated once by <see cref="SetupInstance"/> and read-only thereafter.
+    /// </summary>
+    public Constants Constants { get; private set; } = null!;   // assigned in SetupInstance, before any element is touched
+
+    private Initialiser _initialiser = null!;
+    private Incrementer _incrementer = null!;
+    private Resetter _resetter = null!;
+
+    /// <summary>
+    /// Called once, after the framework has loaded lookups and treatment rates but before any
+    /// element is touched.
+    ///
+    /// <para><b>This is the only place lookups may be read.</b> <c>model.Lookups</c> is populated
+    /// by the framework immediately before this call and not before it, so a lookup read from a
+    /// constructor or a static initialiser gets an empty dictionary - and an empty dictionary
+    /// reads as "key not found" rather than "too early", which is a genuinely confusing hour to
+    /// lose. That ordering guarantee is the entire reason this method exists.</para>
+    ///
+    /// <para>Anything else that is the same for every element belongs here too: coefficient tables
+    /// loaded from a CSV in the client's <c>supporting\</c> folder, sub-models, cached statistics.
+    /// Reach for <c>model.Configuration.WorkFolder</c> to find that folder - it is the client
+    /// root, and it resolves the same way under a normal run and under a debug run.</para>
+    /// </summary>
+    public override void SetupInstance()
+    {
+        try
+        {
+            this.Constants = new Constants(this.model.Lookups);
+
+            _initialiser = new Initialiser(this.model, this);
+            _incrementer = new Incrementer(this.model, this);
+            _resetter = new Resetter(this.model, this);
+        }
+        catch (Exception ex)
+        {
+            // Name the stage. The framework wraps this again on the way out, and without a
+            // sentence saying where it happened the engineer gets a stack trace and no clue.
+            throw new Exception($"Error setting up FixtureModel: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Sets each element's starting state, before period 1. Read the raw input columns, decide the
+    /// initial value of every model parameter, and write them all back through the sinks.
+    /// </summary>
+    /// <param name="iElemIndex">Zero-based index of the element.</param>
+    /// <param name="numInputs">Numeric raw input columns, keyed by column name.</param>
+    /// <param name="textInputs">Text raw input columns, keyed by column name.</param>
+    /// <param name="numModParamValues">Sink for numeric parameter values.</param>
+    /// <param name="textModParamValues">Sink for text parameter values.</param>
+    public override void Initialise(
+        int iElemIndex,
+        Dictionary<string, double> numInputs,
+        Dictionary<string, string> textInputs,
+        Action<string, double> numModParamValues,
+        Action<string, string> textModParamValues)
+    {
+        try
+        {
+            ModelElement element = _initialiser.Initialise(iElemIndex, numInputs, textInputs);
+            element.SetParameterValues(numModParamValues, textModParamValues);
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Error initialising element index {iElemIndex}. Details: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Returns the treatments the optimiser may consider for this element in this period. An empty
+    /// list means "leave this element alone", and for most elements in most periods that is the
+    /// right answer.
+    /// </summary>
+    /// <param name="iElemIndex">Zero-based index of the element.</param>
+    /// <param name="iPeriod">Modelling period (1-based).</param>
+    /// <param name="numInputs">Numeric raw input columns, keyed by column name.</param>
+    /// <param name="textInputs">Text raw input columns, keyed by column name.</param>
+    /// <param name="numModParamValues">Numeric parameters as at the previous period.</param>
+    /// <param name="textModParamValues">Text parameters as at the previous period.</param>
+    public override List<TreatmentInstance> GetTreatmentCandidates(
+        int iElemIndex,
+        int iPeriod,
+        Dictionary<string, double> numInputs,
+        Dictionary<string, string> textInputs,
+        Dictionary<string, double> numModParamValues,
+        Dictionary<string, string> textModParamValues)
+    {
+        try
+        {
+            ModelElement element = ModelElementFactory.GetFromModelData(
+                iElemIndex, numInputs, textInputs, numModParamValues, textModParamValues);
+
+            TreatmentsTrigger trigger = new TreatmentsTrigger(this.model, this);
+            return trigger.GetTriggeredTreatments(element, iPeriod);
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Error selecting treatment candidates for element index {iElemIndex}. Details: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Returns routine maintenance for this element in this period, or <c>null</c> if none is due.
+    /// Maintenance is applied after the optimiser has run and does not compete for capital budget.
+    /// </summary>
+    /// <param name="iElemIndex">Zero-based index of the element.</param>
+    /// <param name="iPeriod">Modelling period (1-based).</param>
+    /// <param name="numInputs">Numeric raw input columns, keyed by column name.</param>
+    /// <param name="textInputs">Text raw input columns, keyed by column name.</param>
+    /// <param name="numModParamValues">Numeric parameters as at the previous period.</param>
+    /// <param name="textModParamValues">Text parameters as at the previous period.</param>
+    public override TreatmentInstance GetTriggeredMaintenance(
+        int iElemIndex,
+        int iPeriod,
+        Dictionary<string, double> numInputs,
+        Dictionary<string, string> textInputs,
+        Dictionary<string, double> numModParamValues,
+        Dictionary<string, string> textModParamValues)
+    {
+        try
+        {
+            ModelElement element = ModelElementFactory.GetFromModelData(
+                iElemIndex, numInputs, textInputs, numModParamValues, textModParamValues);
+
+            // The framework's caller treats this result as nullable, but the abstract signature it
+            // overrides is not annotated as such. Returning null! is how you say "no maintenance".
+            return RoutineMaintenance.GetTriggeredMaintenance(element, this.Constants, iPeriod)!;
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Error triggering routine maintenance on element index {iElemIndex}. Details: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Advances an element by one period when it received no treatment. This is the deterioration
+    /// step, and it runs for the great majority of elements in any period.
+    /// </summary>
+    /// <param name="iElemIndex">Zero-based index of the element.</param>
+    /// <param name="iPeriod">Modelling period (1-based).</param>
+    /// <param name="numInputs">Numeric raw input columns, keyed by column name.</param>
+    /// <param name="textInputs">Text raw input columns, keyed by column name.</param>
+    /// <param name="currentNumModParamValues">Numeric parameters as at the previous period.</param>
+    /// <param name="currentTextModParamValues">Text parameters as at the previous period.</param>
+    /// <param name="numModParamValues">Sink for this period's numeric parameter values.</param>
+    /// <param name="textModParamValues">Sink for this period's text parameter values.</param>
+    public override void Increment(
+        int iElemIndex,
+        int iPeriod,
+        Dictionary<string, double> numInputs,
+        Dictionary<string, string> textInputs,
+        Dictionary<string, double> currentNumModParamValues,
+        Dictionary<string, string> currentTextModParamValues,
+        Action<string, double> numModParamValues,
+        Action<string, string> textModParamValues)
+    {
+        try
+        {
+            ModelElement element = ModelElementFactory.GetFromModelData(
+                iElemIndex, numInputs, textInputs, currentNumModParamValues, currentTextModParamValues);
+
+            ModelElement incremented = _incrementer.Increment(element, iPeriod);
+            incremented.SetParameterValues(numModParamValues, textModParamValues);
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Error incrementing element index {iElemIndex}. Details: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Applies the effect of a treatment the optimiser selected, then writes the resulting state
+    /// back. Called instead of <see cref="Increment"/> for treated elements.
+    /// </summary>
+    /// <param name="treatment">The treatment that was selected for this element.</param>
+    /// <param name="iElemIndex">Zero-based index of the element.</param>
+    /// <param name="iPeriod">Modelling period (1-based).</param>
+    /// <param name="numInputs">Numeric raw input columns, keyed by column name.</param>
+    /// <param name="textInputs">Text raw input columns, keyed by column name.</param>
+    /// <param name="currentNumModParamValues">Numeric parameters as at the previous period.</param>
+    /// <param name="currentTextModParamValues">Text parameters as at the previous period.</param>
+    /// <param name="numModParamValues">Sink for this period's numeric parameter values.</param>
+    /// <param name="textModParamValues">Sink for this period's text parameter values.</param>
+    public override void Reset(
+        TreatmentInstance treatment,
+        int iElemIndex,
+        int iPeriod,
+        Dictionary<string, double> numInputs,
+        Dictionary<string, string> textInputs,
+        Dictionary<string, double> currentNumModParamValues,
+        Dictionary<string, string> currentTextModParamValues,
+        Action<string, double> numModParamValues,
+        Action<string, string> textModParamValues)
+    {
+        try
+        {
+            ModelElement element = ModelElementFactory.GetFromModelData(
+                iElemIndex, numInputs, textInputs, currentNumModParamValues, currentTextModParamValues);
+
+            ModelElement reset = _resetter.Reset(element, iPeriod, treatment);
+            reset.SetParameterValues(numModParamValues, textModParamValues);
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Error resetting element index {iElemIndex}. Details: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Called once at the end of each period, after every element has been processed. Use it for
+    /// network-level work that needs the whole population - rankings, percentiles, proportions
+    /// over a threshold - and store the result on this instance for the next period to read.
+    ///
+    /// <para>Anything you store here without indexing by period is overwritten every period. That
+    /// is usually what you want; when it is not, key your dictionary by <paramref name="iPeriod"/>.</para>
+    /// </summary>
+    /// <param name="iPeriod">Modelling period (1-based) that has just finished.</param>
+    public override void DoEndOfPeriodCalculations(int iPeriod)
+    {
+        // Nothing network-level yet. Most models never need anything here; add it when a decision
+        // in one period genuinely depends on how the whole network looked at the end of the last.
+    }
+}

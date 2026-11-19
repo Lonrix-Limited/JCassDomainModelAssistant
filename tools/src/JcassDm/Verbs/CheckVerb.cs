@@ -61,6 +61,7 @@ internal static class CheckVerb
         }
 
         CheckLookups(facts, lookupsPath, report);
+        CheckTargetFramework(project, AssistantLayout.FindRefsFolder(), report);
         CheckFrameworkReference(project, report);
 
         report.Write(output);
@@ -546,6 +547,88 @@ internal static class CheckVerb
                 "time, or held somewhere it cannot follow, is invisible to this check. Those were " +
                 "not checked either way.", null);
         }
+    }
+
+    /// <summary>
+    /// Does the model target the .NET the Assistant's reference assemblies were built for?
+    ///
+    /// <para><b>A PROBLEM, not a note, and that is the difference from the framework-reference
+    /// rule beside it.</b> That one is about which <i>build</i> of the framework the model's
+    /// <c>refs\</c> holds, and a stale one still builds. This one is about which <i>.NET</i> the
+    /// project targets, and a project on an older .NET cannot compile against references built for
+    /// a newer one: the moment the model's <c>refs\</c> is refreshed, the build fails with CS1705,
+    /// an error nobody outside a compiler team can read. Reporting it as a note would let an agent
+    /// carry on into exactly that error and start "fixing" references by hand.</para>
+    ///
+    /// <para><b>The expected target comes from the Assistant's own <c>refs\FRAMEWORK-VERSION.txt</c>,
+    /// never from this tool.</b> The next .NET move then needs a refreshed <c>refs\</c> and no code
+    /// change. When the stamp cannot be read the rule is skipped with the reason, never passed: a
+    /// check that did not run must not look like one that did.</para>
+    ///
+    /// <para>Kept separate from the framework-reference rule on purpose. A model on old references
+    /// <i>and</i> an old target needs to hear about both.</para>
+    /// </summary>
+    /// <param name="project">The model.</param>
+    /// <param name="assistantRefs">The Assistant's own <c>refs\</c>, or null when it could not be found.
+    /// A parameter rather than a lookup so the tests can hand it a folder of their own.</param>
+    /// <param name="report">Where the finding goes.</param>
+    internal static void CheckTargetFramework(ModelProject project, string? assistantRefs, CheckReport report)
+    {
+        const string Rule = "target framework";
+
+        string? expected = FrameworkStamp.ReadBuildTarget(assistantRefs);
+        if (expected is null)
+        {
+            report.Skip(Rule,
+                "cannot tell which .NET this Assistant's reference assemblies were built for.",
+                assistantRefs is null
+                    ? "jcass-dm could not find the Assistant's own refs\\ folder above its own " +
+                      "location, which usually means jcass-dm.exe was copied out on its own."
+                    : $"The Assistant's refs\\{FrameworkStamp.StampFileName} is missing, or has no " +
+                      "'Build :' line naming a target such as net10.0.",
+                null);
+            return;
+        }
+
+        string projectFile = Path.GetFileName(project.ProjectFilePath);
+        string? actual = project.DeclaredTargetFramework();
+        if (actual is null)
+        {
+            report.Skip(Rule,
+                $"{projectFile} has no single <TargetFramework> element to compare.",
+                "It may use <TargetFrameworks> (plural) or set the target in another file, and this " +
+                "check reads only the .csproj. A domain model needs exactly one target, and with this " +
+                $"Assistant it must be {expected}.",
+                $"Make sure {projectFile} contains <TargetFramework>{expected}</TargetFramework>.");
+            return;
+        }
+
+        if (string.Equals(actual, expected, StringComparison.OrdinalIgnoreCase))
+        {
+            report.Pass(Rule, $"{actual}, same as this Assistant's references");
+            return;
+        }
+
+        string actualName = FrameworkStamp.DescribeTarget(actual);
+        string expectedName = FrameworkStamp.DescribeTarget(expected);
+        string sdkMajor = expectedName.StartsWith(".NET ", StringComparison.Ordinal)
+            ? expectedName[5..].Split('.')[0] + "."
+            : expected;
+
+        report.Problem(Rule,
+            $"your model targets {actualName} ({actual}); this Assistant's references are built for " +
+            $"{expectedName} ({expected}).",
+            $"Juno Cassandra moved to {expectedName}. Anything you have already published keeps " +
+            "running in the web app - this is about building on this machine. A project that " +
+            $"targets {actualName} cannot compile against {expectedName} references: once your " +
+            "model's refs\\ folder is refreshed, the build fails with error CS1705, \"Assembly ... " +
+            "uses ... which has a higher version than referenced assembly ...\". You also need the " +
+            $"{expectedName} SDK on this machine: run  dotnet --list-sdks  and look for a line " +
+            $"starting {sdkMajor}",
+            $"In {projectFile}, change <TargetFramework>{actual}</TargetFramework> to " +
+            $"<TargetFramework>{expected}</TargetFramework> - that line only. Then run the " +
+            $"Assistant's scripts\\refresh-model-refs.ps1 -Project \"{project.Folder}\", rebuild, " +
+            "and run check again.");
     }
 
     /// <summary>

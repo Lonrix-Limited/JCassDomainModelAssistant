@@ -445,6 +445,14 @@ Five consequences the release process must carry:
   runs rather than on an update page they see twice a year — and it is a NOTE rather than a refusal
   because a stale reference still builds, and a check that blocks work over something not yet wrong
   is a check somebody stops running.
+  **Its sibling, the `target framework` rule, is a PROBLEM for the converse reason** — added
+  2026-11-20 with the move to .NET 10. A project targeting an older .NET than the references cannot
+  build against them at all: the compiler stops with CS1705, which nobody outside a compiler team
+  can read, and a note would let an agent carry on into it and start editing references by hand.
+  The expected target is read from the Assistant's own `refs/FRAMEWORK-VERSION.txt`, never written
+  into the tool, so the next major .NET move needs a `refs/` refresh and no code change. The fix
+  edits the engineer's `.csproj`, so the agent — and `refresh-model-refs.ps1` — asks before making
+  it.
 - **A release has to be identifiable.** `ASSISTANT-VERSION.txt` carries the commit and the release
   date, because `refs/FRAMEWORK-VERSION.txt` identifies the *framework* and
   `tools/jcass-dm.build.txt` only moves when the tool source does — it read the same commit for

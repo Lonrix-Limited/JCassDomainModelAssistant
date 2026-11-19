@@ -5,9 +5,11 @@
       "Bash(dotnet build:*)",
       "Bash(dotnet --version)",
       "Bash(dotnet --info)",
+      "Bash(dotnet --list-sdks)",
       "PowerShell(dotnet build:*)",
       "PowerShell(dotnet --version)",
       "PowerShell(dotnet --info)",
+      "PowerShell(dotnet --list-sdks)",
 
       "Bash(./tools/jcass-dm.exe check:*)",
       "Bash(./tools/jcass-dm.exe dump:*)",

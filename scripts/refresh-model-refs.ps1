@@ -34,6 +34,14 @@
     folder your terminal is sitting in, which is normally the Assistant's own folder, so
     ..\MyRoadModel is the usual form.
 
+.PARAMETER UpdateTargetFramework
+    Permission to change one line of your .csproj. If the references this copies are built for a
+    newer .NET than your project targets (the <TargetFramework> line), your model will not build
+    until the line matches, and this script says so. Without this switch it then ASKS before
+    changing anything, and if it cannot ask - no console, as when an AI assistant runs it - it
+    changes nothing. With it, the target value is changed and every other byte of the file is left
+    exactly as it was. Your project file is yours: nothing here edits it without your say-so.
+
 .PARAMETER RefsFolder
     Where to copy FROM. Defaults to this Assistant's own refs\, which is the right answer; the
     switch exists so the script can be pointed at a known-good folder while diagnosing something.
@@ -43,6 +51,9 @@
 
 .EXAMPLE
     .\scripts\refresh-model-refs.ps1 -Project C:\Work\MyRoadModel
+
+.EXAMPLE
+    .\scripts\refresh-model-refs.ps1 -Project ..\MyRoadModel -UpdateTargetFramework
 #>
 
 [CmdletBinding()]
@@ -50,7 +61,9 @@ param(
     [Parameter(Mandatory = $true)]
     [string]$Project,
 
-    [string]$RefsFolder
+    [string]$RefsFolder,
+
+    [switch]$UpdateTargetFramework
 )
 
 $ErrorActionPreference = 'Stop'
@@ -279,6 +292,105 @@ if ($productVersion -match '\+([0-9a-f]{7,40})') { $newSha = $Matches[1] }
 Write-Host ("Copied {0} files. {1} assemblies, all with documentation." -f $copied, $landedDlls.Count) -ForegroundColor Green
 Write-Host "Framework commit : $newSha" -ForegroundColor Green
 Write-Host ''
+
+# ---------------------------------------------------------------------------
+# DOES THE PROJECT TARGET THE .NET THESE REFERENCES WERE BUILT FOR?
+#
+# The references just copied say which .NET they were built for, on the
+# "Build :" line of FRAMEWORK-VERSION.txt. A project on an older .NET cannot
+# compile against them - the build stops with error CS1705 - so a plain
+# "now rebuild" would send the engineer straight into an error they cannot
+# read. jcass-dm check reports the same thing as a PROBLEM; this says it at
+# the moment it becomes true.
+#
+# THE PROJECT FILE IS NEVER CHANGED WITHOUT PERMISSION. It is the engineer's
+# file, not ours. Permission is either -UpdateTargetFramework, passed on
+# purpose, or an explicit "y" at the prompt below. Anything else - no answer,
+# no console to ask on, a different answer - leaves the file byte for byte as
+# it was. When the edit is made it changes the target value and nothing else:
+# same encoding, same line endings, every other byte untouched.
+# ---------------------------------------------------------------------------
+
+$targetMismatch = $false
+$stampPath = Join-Path $target 'FRAMEWORK-VERSION.txt'
+$refsTarget = $null
+if (Test-Path -LiteralPath $stampPath) {
+    foreach ($line in Get-Content -LiteralPath $stampPath) {
+        if ($line -match '^\s*Build\s*:(.*)$') {
+            if ($Matches[1] -match '\b(net\d+\.\d+)\b') { $refsTarget = $Matches[1].ToLowerInvariant() }
+            break
+        }
+    }
+}
+
+$projectFile = $csprojFiles[0].FullName
+$projectText = [System.IO.File]::ReadAllText($projectFile)
+$withoutComments = [regex]::Replace($projectText, '<!--.*?-->', '', 'Singleline')
+$projectTarget = $null
+$targetMatch = [regex]::Match($withoutComments, '<TargetFramework>\s*([^<]*?)\s*</TargetFramework>', 'IgnoreCase')
+if ($targetMatch.Success -and $targetMatch.Groups[1].Value.Length -gt 0) { $projectTarget = $targetMatch.Groups[1].Value }
+
+if ($refsTarget -and $projectTarget -and ($projectTarget -ne $refsTarget)) {
+    $projectName = $csprojFiles[0].Name
+    Write-Host "YOUR PROJECT TARGETS $projectTarget. These references are built for $refsTarget." -ForegroundColor Yellow
+    Write-Host ''
+    Write-Host 'It will not build until the two match: the compiler stops with error CS1705. Anything'
+    Write-Host 'you have already published keeps running in the web app - this is about building on'
+    Write-Host 'this machine. You also need the matching .NET SDK installed; check with'
+    Write-Host '  dotnet --list-sdks'
+    Write-Host ''
+    Write-Host "The fix is one line in ${projectName}:"
+    Write-Host "  <TargetFramework>$projectTarget</TargetFramework>  ->  <TargetFramework>$refsTarget</TargetFramework>"
+    Write-Host ''
+
+    $permitted = [bool]$UpdateTargetFramework
+    if (-not $permitted) {
+        $canAsk = [Environment]::UserInteractive -and -not [Console]::IsInputRedirected
+        if ($canAsk) {
+            $answer = $null
+            try { $answer = Read-Host "Change that line now? Nothing else in the file changes. [y/N]" }
+            catch { $answer = $null }
+            $permitted = ($answer -match '^\s*(y|yes)\s*$')
+        }
+    }
+
+    if ($permitted) {
+        $bytes = [System.IO.File]::ReadAllBytes($projectFile)
+        $hasBom = $bytes.Length -ge 3 -and $bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB -and $bytes[2] -eq 0xBF
+
+        # Replace the value inside the one element that was matched above, located in the
+        # original text rather than the comment-stripped copy, so the offsets are real.
+        $elementPattern = '(<TargetFramework>\s*)' + [regex]::Escape($projectTarget) + '(\s*</TargetFramework>)'
+        $element = [regex]::Matches($projectText, $elementPattern, 'IgnoreCase') |
+            Where-Object { -not ($projectText.Substring(0, $_.Index) -match '(?s)<!--(?:(?!-->).)*$') } |
+            Select-Object -First 1
+
+        if ($null -eq $element) {
+            Write-Host "Could not find that line to change, so $projectName was left as it was. Change it by hand." -ForegroundColor Yellow
+            $targetMismatch = $true
+        }
+        else {
+            $replacement = $element.Groups[1].Value + $refsTarget + $element.Groups[2].Value
+            $newText = $projectText.Substring(0, $element.Index) + $replacement +
+                $projectText.Substring($element.Index + $element.Length)
+            [System.IO.File]::WriteAllText($projectFile, $newText, (New-Object System.Text.UTF8Encoding($hasBom)))
+            Write-Host "Changed $projectName to target $refsTarget. Nothing else in it was touched." -ForegroundColor Green
+            Write-Host ''
+        }
+    }
+    else {
+        Write-Host "$projectName was NOT changed. Make that one edit yourself, or run this again with" -ForegroundColor Yellow
+        Write-Host '-UpdateTargetFramework to have it made. Then rebuild, and run' -ForegroundColor Yellow
+        Write-Host ("  .\tools\jcass-dm.exe check --project `"{0}`"" -f $projectPath) -ForegroundColor Yellow
+        Write-Host ''
+        $targetMismatch = $true
+    }
+}
+
+if ($targetMismatch) {
+    exit 0
+}
+
 Write-Host 'Now rebuild your model, so that anything the new framework changed shows up as a build'
 Write-Host 'error here rather than as odd behaviour in the web app:'
 Write-Host ''

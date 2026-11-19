@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace JcassDm.Project;
 
@@ -63,6 +64,63 @@ internal static class FrameworkStamp
         }
         catch (IOException) { return null; }
         catch (UnauthorizedAccessException) { return null; }
+    }
+
+    /// <summary>The name of the stamp file the framework maintainers write into every <c>refs\</c> folder.</summary>
+    public const string StampFileName = "FRAMEWORK-VERSION.txt";
+
+    /// <summary>
+    /// The .NET target the assemblies in a <c>refs\</c> folder were built for - <c>net10.0</c>, say -
+    /// read from the <c>Build :</c> line of its <c>FRAMEWORK-VERSION.txt</c>.
+    ///
+    /// <para><b>Read from the stamp, never hard-coded in this tool.</b> The next major .NET move then
+    /// needs a refreshed <c>refs\</c> and nothing else: the check follows the references it ships
+    /// with. Unlike the commit, the target is not recoverable from the assemblies' version
+    /// resource, so the stamp is the only source.</para>
+    ///
+    /// <para>Null when the folder, the file, the line or a target on it is missing - "cannot tell",
+    /// which the caller reports as skipped rather than passed.</para>
+    /// </summary>
+    public static string? ReadBuildTarget(string? refsFolder)
+    {
+        if (refsFolder is null) return null;
+
+        string stamp = Path.Combine(refsFolder, StampFileName);
+        if (!File.Exists(stamp)) return null;
+
+        try
+        {
+            foreach (string line in File.ReadLines(stamp))
+            {
+                string trimmed = line.Trim().TrimStart('﻿');
+                if (!trimmed.StartsWith("Build", StringComparison.OrdinalIgnoreCase)) continue;
+
+                int colon = trimmed.IndexOf(':');
+                if (colon < 0) continue;
+
+                Match target = Regex.Match(
+                    trimmed[(colon + 1)..], @"\bnet\d+\.\d+\b", RegexOptions.IgnoreCase);
+                return target.Success ? target.Value.ToLowerInvariant() : null;
+            }
+        }
+        catch (IOException) { return null; }
+        catch (UnauthorizedAccessException) { return null; }
+
+        return null;
+    }
+
+    /// <summary>
+    /// A target framework moniker in the words an engineer knows: <c>net10.0</c> is ".NET 10".
+    /// Anything that is not a plain <c>netN.M</c> is returned as written.
+    /// </summary>
+    public static string DescribeTarget(string targetFramework)
+    {
+        Match match = Regex.Match(
+            targetFramework, @"^net(?<major>\d+)\.(?<minor>\d+)$", RegexOptions.IgnoreCase);
+        if (!match.Success) return targetFramework;
+
+        string minor = match.Groups["minor"].Value;
+        return minor == "0" ? $".NET {match.Groups["major"].Value}" : $".NET {match.Groups["major"].Value}.{minor}";
     }
 
     /// <summary>The first seven characters, which is how everything else here prints a commit.</summary>

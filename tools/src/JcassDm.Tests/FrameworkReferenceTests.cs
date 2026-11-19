@@ -118,7 +118,7 @@ public class FrameworkReferenceTests
     /// Patch a single assembly rather than all of them, producing the mixed-release folder a hand
     /// copy leaves behind.
     /// </param>
-    private static void SeedRefs(TemporaryModel model, string? patchCommit, bool patchOnlyOne = false)
+    internal static void SeedRefs(TemporaryModel model, string? patchCommit, bool patchOnlyOne = false)
     {
         string source = Path.Combine(TestBundle.RepoRoot(), "refs");
         string target = model.PathTo("refs");

@@ -156,6 +156,24 @@ internal sealed class ModelProject
     }
 
     /// <summary>
+    /// The value of the single <c>&lt;TargetFramework&gt;</c> in the <c>.csproj</c> - <c>net10.0</c>,
+    /// say - or null when there is none.
+    ///
+    /// <para>Null also covers the plural <c>&lt;TargetFrameworks&gt;</c> and a target set in a
+    /// <c>Directory.Build.props</c>: neither is how a domain model is laid out, and guessing at
+    /// either would report a target the build does not actually use.</para>
+    /// </summary>
+    public string? DeclaredTargetFramework()
+    {
+        string text = File.ReadAllText(this.ProjectFilePath);
+        text = Regex.Replace(text, "<!--.*?-->", string.Empty, RegexOptions.Singleline);
+
+        Match match = Regex.Match(text, @"<TargetFramework>\s*(?<tfm>[^<]*?)\s*</TargetFramework>",
+            RegexOptions.IgnoreCase);
+        return match.Success && match.Groups["tfm"].Value.Length > 0 ? match.Groups["tfm"].Value : null;
+    }
+
+    /// <summary>
     /// Finds the entry class: the one deriving from <c>DomainModelBase</c>.
     ///
     /// <para>Returns null when there is none to be found, which <c>check</c> reports rather than

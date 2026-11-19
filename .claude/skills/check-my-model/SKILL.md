@@ -63,6 +63,10 @@ Read it back rule by rule, in modelling terms. Four things to get right:
 - **A `NOTE` that a row has an empty first column means rows are being lost.** The framework stops
   reading the sheet there —
   [`silent-failures.md` § 14](../../../docs/conventions/silent-failures.md#14-a-row-with-an-empty-first-cell).
+- **A `target framework` PROBLEM means the model will not build against this Assistant's
+  references.** What they have published keeps running. Follow
+  [`reading-errors.md` § CS1705](../../../docs/orientation/reading-errors.md#error-cs1705--uses--which-has-a-higher-version-than-referenced-assembly)
+  — check for the SDK first, and **ask before changing their `.csproj`**, the one target line only.
 - **Green does not mean the model is right.** It means nothing locally visible is inconsistent. Say
   so in your own words rather than paraphrasing it into "the model is fine". The web app's
   **Check Setup** is authoritative and sees the client's real data.

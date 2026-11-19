@@ -15,7 +15,7 @@ only a healthy model would prove the output formatting and nothing else. So each
 
 ## What each one breaks
 
-All nine start from the same base — `jcass-dm scaffold FixtureModel --element ModelElement
+All ten start from the same base — `jcass-dm scaffold FixtureModel --element ModelElement
 --from-sample` — and then have one thing done to them.
 
 | Folder | What is wrong | Rule it trips |
@@ -29,6 +29,7 @@ All nine start from the same base — `jcass-dm scaffold FixtureModel --element 
 | `two-csproj` | a second `.csproj` at the root | one `.csproj` at the root |
 | `assembly-name-set` | `<AssemblyName>SomethingElse</AssemblyName>` in the `.csproj` | `<AssemblyName>` |
 | `blank-budget-category` | `RMaint` has an empty `budget_category` cell | budget categories |
+| `target-framework-behind` | `<TargetFramework>net9.0</TargetFramework>`, while the Assistant's `refs/FRAMEWORK-VERSION.txt` says its references are built for a newer target | target framework |
 
 `names-disagree` does double duty: it is also **the `rename` test case**, because it is a model
 whose four names genuinely disagree, which is the state `rename` exists to fix. See

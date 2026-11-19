@@ -47,7 +47,7 @@ $stampPath = Join-Path $toolsFolder 'jcass-dm.build.txt'
 # knows about, which can be behind the newest one released, so the version is stated here.
 # Raise it when a new .NET patch ships. It is passed to the publish only, not set in the
 # project, so that running the tests does not need this exact runtime installed.
-$bundledRuntimeVersion = '9.0.23'
+$bundledRuntimeVersion = '10.0.15'
 
 if (-not (Test-Path -LiteralPath $toolSource)) {
     Write-Host "Cannot find the tool source. Run this from the repository, as .\scripts\build-jcass-dm.ps1" -ForegroundColor Red

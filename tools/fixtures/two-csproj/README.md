@@ -52,7 +52,7 @@ silently.
 dotnet build FixtureModel.csproj -c Debug --no-incremental
 ```
 
-Expected: `Build succeeded. 0 Warning(s) 0 Error(s)`, and `bin\Debug\net9.0\FixtureModel.dll`.
+Expected: `Build succeeded. 0 Warning(s) 0 Error(s)`, and `bin\Debug\net10.0\FixtureModel.dll`.
 
 **You can build here; you cannot run here.** The assemblies in `refs\` are *reference assemblies*
 — the framework's full public API with no method bodies. Enough for the compiler and for

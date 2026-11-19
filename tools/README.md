@@ -98,14 +98,22 @@ What it does cover is the set of mistakes that otherwise fail **silently**, or l
 somewhere that does not name the cause: the four names, a bundle parameter never written in
 `SetParameterValues`, a treatment declared and never produced (or produced and never
 declared), a treatment with no reset arm, a blank budget category, two `.csproj` files, a set
-`<AssemblyName>`, lookup sets that are not in the `lookups.xlsx` you point it at, and a
-`refs\` folder holding a different framework build from the one this Assistant carries.
+`<AssemblyName>`, lookup sets that are not in the `lookups.xlsx` you point it at, a project
+targeting an older .NET than this Assistant's references, and a `refs\` folder holding a
+different framework build from the one this Assistant carries.
 
-That last one is worth calling out because it is the only rule here that is about the Assistant
-rather than the model. Your project keeps its own copy of the reference assemblies and nothing
-refreshes it when you download a newer Assistant, so the two drift apart with no error at all —
-see [`../docs/conventions/silent-failures.md` § 13](../docs/conventions/silent-failures.md). It
-reports as a NOTE rather than a PROBLEM: a stale reference still builds and still runs.
+The last two are worth calling out because they are the only rules here that compare the model
+with the Assistant, and they deliberately differ in severity:
+
+- **`target framework` is a PROBLEM.** A project targeting .NET 9 cannot compile against .NET 10
+  references — the build stops with error CS1705. The expected target is read from the
+  Assistant's own `refs\FRAMEWORK-VERSION.txt`, not written into the tool. The fix is one line,
+  and [`../docs/orientation/reading-errors.md`](../docs/orientation/reading-errors.md#error-cs1705--uses--which-has-a-higher-version-than-referenced-assembly)
+  walks through it.
+- **`framework reference` is a NOTE.** Your project keeps its own copy of the reference assemblies
+  and nothing refreshes it when you download a newer Assistant, so the two drift apart with no
+  error at all — see [`../docs/conventions/silent-failures.md` § 13](../docs/conventions/silent-failures.md).
+  A stale reference still builds and still runs.
 
 It also reads C# as text rather than compiling it. Any rule it could not apply is reported as
 `SKIPPED`, never as passed — a check that quietly becomes a no-op is worse than no check.

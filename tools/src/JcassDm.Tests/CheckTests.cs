@@ -35,6 +35,7 @@ public class CheckTests
     [InlineData("two-csproj")]
     [InlineData("assembly-name-set")]
     [InlineData("blank-budget-category")]
+    [InlineData("target-framework-behind")]
     public void Every_broken_fixture_is_caught(string fixture)
     {
         ToolResult result = Run(fixture);

@@ -15,6 +15,64 @@ before you download.
 
 ---
 
+## 2026-11-20
+
+**Headline: Juno Cassandra is now on .NET 10. Install the .NET 10 SDK and change one line in your
+model's `.csproj`. Anything you have already published keeps running.**
+
+### What to re-check in your model
+
+Do these in this order. [`docs/orientation/updating-the-assistant.md`](docs/orientation/updating-the-assistant.md)
+step 5 has the same list with the commands.
+
+- **Install the .NET 10 SDK.** Check with `dotnet --list-sdks`: one line must start `10.`. Your .NET 9
+  SDK can stay installed beside it.
+- **Change your model's target to .NET 10.** In your `.csproj`, change
+  `<TargetFramework>net9.0</TargetFramework>` to `<TargetFramework>net10.0</TargetFramework>`. Nothing
+  else in the file changes. Your assistant will offer to make the change and ask first.
+  `refresh-model-refs.ps1 -UpdateTargetFramework` makes the same one-line change.
+- **Refresh your model's `refs\` folder and rebuild** —
+  `.\scripts\refresh-model-refs.ps1 -Project ..\YourModel`, then `dotnet build`. No public signature
+  changed, so the model should build without other edits.
+- **Run `jcass-dm check`.** The new `target framework` rule should read OK.
+
+**If you skip the target change**, the build fails with error CS1705, *"… uses … which has a higher
+version than referenced assembly …"*. It means your project targets .NET 9 and the references are
+.NET 10. The fix is the one line above, not editing references —
+[`docs/orientation/reading-errors.md`](docs/orientation/reading-errors.md#error-cs1705--uses--which-has-a-higher-version-than-referenced-assembly).
+
+### Changed in `jcass-dm` (now 1.2.0)
+
+- **`check` has a new `target framework` rule.** It fails the check (exit code 4) when your model
+  targets an older .NET than this Assistant's references are built for, and tells you the one line to
+  change. It is separate from the `framework reference` note, which is about which framework *build*
+  your `refs\` holds. A model that is behind on both gets both findings.
+- **New scaffolded models target .NET 10.**
+- **The tool now carries .NET 10.0.15.**
+
+### Changed in the scripts
+
+- **`refresh-model-refs.ps1` warns when your project's target does not match the references it just
+  copied.** It changes your `.csproj` only if you answer `y` at its prompt or pass
+  `-UpdateTargetFramework`. When an AI assistant runs it there is no prompt to answer, so the file is
+  left untouched.
+
+### Newly documented
+
+- **Do not make a `.slnx` solution file.** A domain model does not need a solution file. If you want
+  one, the .NET 10 SDK makes a `.slnx` by default, and the Debug Model editor in the web app cannot
+  open that format. Use `dotnet new sln --format sln`.
+  [`docs/orientation/reading-errors.md`](docs/orientation/reading-errors.md#error-cs1705--uses--which-has-a-higher-version-than-referenced-assembly).
+
+### Also in this release
+
+- **`refs\` and the generated API reference are rebuilt on .NET 10.** The framework's public API is
+  unchanged. One description is new: when a treatment's cost is split across budget categories, the
+  parts are listed in category-name order. The web app takes up that ordering with its next framework
+  update; until then their order can differ between runs. Totals are the same either way.
+
+---
+
 ## 2026-11-19
 
 **Headline: a new procedure for network functions, clearer setup errors, and an updated `jcass-dm`.**

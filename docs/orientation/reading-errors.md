@@ -100,6 +100,58 @@ Read the **first** error and ignore the rest — later ones are frequently conse
 
 Give the engineer the file, the line, and the corrected line. Do not explain the compiler.
 
+**One build error is the exception, and it is next.** The compiler names a file and a line that are
+not where the fix is.
+
+### error CS1705 — "uses … which has a higher version than referenced assembly"
+
+**What they see.** The build fails, usually with many errors, and the first one reads something like:
+
+```
+error CS1705: Assembly 'JCass_ModelCore' with identity '...' uses 'System.Runtime, Version=10.0.0.0'
+which has a higher version than referenced assembly 'System.Runtime' with identity
+'System.Runtime, Version=9.0.0.0'
+```
+
+`jcass-dm check` reports the same situation before the build does, as a **PROBLEM** under the rule
+**target framework**: *"your model targets .NET 9 (net9.0); this Assistant's references are built
+for .NET 10 (net10.0)."*
+
+**What it means.** The model's `.csproj` targets an older .NET than the framework reference
+assemblies in its `refs\` folder were built for. Juno Cassandra moved from .NET 9 to .NET 10, and
+this Assistant's references are .NET 10. A model scaffolded on .NET 9 hits this the first time its
+`refs\` is refreshed. **Nothing the engineer has already published is affected** — published models
+keep running in the web app. This is about building on their machine.
+
+**Do not fix it by editing references.** Not a `<Reference>` path, not a `HintPath`, not a package
+version, and do not copy older assemblies back into `refs\`. Those all "work" by putting the model
+back on a framework the server no longer documents. The fix is one line.
+
+**What you do, in this order:**
+
+1. **Say what happened in one sentence** — Juno Cassandra moved to .NET 10, and the model's project
+   file still says .NET 9; what they have published keeps running.
+2. **Check they have the .NET 10 SDK.** In their PowerShell terminal: `dotnet --list-sdks`. If no
+   line starts `10.`, **stop there** and send them to
+   [`prerequisites.md`](prerequisites.md) for the download — nothing else will build until it is
+   installed, and changing the project file first would only replace one error with another.
+3. **Ask before you change their `.csproj`**, and say exactly what will change: *"I'll change
+   `<TargetFramework>net9.0</TargetFramework>` to `<TargetFramework>net10.0</TargetFramework>` in
+   `MyRoadModel.csproj` — that line only. Shall I?"* It is their project file and an unexpected edit
+   to it is the kind they cannot check. When they say yes, change that line and nothing else.
+   (`refresh-model-refs.ps1 -UpdateTargetFramework` makes the same one-line edit, if they would
+   rather run it themselves.)
+4. **Refresh refs, rebuild, check** — `.\scripts\refresh-model-refs.ps1 -Project ..\MyRoadModel`,
+   then `dotnet build`, then `.\tools\jcass-dm.exe check --project ..\MyRoadModel`. The target
+   framework rule should now read OK.
+
+**A solution file, if you ever make one, is `.sln`, never `.slnx`.** A domain model does not need a
+solution file at all — every command in these pages builds the `.csproj` directly. But the .NET 10
+SDK's `dotnet new sln` now creates the newer `.slnx` format by default, and the C# extension in the
+web app's Debug Model editor cannot open one, so IntelliSense and breakpoints stop working there. If
+one is wanted, create it with `dotnet new sln --format sln`. **Never convert an existing `.sln` to
+`.slnx`.**
+
 ---
 
 ## Checks that look like evidence and are not
@@ -137,7 +189,7 @@ Almost always a stale or mismatched build. Rebuild, then check the timestamps an
 
 ```powershell
 dotnet build MyRoadModel.csproj -c Debug --no-incremental
-dir bin\Debug\net9.0\
+dir bin\Debug\net10.0\
 ```
 
 The `.dll` and the `.pdb` should both be there, both stamped seconds ago, and the `.dll` should be

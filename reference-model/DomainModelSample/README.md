@@ -112,7 +112,7 @@ It leaves the namespace alone by default and tells you why — the namespace is 
 four names, and a stale one is confusing rather than broken. Pass the namespace option if you
 want it updated too.
 
-Then rebuild and confirm `bin\Debug\net9.0\MyRoadModel.dll` exists.
+Then rebuild and confirm `bin\Debug\net10.0\MyRoadModel.dll` exists.
 
 For a **new** model you should not be renaming at all — `scaffold` writes all four from one name
 in the first place. Reach for `rename` when you have **inherited** a model whose names already
@@ -137,7 +137,7 @@ to be. In VS Code: **Terminal → New Terminal**, then `pwd` to confirm.
 dotnet build .\reference-model\DomainModelSample\DomainModelSample.csproj -c Debug --no-incremental
 ```
 
-Expected: `Build succeeded. 0 Warning(s) 0 Error(s)`, and `bin\Debug\net9.0\DomainModelSample.dll`.
+Expected: `Build succeeded. 0 Warning(s) 0 Error(s)`, and `bin\Debug\net10.0\DomainModelSample.dll`.
 Open the folder in VS Code and you get IntelliSense on the framework types straight away.
 
 ### You can build it here; you cannot run it here
@@ -170,7 +170,7 @@ dotnet build .\reference-model\DomainModelSample\DomainModelSample.csproj -c Rel
 ```
 
 Debug buys you nothing there — a web **Debug Model** F5 run never loads the registry DLL at all, it
-builds from your source and loads `bin\Debug\net9.0\` out of the workspace. Shipping the PDB
+builds from your source and loads `bin\Debug\net10.0\` out of the workspace. Shipping the PDB
 alongside the Release DLL is optional but worth it: it puts line numbers in the stack trace when a
 regular run throws.
 

@@ -90,6 +90,16 @@ carries `FRAMEWORK-VERSION.txt` across, so
 `check-framework-version.ps1 -RefsFolder ..\MyRoadModel\refs` can report the snapshot's age
 afterwards.
 
+**It says when the project's .NET target no longer matches, and changes it only with permission.**
+After copying, it compares the `<TargetFramework>` in the model's `.csproj` with the `Build :` line
+of the `FRAMEWORK-VERSION.txt` it just copied. On a mismatch — a `net9.0` project after the move to
+.NET 10 — it explains that the model will not build (error CS1705), points at `jcass-dm check`, and
+asks whether to change that one line. It edits only on an explicit `y`, or when
+`-UpdateTargetFramework` was passed on purpose. With neither, and always when there is no console to
+ask on, the file is left byte for byte as it was. The edit, when made, changes the target value and
+nothing else: same encoding, same line endings. The project file is the engineer's, and the agent
+asks before touching it too.
+
 **It validates everything before it deletes anything.** A missing source folder, a source missing its
 `.xml` files, a `-Project` path that does not exist or holds no `.csproj` — each refuses with the
 model untouched, rather than leaving an emptied folder behind. `-Project` is a path the engineer

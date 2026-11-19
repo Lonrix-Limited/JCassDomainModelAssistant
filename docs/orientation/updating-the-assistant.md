@@ -162,6 +162,25 @@ dotnet build ..\MyRoadModel\MyRoadModel.csproj -c Debug --no-incremental
 model's copy against this Assistant's and reports a NOTE when they differ, naming both. That is a
 backstop, not a substitute: it only speaks when you happen to run `check`.
 
+#### Coming from a release before 2026-11-20? Your model moves to .NET 10 first
+
+Juno Cassandra moved from .NET 9 to .NET 10, and from the 2026-11-20 release this Assistant's
+references are .NET 10. **A model that still targets .NET 9 will not build against them** — the
+compiler stops with error CS1705. **What you have already published keeps running**; this is only
+about building on your machine. Do these in this order, before the refresh above:
+
+1. **Install the .NET 10 SDK** — [`prerequisites.md`](prerequisites.md). Confirm with
+   `dotnet --list-sdks`: a line starting `10.` must be there. Keeping .NET 9 installed beside it is
+   fine.
+2. **Change one line in your model's `.csproj`**:
+   `<TargetFramework>net9.0</TargetFramework>` becomes `<TargetFramework>net10.0</TargetFramework>`.
+   Nothing else in the file changes. Your assistant will offer to do it and ask first, or add
+   `-UpdateTargetFramework` to the refresh command below to have the script make that one edit.
+3. **Refresh your model's refs** — the command at the top of this step.
+4. **Rebuild** — the `dotnet build` command above.
+5. **Run `jcass-dm check`.** Its `target framework` rule should read OK. It reports a PROBLEM for as
+   long as the two disagree, so it is also how you find out if this step was missed.
+
 ### 6. Reopen the workspace and re-add your model
 
 Double-click [`../../assistant.code-workspace`](../../assistant.code-workspace) in the new folder,

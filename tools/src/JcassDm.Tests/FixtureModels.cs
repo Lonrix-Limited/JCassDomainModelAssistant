@@ -33,6 +33,7 @@ public static class FixtureModels
             ["two-csproj"] = "two .csproj files at the root, which stops a debug run before it starts",
             ["assembly-name-set"] = "<AssemblyName> is set to something other than the .csproj stem",
             ["blank-budget-category"] = "RMaint has no budget_category, so the run throws at setup naming the treatment",
+            ["target-framework-behind"] = "the .csproj targets net9.0, older than the .NET the Assistant's references are built for",
         };
 
     /// <summary>Absolute path to a fixture, as committed. Read-only as far as the tests care.</summary>
