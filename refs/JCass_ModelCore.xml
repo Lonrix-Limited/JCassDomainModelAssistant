@@ -2808,6 +2808,7 @@
             <summary>
             (Optional) Budget category fractions for cost allocation for this treatment. If this is empty, the
             treatment cost will be allocated to the budget category of the treatment type (default budget category for treatment type).
+            Once assigned, entries enumerate in ordinal order of the category name, whatever order they were added in.
             </summary>
         </member>
         <member name="P:JCass_ModelCore.Treatments.TreatmentInstance.UnitRate">

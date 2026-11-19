@@ -99,7 +99,7 @@ Unit Rate inherited from the TreatmentType definition or optionally specified in
 public IReadOnlyDictionary<string, decimal> BudgetCategoryFractions;
 ```
 
-(Optional) Budget category fractions for cost allocation for this treatment. If this is empty, the treatment cost will be allocated to the budget category of the treatment type (default budget category for treatment type).
+(Optional) Budget category fractions for cost allocation for this treatment. If this is empty, the treatment cost will be allocated to the budget category of the treatment type (default budget category for treatment type). Once assigned, entries enumerate in ordinal order of the category name, whatever order they were added in.
 
 ### Comment
 
