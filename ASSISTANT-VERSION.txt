@@ -2,10 +2,10 @@
 
 WHICH VERSION OF THE ASSISTANT IS THIS?
 
-release          : 2026-09-16
-assistant commit : 9bf746dada7d82e2d87b448543ad79885ae39713
-stamped on       : 2026-09-16
-framework commit : bf70a736aa2ab37b99e161da6a5816b4f1563da9
+release          : 2026-11-19
+assistant commit : 003b03cb4b8a38b72606452c17b4e2f1297740f5
+stamped on       : 2026-11-19
+framework commit : 8f4ea26326fb64dbad0c74c146154872c1d1dc00
 
 Quote the release and the assistant commit when you email support@lonrix.com. They say
 exactly which documentation, tool and reference assemblies you are looking at, which is

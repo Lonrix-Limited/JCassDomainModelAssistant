@@ -15,6 +15,75 @@ before you download.
 
 ---
 
+## 2026-11-19
+
+**Headline: if your model uses the `z_score` network function, its results have changed because the
+old calculation was wrong. Re-check anything you built on them.**
+
+### What to re-check in your model
+
+- **Does your model use `z_score`?** List its network functions, in your PowerShell terminal in the
+  Assistant folder:
+  `.\tools\jcass-dm.exe dump ..\YourModel\domain_model_setup.xlsx --sheet network_functions`.
+  If it does:
+  - **Re-check every threshold, score or rule that reads the output.** The web app already runs the
+    corrected calculation, so forecasts will differ from those made with the old one.
+  - **Make sure the output parameter's `minimum` is below zero.** Results below the network mean are
+    negative, and a minimum of 0 turns them all into 0.
+- **Look for empty cells in column A of your setup sheets.** Reading stops at the first row where
+  column A is empty, with no error, and that row and everything below it are ignored. This is how the
+  framework has always worked, but `check` used to miss a row with values in its other columns. Run
+  `jcass-dm check` for the bundle, and look through the client's workbooks yourself.
+- **If your project sets a `Minimum Treatment Suitability Score`, confirm your model checks it.** A
+  model that does not check it ignores the setting, with no error. Models scaffolded from this
+  Assistant do not check it.
+  [`docs/patterns/treatment-suitability-scoring.md`](docs/patterns/treatment-suitability-scoring.md#the-configured-minimum).
+- **Refresh your model's `refs\` folder and rebuild** —
+  `.\scripts\refresh-model-refs.ps1 -Project ..\YourModel`. No public signature changed, so your model
+  should build without edits.
+- **Update your .NET 9 SDK to the latest release.** It carries security fixes. This affects your own
+  machine only, and does not change forecast results.
+
+### Changed in the framework
+
+- **`z_score` is now correct.** It used to give every element the same number, the network mean divided
+  by the standard deviation. It is now the element's value minus the mean, divided by the sample
+  standard deviation. It is 0 when every value is the same or the network has one element.
+- **Network function setup errors now name the problem.** A missing or non-numeric parameter gives, for
+  example, *"Network Function error: Input parameter 'x' is not defined on the parameters sheet."* A
+  missing parameter used to surface as a general dictionary error.
+  [`docs/orientation/reading-errors.md`](docs/orientation/reading-errors.md#network-function-setup-errors).
+
+### Changed in `jcass-dm` (now 1.1.1)
+
+- **`check` and `dump` report a row with values and an empty first column**, and commands that add a row
+  refuse to write over it.
+- **`check` no longer reports network function outputs as unwritten.** The framework writes them, so
+  your code does not need to. Ignore any earlier advice from `check` to write one or delete its row.
+- **The tool now carries .NET 9.0.23**, the latest security patch.
+- **New scaffolded models carry corrected comments** about the suitability score.
+
+### Newly documented — existing behaviour, not changes
+
+- **[Adding a network function](docs/workflow/30-make-a-change.md#add-a-network-function)** now has its
+  own procedure. A network function's position on the `parameters` sheet does not matter. Its row order
+  on the `network_functions` sheet does, and the concepts page has been corrected to say so.
+- **Two new entries on the
+  [silent failures list](docs/conventions/silent-failures.md#14-a-row-with-an-empty-first-cell)** cover
+  the empty column A and the unchecked minimum score.
+- **The suitability scoring guidance is corrected.** A score belongs to a treatment on a particular
+  element, and it is one ranking criterion among several. An unscored candidate is ranked on zero. An
+  invalid score stops an MCDA run with an error when the score has a weight.
+- **The web app's Help has new articles:** *Network functions*, *The MCDA model* and *The Treatment
+  Suitability Score*.
+
+### Also in this release
+
+- **`refs\` and the generated API reference now match the framework running on the server.** Nothing
+  about `TreatmentInstance`, triggers, resets or lookups changed.
+
+---
+
 ## 2026-09-16
 
 **Headline: ask your assistant to refactor a model you have inherited and it now tells you what is
