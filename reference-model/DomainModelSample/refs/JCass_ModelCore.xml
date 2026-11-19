@@ -428,6 +428,19 @@
             <c>&lt;workFolder&gt;/outputs</c>. The caller is responsible for moving files to the final
             location after a successful run. Null preserves existing desktop behaviour.</param>
         </member>
+        <member name="M:JCass_ModelCore.Exporting.DeskTopExporter.EnsureParentFolderExists(System.String)">
+            <summary>
+            Creates the folder a debug or log export is about to be written to, if it does not exist yet.
+            </summary>
+            <param name="filePath">Full path of the file about to be written.</param>
+            <remarks>
+            The <c>debug/</c> and <c>logs/</c> folders are not guaranteed to exist: a fresh clone has neither
+            under the unit-test work folders (git does not track empty folders, and <c>.gitignore</c> excludes
+            <c>debug/</c>). Without this, <see cref="M:System.IO.File.Delete(System.String)"/> throws
+            <see cref="T:System.IO.DirectoryNotFoundException"/> and the whole model run fails. On a folder that already
+            exists, as on every web client folder, this is a no-op.
+            </remarks>
+        </member>
         <member name="M:JCass_ModelCore.Exporting.DeskTopExporter.JoinTreatmentsSelectedIntoDebugRankingSet(JCass_Data.Objects.jcDataSet)">
             <summary>
             Join the final treatments information into the Debug set for Treatment Ranking (if applicable) so that the user
@@ -1005,9 +1018,9 @@
         </member>
         <member name="P:JCass_ModelCore.ModelObjects.ModelConfiguration.MinimumTreatmentSuitabilityScoreAllowed">
             <summary>
-            Minimum Treatment Suitability Score allowed for a treatment to be considered a candidate in MCDA analysis. This property
-            is only used for MCDA analyses. If the treatment suitability score is below this value, the treatment will not be added
-            to the candidate treatments list (this decision is made in the Default Domain Model).
+            Minimum Treatment Suitability Score for a treatment to be considered a candidate in MCDA analysis. This setting is only
+            used for MCDA analyses. It is applied by your domain model when it proposes candidate treatments, not by the framework,
+            so check your domain model for how it is treated.
             </summary>
         </member>
         <member name="P:JCass_ModelCore.ModelObjects.ModelConfiguration.RawDataFilePath">
@@ -1482,6 +1495,15 @@
             Checks that the input and output keys for Network Statistics parameters map to available Model _model.Parameters. Also checks
             that the specified input and output parameters map to Model Parameters that are numeric.
             </summary>
+        </member>
+        <member name="M:JCass_ModelCore.ModelObjects.ModelSetupChecker.IsNetworkStatsParameterOK(System.String,System.String)">
+            <summary>
+            Checks that a parameter named on the network functions sheet is defined and numeric, recording
+            a setup error naming it if not.
+            </summary>
+            <param name="parameterName">The name given on the sheet.</param>
+            <param name="role">Which column it came from, for the message: Input or Output.</param>
+            <returns>True if the parameter can be used.</returns>
         </member>
         <member name="M:JCass_ModelCore.ModelObjects.ModelSetupChecker.MarkNetworkStatsParameters">
             <summary>

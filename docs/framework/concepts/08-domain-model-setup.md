@@ -117,7 +117,7 @@ At runtime, Cassandra will scan your input file and report an error if:
 
 > **Important**
 >
-> The table shown above must have left-upper corner in cell A1 of the 'input_headers' sheet. You can use the cells below or to the right of the table but it is recommended that you rather make use of a separate sheet to keep any notes etc.
+> The table shown above must have left-upper corner in cell A1 of the 'input_headers' sheet. You can use the cells to the right of the table, or below it if you leave a blank row first, but it is recommended that you rather make use of a separate sheet to keep any notes etc.
 >
 > Keep column names unchanged (case-sensitive) and do not change the order of columns.
 
@@ -202,7 +202,7 @@ The table below shows an example of a Parameter Definition table:
 
 > **Important**
 >
-> The table shown above must have left-upper corner in cell A1 of the 'input_headers' sheet. You can use the cells below or to the right of the table but it is recommended that you rather make use of a separate sheet to keep any notes etc.
+> The table shown above must have left-upper corner in cell A1 of the 'parameters' sheet. You can use the cells to the right of the table, or below it if you leave a blank row first, but it is recommended that you rather make use of a separate sheet to keep any notes etc.
 >
 > Keep column names unchanged (case-sensitive) and do not change the order of columns.
 
@@ -266,7 +266,7 @@ The treatments you want your model to trigger and apply need to be defined on th
 
 > **Important**
 >
-> The table shown above must have left-upper corner in cell A1 of the 'treatments' sheet. You can use the cells below or to the right of the table but it is recommended that you rather make use of a separate sheet to keep any notes etc.
+> The table shown above must have left-upper corner in cell A1 of the 'treatments' sheet. You can use the cells to the right of the table, or below it if you leave a blank row first, but it is recommended that you rather make use of a separate sheet to keep any notes etc.
 >
 > Keep column names unchanged (case-sensitive) and do not change the order of columns.
 
@@ -311,7 +311,7 @@ Similarly, if you want to include a priority based on Traffic (ADT), you can hav
 
 > **Important**
 >
-> The table shown above must have left-upper corner in cell A1 of the 'mcda_setup' sheet. You can use the cells below or to the right of the table but it is recommended that you rather make use of a separate sheet to keep any notes etc.
+> The table shown above must have left-upper corner in cell A1 of the 'mcda_setup' sheet. You can use the cells to the right of the table, or below it if you leave a blank row first, but it is recommended that you rather make use of a separate sheet to keep any notes etc.
 >
 > Keep column names unchanged (case-sensitive) and do not change the order of columns.
 
@@ -327,9 +327,9 @@ However, in some instances, you may want to know how the element compares relati
 
 The purpose of Network Functions is to make available some functionality for calculating aspects of an element as it relates to the rest of the network. To define a parameter that depends on Network Functions, you need to follow these broad steps:
 
-1. Define the parameter in your 'parameters' sheet
+1. Define the parameter in your 'parameters' sheet as a numeric parameter, with a minimum and maximum that suit the function
 2. Add a row to represent the parameter to the table on the 'network_functions' sheet
-3. Define which other parameter the network-function parameter is dependent on (this is the 'input_parameter').
+3. Define which other parameter the network-function parameter is dependent on (this is the 'input_parameter'). It must also be a numeric parameter on the 'parameters' sheet.
 4. Define what network function should be used to calculate the value for your network-function parameter.
 
 **An Example:** 
@@ -339,19 +339,21 @@ Next you need to specify which of the available network functions is to be used 
 
 > **Important**
 >
-> Because parameters calculated using Network Functions are always dependent on other parameters, **they should always be specified last in your Model Parameters table**. In the unlikely case that one Network Function parameter depends on another, you should specify the input parameter before the parameter that depends on it.
+> The position of a parameter in the 'parameters' sheet does not matter for Network Functions, but the order of rows on the 'network_functions' sheet does. Rows are calculated from top to bottom. If one Network Function uses the output of another as its input, **put the row that produces the value higher on the sheet**. Otherwise the function finds no result for that period yet, and no error is reported.
+
+Network Functions are calculated once after the model is initialised, then again at the end of every period. In any period, your Domain Model therefore sees the result from the end of the previous period. Any value your Domain Model writes to the output parameter is replaced. In a Benefit-Cost Analysis, Network Functions are not recalculated while a strategy is rolled forward.
 
 ### Available Network Functions
 
 The network functions currently (October 2025) available in Cassandra are:
 
-* **Z-Score**: This is the [Standard Score](https://en.wikipedia.org/wiki/Standard_score) that indicates how many standard deviations the element's input value is below (negative) or above (positive) the mean of the total network distribution for that input value. Specify code **'z_score'** (case sensitive) in the 'function_type' column to use this function.
+* **Z-Score**: This is the [Standard Score](https://en.wikipedia.org/wiki/Standard_score) that indicates how many standard deviations the element's input value is below (negative) or above (positive) the network mean. It is the element's value minus the mean, divided by the sample standard deviation. If every element has the same value, or the network has one element, the result is 0. Because results below the mean are negative, the output parameter's minimum must be below zero or those results are clamped. Specify code **'z_score'** (case sensitive) in the 'function_type' column to use this function.
 
-* **Percentage Rank**: this is the Percentage Rank of the input parameter relative to the values for the rest of the network, similar to [Excel's PERCENTRANK function](https://support.microsoft.com/en-au/office/percentrank-function-f1b5836c-9619-4847-9fc9-080ec9024442). Specify code **'percent_rank'** (case sensitive) in the 'function_type' column to use this function. This method uses a lazy lookup so it is SLOWER than
-the approximate method below (by a factor of more than 100) but this method gives an exact match with Excel.
+* **Percentage Rank**: this is the Percentage Rank of the input parameter relative to the values for the rest of the network, on a scale of 0 to 100, similar to [Excel's PERCENTRANK function](https://support.microsoft.com/en-au/office/percentrank-function-f1b5836c-9619-4847-9fc9-080ec9024442). Tied elements are ranked from the first of them in sorted order. This method checks values one at a time, so it becomes much slower than the approximate method below as the network grows. Specify code **'percent_rank'** (case sensitive) in the 'function_type' column to use this function.
 
-* **Approximate Percentage Rank**: this is the approximate Percentage Rank of the input parameter relative to the values for the rest of the network, similar to [Excel's PERCENTRANK function](https://support.microsoft.com/en-au/office/percentrank-function-f1b5836c-9619-4847-9fc9-080ec9024442). This method uses Binary Search so it is significantly
-FASTER than the other method (see above) by a factor of about 100. However, when there are many repeat values it does not match Excel exactly. Specify code **'percent_rank_approx'** (case sensitive) in the 'function_type' column to use this function.
+* **Approximate Percentage Rank**: this is the approximate Percentage Rank of the input parameter, also on a scale of 0 to 100. It uses a binary search, so it is much faster on a large network. Tied elements receive the same rank as each other, but it can differ from the rank 'percent_rank' gives. With no repeated values the two methods give the same result. Specify code **'percent_rank_approx'** (case sensitive) in the 'function_type' column to use this function.
+
+Every result is clamped to the output parameter's minimum and maximum without warning, so a Percentage Rank needs a range that covers 0 to 100.
 
 If you need additional Network Functions similar to the above for your model, contact Lonrix.
 
@@ -366,6 +368,8 @@ If you need additional Network Functions similar to the above for your model, co
 
 > **Important**
 >
-> The table shown above must have left-upper corner in cell A1 of the 'network_functions' sheet. You can use the cells below or to the right of the table but it is recommended that you rather make use of a separate sheet to keep any notes etc.
+> The table shown above must have left-upper corner in cell A1 of the 'network_functions' sheet. Keep column names unchanged (case-sensitive) and keep 'input_parameter' in column A.
 >
-> Keep column names unchanged (case-sensitive) and do not change the order of columns.
+> **Every row must have a value in column A.** Reading stops at the first row where column A is empty, and that row and every row below it are ignored without any error. Leave no blank rows between functions, and do not move the optional 'comment' column to column A.
+>
+> You can use the cells to the right of the table, or below it if you leave a blank row first, but it is recommended that you rather make use of a separate sheet to keep any notes etc.

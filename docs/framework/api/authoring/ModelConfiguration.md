@@ -270,7 +270,7 @@ Flag to indicative if the Objective Parameter is to be minimised (true) or maxim
 public double MinimumTreatmentSuitabilityScoreAllowed { get; set; }
 ```
 
-Minimum Treatment Suitability Score allowed for a treatment to be considered a candidate in MCDA analysis. This property is only used for MCDA analyses. If the treatment suitability score is below this value, the treatment will not be added to the candidate treatments list (this decision is made in the Default Domain Model).
+Minimum Treatment Suitability Score for a treatment to be considered a candidate in MCDA analysis. This setting is only used for MCDA analyses. It is applied by your domain model when it proposes candidate treatments, not by the framework, so check your domain model for how it is treated.
 
 ### ModelTypeName
 
