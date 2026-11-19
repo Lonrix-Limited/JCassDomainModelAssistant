@@ -31,9 +31,12 @@ reading their code.**
 
 1. **Look for `model-knowledge/<ModelName>.md`.** The `README.md` in that folder is not a notes file
    — a folder holding only the README is a folder with no notes in it.
-2. **If it is missing, list the folder that *contains* this repository** and look for a sibling
-   `JCassDomainModelAssistant*-old` or `*-main` with `model-knowledge` files in it. After an update
-   that is where their notes usually are.
+2. **If it is missing, list the folder that *contains* this repository** — all of it: `ls ..` in
+   bash, `Get-ChildItem ..` in PowerShell — and look for a sibling `JCassDomainModelAssistant*-old`
+   or `*-main` with `model-knowledge` files in it. After an update that is where their notes usually
+   are. **`ls ../<ModelName>*` is not this check**: it finds their model, not an older copy of this
+   Assistant, and an agent that ran only that has offered to start a new notes file while the old
+   one sat one folder away.
 3. **What you do next depends on what they asked for, and this is the part to get right.**
 
 | They asked you to | You |

@@ -109,7 +109,8 @@ them already are.
 **If it is not there, it has two steps. Do both.**
 
 **Step one: look next door before you say anything.** List the folder that *contains* this
-repository. If a sibling folder matches `JCassDomainModelAssistant*-old` or `*-main` and has a
+repository — all of it, `ls ..` or `Get-ChildItem ..`. Listing `../<ModelName>*` is not this step:
+it finds their model, not an older copy of this Assistant. If a sibling folder matches `JCassDomainModelAssistant*-old` or `*-main` and has a
 `model-knowledge` folder with files in it, you have found their notes and you can name the exact
 path. Do not skip this because it feels like a long shot — after an update it is the usual case, and
 naming the folder is the difference between an instruction they can follow in one move and a request

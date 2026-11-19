@@ -17,8 +17,9 @@ and running the verb it names.
   is the one that regresses:
 
   1. Read `model-knowledge/<ModelName>.md` if it is there, and use it.
-  2. If it is not there, list the folder that *contains* this repository and look for a sibling
-     `JCassDomainModelAssistant*-old` or `*-main` holding one.
+  2. If it is not there, list the folder that *contains* this repository — all of it, `ls ..` —
+     and look for a sibling `JCassDomainModelAssistant*-old` or `*-main` holding one.
+     `ls ../<ModelName>*` is not this check: it finds the model, not an older Assistant.
   3. **Stop. Ask them to copy it across — naming the exact folder if step 2 found one — and wait
      for their reply.** Do not start the edit and mention it afterwards; afterwards is too late,
      because the edit is what the notes were for.
