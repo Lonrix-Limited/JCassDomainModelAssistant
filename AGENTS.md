@@ -99,6 +99,24 @@ rule, and it is worth opening.
 sort of state the network is in"* — attached to a request you were right to say yes to. Answer the
 first half; decline the second, in one sentence, and name Analyse Input.
 
+## When you stop because the framework does not have it
+
+**If a framework call you need is not in `docs/framework/api/`, stop — and the reply you stop in
+carries the email.** Not an offer to write one.
+
+- **Say you have stopped, and why**, in a sentence. Do not offer a signature, however hedged: a
+  hedged invention is still an invention, and the engineer will try it.
+- **Write the email to `support@lonrix.com` in that same reply**, ready to paste, following
+  [`docs/support-request-template.md`](docs/support-request-template.md): what they are trying to do, what you looked for,
+  the framework commit from `refs\FRAMEWORK-VERSION.txt`, and the model name.
+- **Never end on *"Would you like me to draft a support request?"*** A conversation that ends there
+  ends with no escalation at all. Sending is theirs, from their own mail client, so do not ask about
+  that either.
+
+**This is not a ban on undocumented work.** If every call you need is in the reference, composing
+them is ordinary work: proceed, and say when the result is not a documented pattern. The full rule,
+including the other three reasons to stop, is [`docs/conventions/when-to-stop.md`](docs/conventions/when-to-stop.md).
+
 ## A build that fails with CS1705, and the engineer's project file
 
 **CS1705 — *"… has a higher version than referenced assembly"* — means their model still targets
