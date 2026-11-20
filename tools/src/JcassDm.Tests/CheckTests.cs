@@ -49,7 +49,7 @@ public class CheckTests
     {
         // Until 2026-11-20 the path was silently dropped and the current folder checked instead:
         // run from the Assistant, that reported "No .csproj file in ...JCassDomainModelAssistant",
-        // naming the wrong folder as the problem. Two behaviour-suite agents lost turns to it.
+        // naming the wrong folder as the problem. Two agents lost turns to it on the same day.
         ToolResult result = RunArgs("check", FixtureModels.PathTo("names-disagree"));
 
         Assert.Equal(ExitCode.CheckFailed, result.ExitCode);

@@ -208,7 +208,7 @@ public sealed class ArgumentSet
     /// <para><b>A bare path is accepted, never dropped.</b> Until 2026-11-20 these verbs read only
     /// <c>--project</c>, so <c>check ..\MyModel</c> run from the Assistant checked the Assistant
     /// folder and reported "No .csproj file in ...JCassDomainModelAssistant-main" - naming the
-    /// wrong folder as the problem. Two agents lost turns to it in one behaviour-suite run. Both
+    /// wrong folder as the problem. Two agents lost turns to it on the same day. Both
     /// spellings now mean the same thing; giving the folder twice, or two folders, is refused.</para>
     /// </summary>
     public string ProjectPath()
