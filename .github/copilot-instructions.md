@@ -107,17 +107,20 @@ is still their file: **ask before you edit it, even when they said *"fix it"*.**
 
 1. **Say what happened in one sentence**, and say that **what they have already published keeps
    running** — this is only about building on their machine.
-2. **Check for a .NET 10 SDK** — `dotnet --list-sdks`, in their PowerShell terminal. No line starting
-   `10.` → stop, and point them at the SDK download in `docs/orientation/prerequisites.md`.
+2. **Check for a .NET 10 SDK yourself, before you ask anything** — run `dotnet --list-sdks`. No line
+   starting `10.` → stop there, and point them at the SDK download in
+   `docs/orientation/prerequisites.md`. Do not ask for the edit until you know the SDK is there: on a
+   machine without it, the edit only swaps one build error for another.
 3. **Ask, naming the one line** — `<TargetFramework>net9.0</TargetFramework>` to
    `<TargetFramework>net10.0</TargetFramework>` in their `.csproj` — **and wait for the yes.** Then
    change that line and nothing else. Never a `<Reference>`, a `HintPath` or a package version, and
    never older assemblies copied into `refs\`: each makes the build pass on a framework nobody
    documents.
-4. **Refresh refs, rebuild, check** — in their PowerShell terminal, from this Assistant folder:
+4. **Refresh refs, rebuild, check — run these yourself**, then tell them what `check` reported
+   (the `target framework` rule should read OK). From this Assistant folder, in PowerShell:
    `.\scripts\refresh-model-refs.ps1 -Project ..\<ModelName>`, then `dotnet build` in the model
-   folder, then `.\tools\jcass-dm.exe check --project ..\<ModelName>`. Tell them the
-   `target framework` rule now reads OK. There is no `jcass-dm` verb for refreshing refs.
+   folder, then `.\tools\jcass-dm.exe check --project ..\<ModelName>`. There is no `jcass-dm` verb
+   for refreshing refs.
 
 **Why the ask, when the edit is obviously right:** an unexpected change to a project file is the kind
 an engineer cannot check, and *"fix it"* was said about an error they could not read, not about their
