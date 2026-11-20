@@ -3,7 +3,7 @@
 WHICH VERSION OF THE ASSISTANT IS THIS?
 
 release          : 2026-11-20
-assistant commit : 92478bfbb56ee71c909efd8d45e7aedf9900453b
+assistant commit : 0b55dcf3dfa1506a38128b49983c02035f018fc4
 stamped on       : 2026-11-20
 framework commit : 362f4bba774e086b6e73c1b58e6ab8a34d2a38ab
 
