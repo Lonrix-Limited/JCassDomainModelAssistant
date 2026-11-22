@@ -123,6 +123,22 @@ public class VerbTests
     }
 
     [Fact]
+    public void SetMeta_points_out_a_namespaced_main_class_left_in_an_older_bundle()
+    {
+        // set-meta refuses to write a namespace, but a bundle from before 2026-11-22 can still hold
+        // one. Its last segment agrees with main_dll, so the old last-segment comparison said nothing
+        // - while the web app's Check bundle and publish refuse it.
+        using TemporaryModel model = FixtureModels.Copy("main-class-namespaced");
+
+        ToolResult result = model.Run(
+            "set-meta", model.PathTo("domain_model_setup.xlsx"), "--main-dll", "FixtureModel.dll", "--force");
+
+        Assert.Equal(ExitCode.Ok, result.ExitCode);
+        Assert.Contains("carries a namespace", result.Output, StringComparison.Ordinal);
+        Assert.Contains("--main-class FixtureModel", result.Output, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void SetMeta_accepts_model_name_as_an_alias_for_display_name()
     {
         using var bundle = TestBundle.FromReferenceModel();

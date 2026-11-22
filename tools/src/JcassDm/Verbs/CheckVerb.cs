@@ -202,8 +202,9 @@ internal static class CheckVerb
         }
         if (metaDisagrees)
         {
-            why.Add("A meta sheet that disagrees passes F5 (with only a warning), then fails Check bundle " +
-                    "on the web Debug Model page, and publish refuses it.");
+            why.Add("A meta sheet that disagrees passes F5 - with a warning only when main_dll differs by " +
+                    "more than letter case, otherwise silently - then fails Check bundle on the web Debug " +
+                    "Model page, and publish refuses it.");
         }
 
         report.Problem("the four names",

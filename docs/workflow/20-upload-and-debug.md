@@ -182,8 +182,9 @@ At the end:
   a real forecast; it is not a dry run.
 - **It ignores the bundle's `meta.main_dll` and `meta.main_class`** and binds to whatever your
   `.csproj` just built. That is deliberate — under debugging your source has moved on from the
-  published assembly. It is also why a name mismatch hides here: the only sign is a
-  `[DebugMode] Overriding DM DLL name` warning. **Check bundle** (step 8) is what catches it.
+  published assembly. It is also why a name mismatch hides here: at most there is a
+  `[DebugMode] Overriding DM DLL name` warning, and only when `main_dll` differs by more than letter
+  case — a wrong `main_class` shows nothing. **Check bundle** (step 8) is what catches it.
 
 ### If F5 says it cannot find a debug adapter
 

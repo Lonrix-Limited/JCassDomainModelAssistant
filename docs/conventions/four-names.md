@@ -32,7 +32,7 @@ The two routes mean a mismatch fails in a different place depending on **which**
 | What disagrees | F5 on the Debug Model page | Check bundle | Publish | `jcass-dm check` |
 |---|---|---|---|---|
 | The entry class (#3) against the `.csproj` (#1), or `<AssemblyName>` set | **Fails** — *"Domain Model class 'X' was not found in the specified .dll"* | Cannot see it — it does not read C# | **Not caught** — publish compares the spreadsheet with the project name, never the C#. Do not publish a model F5 cannot run | **Reports it** |
-| The `meta` sheet (#4) against the `.csproj` (#1) | **Runs**, with a `[DebugMode] Overriding DM DLL name` warning | **Fails** — *"Bundle main_dll + main_class match the C# project"* | **Refuses** — nothing published | **Reports it** |
+| The `meta` sheet (#4) against the `.csproj` (#1) | **Runs**. A `[DebugMode] Overriding DM DLL name` warning appears only when `main_dll` differs by more than letter case; a wrong `main_class`, or a case-only `main_dll`, runs with no sign at all | **Fails** — *"Bundle main_dll + main_class match the C# project"* | **Refuses** — nothing published | **Reports it** |
 
 The second row is the one that used to hurt: F5 is green on every run, so the mismatch sat there
 until the first normal run after publish. Check bundle now catches it as soon as the edited workbook

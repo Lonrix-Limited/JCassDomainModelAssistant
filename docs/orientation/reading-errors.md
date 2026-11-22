@@ -65,8 +65,9 @@ Y.csproj implies a model class named 'Y'"*. **The setup spreadsheet names a diff
 the project builds** — nearly always a rename that reached the C# and not the `meta` sheet, or the
 other way round.
 
-F5 runs perfectly with this in place (it ignores both values and only prints a
-`[DebugMode] Overriding DM DLL name` warning), so a green F5 is not evidence against it. A normal
+F5 runs perfectly with this in place (it ignores both values; it prints a
+`[DebugMode] Overriding DM DLL name` warning only when `main_dll` differs by more than letter case,
+and otherwise nothing at all), so a green F5 is not evidence against it. A normal
 run would fail, which is why publish refuses until the two agree.
 
 Two details that make a value that *looks* right still fail:

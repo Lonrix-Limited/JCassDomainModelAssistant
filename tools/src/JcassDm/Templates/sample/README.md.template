@@ -48,8 +48,10 @@ shipped. So the two only agree when all four strings match. When they don't:
 
 - **The class is not named after the `.csproj`** → F5 fails with
   `Domain Model class 'Whatever' was not found in the specified .dll`.
-- **The `meta` sheet names something else** → F5 runs (with a `[DebugMode] Overriding DM DLL name`
-  warning), and **Check bundle** on the Debug Model page fails and publish refuses until they agree.
+- **The `meta` sheet names something else** → F5 runs. It prints a
+  `[DebugMode] Overriding DM DLL name` warning only when `main_dll` differs by more than letter
+  case; otherwise it says nothing. **Check bundle** on the Debug Model page fails, and publish
+  refuses, until they agree.
   `main_dll` must match `{{MODEL}}.dll` exactly, letter case included — the server runs Linux.
   `main_class` is the bare name `{{MODEL}}`, no namespace.
 

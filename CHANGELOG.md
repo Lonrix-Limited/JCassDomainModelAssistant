@@ -38,7 +38,10 @@ and refused at publish — letter case in `main_dll` included.**
 
 - `jcass-dm check` now refuses a namespace-qualified `main_class`, says when `main_dll` differs only
   in letter case, and explains a spreadsheet mismatch as *passes F5, fails Check bundle* rather than
-  *fails F5*. `set-meta --main-class` refuses a namespace.
+  *fails F5*. `set-meta --main-class` refuses a namespace, and any `set-meta` on a bundle that
+  still holds a namespaced `main_class` from an older release points it out. The docs no longer
+  promise an F5 warning for a spreadsheet mismatch: there is one only when `main_dll` differs by
+  more than letter case, so a wrong `main_class` passes F5 without a sign.
 - [`docs/conventions/four-names.md`](docs/conventions/four-names.md) has a new section, **After a
   rename — carry it to the web app**: renamed source, Reset debug bundle if the old DLL is still
   listed, the edited workbook after the reset, then Check bundle.

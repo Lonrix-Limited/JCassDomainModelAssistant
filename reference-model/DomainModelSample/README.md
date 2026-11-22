@@ -100,7 +100,8 @@ names disagree:
   mistake is the reason this kit exists.
 
 - **The `meta` sheet names something other than the `.csproj`.** F5 runs perfectly — it ignores the
-  sheet and prints only a `[DebugMode] Overriding DM DLL name` warning — and a normal run would
+  sheet, and prints a `[DebugMode] Overriding DM DLL name` warning only when `main_dll` differs by
+  more than letter case (a wrong `main_class` prints nothing) — and a normal run would
   fail. That is the dangerous one, because every debug run is green. The web Debug Model page's
   **Check bundle** compares `main_dll` and `main_class` with your project name and fails on any
   difference, and **publish refuses** on the same comparison, so it can no longer reach a live run.

@@ -69,8 +69,9 @@ internal static class SetMetaVerb
     /// Points out a <c>main_dll</c> and <c>main_class</c> that cannot both be right.
     ///
     /// <para>A note rather than a refusal: the caller may be part-way through a rename they
-    /// intend to finish. Only the last segment is compared because a bundle written before
-    /// namespaces were refused can still carry one. A mismatch here is the single most common
+    /// intend to finish. A bundle written before namespaces were refused can still carry one in
+    /// <c>main_class</c>: that gets a note of its own, and the DLL comparison then uses the last
+    /// segment so the two notes do not say the same thing twice. A mismatch here is the single most common
     /// way a model breaks: whichever of the two disagrees with the project name fails the web
     /// app's Check bundle, and publish refuses it.</para>
     /// </summary>
@@ -88,6 +89,17 @@ internal static class SetMetaVerb
 
         string assembly = dll.EndsWith(".dll", StringComparison.OrdinalIgnoreCase) ? dll[..^4] : dll;
         string lastSegment = className.Split('.').Last();
+
+        if (className.Contains('.'))
+        {
+            // Only reachable from a bundle written before namespaces were refused - set-meta itself
+            // no longer writes one. The web app refuses it whether or not the last segment agrees.
+            output.WriteLine();
+            output.WriteLine($"note       main_class is '{className}', which carries a namespace. The web app's Check");
+            output.WriteLine($"           bundle and publish refuse that; it must be the bare class name '{lastSegment}'.");
+            output.WriteLine($"           Fix:  jcass-dm set-meta <bundle> --main-class {lastSegment}");
+        }
+
         if (string.Equals(assembly, lastSegment, StringComparison.Ordinal)) return;
 
         output.WriteLine();
