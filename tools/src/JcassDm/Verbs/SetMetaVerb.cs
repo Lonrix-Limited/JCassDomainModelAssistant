@@ -68,12 +68,11 @@ internal static class SetMetaVerb
     /// <summary>
     /// Points out a <c>main_dll</c> and <c>main_class</c> that cannot both be right.
     ///
-    /// <para>A note rather than a refusal: a namespace-qualified class name is legitimate,
-    /// so only the last segment is compared, and the caller may be part-way through a
-    /// rename they intend to finish. But a mismatch here is the single most common way a
-    /// model breaks, and it breaks only on the debug path - a normal run reads these two
-    /// values and is perfectly happy, so nothing else will mention it until somebody
-    /// presses F5.</para>
+    /// <para>A note rather than a refusal: the caller may be part-way through a rename they
+    /// intend to finish. Only the last segment is compared because a bundle written before
+    /// namespaces were refused can still carry one. A mismatch here is the single most common
+    /// way a model breaks: whichever of the two disagrees with the project name fails the web
+    /// app's Check bundle, and publish refuses it.</para>
     /// </summary>
     private static void WarnIfNamesDisagree(BundleFile bundle, TextWriter output)
     {

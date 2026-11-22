@@ -44,9 +44,14 @@ internal static class NameRules
     }
 
     /// <summary>
-    /// A <c>main_class</c> value: a C# type name, optionally namespace-qualified. Checked
-    /// because the framework resolves the entry class by this string at load time, and an
-    /// unloadable class reads as "Domain Model class not found" long after the typo.
+    /// A <c>main_class</c> value: a bare C# class name, with no namespace. Checked because the
+    /// framework resolves the entry class by this string at load time, and an unloadable class
+    /// reads as "Domain Model class not found" long after the typo.
+    ///
+    /// <para>A namespace-qualified value used to be accepted here. It is refused since the web
+    /// app's Check bundle and publish began refusing it (2026-11-22): the framework matches the
+    /// bare type name, so a qualified value cannot load, and accepting it here would write a
+    /// bundle the web app will not publish.</para>
     /// </summary>
     public static string RequireTypeName(string value, string optionName)
     {
@@ -59,16 +64,20 @@ internal static class NameRules
                 $"For '{value}' you probably want '{value[..^4]}'.");
         }
 
-        foreach (string segment in value.Split('.'))
+        if (value.Contains('.'))
         {
-            if (segment.Length == 0 || (!char.IsLetter(segment[0]) && segment[0] != '_')
-                || segment.Any(c => !char.IsLetterOrDigit(c) && c != '_'))
-            {
-                throw new UsageFailure(
-                    $"'{optionName}' is '{value}', which is not a valid C# class name. " +
-                    "Use letters, digits and underscores, starting with a letter; " +
-                    "a namespace prefix separated by full stops is allowed.");
-            }
+            string bare = value.Split('.').Last();
+            throw new UsageFailure(
+                $"'{optionName}' is '{value}', which carries a namespace. It must be the bare class " +
+                $"name - '{bare}' - because the web app refuses a namespace-qualified main_class.");
+        }
+
+        if ((!char.IsLetter(value[0]) && value[0] != '_')
+            || value.Any(c => !char.IsLetterOrDigit(c) && c != '_'))
+        {
+            throw new UsageFailure(
+                $"'{optionName}' is '{value}', which is not a valid C# class name. " +
+                "Use letters, digits and underscores, starting with a letter.");
         }
         return value;
     }

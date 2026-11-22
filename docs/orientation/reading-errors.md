@@ -53,6 +53,41 @@ The four names disagree. Not a code problem at all —
 [`../conventions/four-names.md`](../conventions/four-names.md). Run `jcass-dm check`; it names which
 of the four are out of step.
 
+Under **F5** this almost always means the **entry class** is not named after the `.csproj` (or
+`<AssemblyName>` is set), because a debug run takes the class name from the project name and nothing
+else. **Check bundle cannot see this one** — it compares the setup spreadsheet with the project name,
+not the C#. `jcass-dm check` can.
+
+### Check bundle fails *"Bundle main_dll + main_class match the C# project"*
+
+The message reads *"main_dll is 'X' but Y.csproj builds 'Y.dll'"*, or *"main_class is 'X' but
+Y.csproj implies a model class named 'Y'"*. **The setup spreadsheet names a different model than
+the project builds** — nearly always a rename that reached the C# and not the `meta` sheet, or the
+other way round.
+
+F5 runs perfectly with this in place (it ignores both values and only prints a
+`[DebugMode] Overriding DM DLL name` warning), so a green F5 is not evidence against it. A normal
+run would fail, which is why publish refuses until the two agree.
+
+Two details that make a value that *looks* right still fail:
+
+- **`main_dll` is matched exactly, letter case included** — *"They differ only in letter case"* on
+  the end of the message means `toymodel.dll` against `ToyModel.dll`. The server runs Linux, where
+  those are two different files.
+- **`main_class` is the bare class name, no namespace.** `MyRoads.ToyModel` fails; `ToyModel`
+  passes. Letter case does not matter here.
+
+The fix is local, then one upload: run `jcass-dm rename <ProjectName>` with the name the `.csproj`
+already has — it rewrites only what disagrees — then send the workbook with **Upload bundle
+file(s)** and check again. The full sequence is
+[`../conventions/four-names.md` § After a rename](../conventions/four-names.md#after-a-rename--carry-it-to-the-web-app).
+
+### Publish refuses: *"Bundle names the wrong DLL"* or *"Bundle names the wrong model class"*
+
+The same disagreement as above, caught one step later. Nothing was published; the live model is
+untouched. Fix it exactly as above, then **Check bundle** before publishing again —
+[`../workflow/40-publish.md`](../workflow/40-publish.md#the-refusal-that-catches-people).
+
 ### "Couldn't find a debug adapter descriptor for debug type 'coreclr'"
 
 Usually followed by *(extension might have failed to activate)*, with buttons offering to open
@@ -131,7 +166,7 @@ back on a framework the server no longer documents. The fix is one line.
 
 1. **Say what happened in one sentence** — Juno Cassandra moved to .NET 10, and the model's project
    file still says .NET 9; what they have published keeps running.
-2. **Check they have the .NET 10 SDK.** In their PowerShell terminal: `dotnet --list-sdks`. If no
+2. **Check for the .NET 10 SDK yourself, before you ask anything** — run `dotnet --list-sdks`. If no
    line starts `10.`, **stop there** and send them to
    [`prerequisites.md`](prerequisites.md) for the download — nothing else will build until it is
    installed, and changing the project file first would only replace one error with another.
@@ -141,9 +176,11 @@ back on a framework the server no longer documents. The fix is one line.
    to it is the kind they cannot check. When they say yes, change that line and nothing else.
    (`refresh-model-refs.ps1 -UpdateTargetFramework` makes the same one-line edit, if they would
    rather run it themselves.)
-4. **Refresh refs, rebuild, check** — `.\scripts\refresh-model-refs.ps1 -Project ..\MyRoadModel`,
-   then `dotnet build`, then `.\tools\jcass-dm.exe check --project ..\MyRoadModel`. The target
-   framework rule should now read OK.
+4. **Refresh refs, rebuild, check — run these yourself**, then tell them what `check` reported. From
+   this Assistant folder, in PowerShell: `.\scripts\refresh-model-refs.ps1 -Project ..\MyRoadModel`,
+   then `dotnet build` in the model folder, then
+   `.\tools\jcass-dm.exe check --project ..\MyRoadModel`. The target framework rule should now read
+   OK.
 
 **A solution file, if you ever make one, is `.sln`, never `.slnx`.** A domain model does not need a
 solution file at all — every command in these pages builds the `.csproj` directly. But the .NET 10

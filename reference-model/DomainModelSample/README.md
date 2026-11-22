@@ -4,7 +4,7 @@ A deliberately small, working Juno Cassandra **domain model**, kept here to be *
 
 **Do not clone and rename this folder.** That was the old advice and it is now the wrong one:
 renaming is the most reliable way to break a model, because four separate strings have to agree
-and nothing tells you when they don't. Start your own model with the tool instead, which writes
+and a copy-and-rename by hand gets three of them. Start your own model with the tool instead, which writes
 all four from a single name and cannot produce a mismatch:
 
 ```powershell
@@ -85,22 +85,36 @@ where the name comes from:
   you are mid-edit, your source has usually drifted away from whatever identity was last shipped,
   and the meta sheet still describes the shipped version.
 
-So the two routes only ever agree when all four strings match. When they don't, everything looks
-fine until you press F5 and get:
+So the two routes only ever agree when all four strings match. Which way it breaks depends on which
+names disagree:
 
-```
-Domain Model class 'Whatever' was not found in the specified .dll
-```
+- **The entry class is not named after the `.csproj`** (or `<AssemblyName>` is set). F5 fails, because
+  it looks for a class named after the project:
 
-The framework's unit-test domain model gets this wrong — its csproj is `JCassUnitTestDomainModel`
-but its class is `UnitTestDomainModel` — and F5 against it fails for exactly this reason. That
-mistake is the reason this kit exists.
+  ```
+  Domain Model class 'Whatever' was not found in the specified .dll
+  ```
+
+  The framework's unit-test domain model gets this wrong — its csproj is `JCassUnitTestDomainModel`
+  but its class is `UnitTestDomainModel` — and F5 against it fails for exactly this reason. That
+  mistake is the reason this kit exists.
+
+- **The `meta` sheet names something other than the `.csproj`.** F5 runs perfectly — it ignores the
+  sheet and prints only a `[DebugMode] Overriding DM DLL name` warning — and a normal run would
+  fail. That is the dangerous one, because every debug run is green. The web Debug Model page's
+  **Check bundle** compares `main_dll` and `main_class` with your project name and fails on any
+  difference, and **publish refuses** on the same comparison, so it can no longer reach a live run.
+
+Two precisions those web checks enforce. **`main_dll` is compared letter for letter, case
+included**: the server runs Linux, so `domainmodelsample.dll` is not `DomainModelSample.dll`.
+**`main_class` must be the bare class name with no namespace** — `DomainModelSample`, never
+`DomainModelSample.Objects.DomainModelSample`.
 
 ### Renaming a model — use the tool, not four manual edits
 
 This README used to walk through four manual steps here: two `git mv`s, a class rename, and two
 cells in the `meta` sheet. Doing it by hand is exactly how the four names drift apart, and the
-fourth step is inside a binary spreadsheet where nothing warns you.
+fourth step is inside a binary spreadsheet that no editor will show you.
 
 There is a verb for it, and it changes all four atomically or changes nothing:
 
@@ -113,6 +127,11 @@ four names, and a stale one is confusing rather than broken. Pass the namespace 
 want it updated too.
 
 Then rebuild and confirm `bin\Debug\net10.0\MyRoadModel.dll` exists.
+
+That fixes your machine only. The web workspace still holds the old names until you upload the
+renamed source **and** the edited workbook — and possibly clear an old DLL with **Reset debug
+bundle** first. The order matters; it is in
+[`docs/conventions/four-names.md` § After a rename](../../docs/conventions/four-names.md#after-a-rename--carry-it-to-the-web-app).
 
 For a **new** model you should not be renaming at all — `scaffold` writes all four from one name
 in the first place. Reach for `rename` when you have **inherited** a model whose names already

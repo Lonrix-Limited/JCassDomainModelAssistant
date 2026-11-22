@@ -112,9 +112,17 @@ name:
 ```
 
 **Never rename by hand.** Four names have to change together — the `.csproj` filename, the assembly,
-the entry class, and two settings inside the bundle — and doing it by hand gets three of them. The
-failure surfaces much later as *"class not found in the specified .dll"*.
+the entry class, and two settings inside the bundle — and doing it by hand gets three of them. A
+class left behind fails F5 with *"class not found in the specified .dll"*; a bundle setting left
+behind fails **Check bundle** on the Debug Model page and is refused at publish.
 [`../conventions/four-names.md`](../conventions/four-names.md).
+
+**`rename` only changes your machine.** The web workspace still holds the starter model's old name —
+its source, its workbook, and in an older workspace a copy of its DLL. The first time you upload
+(step 20), carry the rename across in the order on
+[`../conventions/four-names.md` § After a rename](../conventions/four-names.md#after-a-rename--carry-it-to-the-web-app):
+renamed source, **Reset debug bundle** if the old DLL is listed, then the edited workbook, then
+**Check bundle**.
 
 Renaming the project folder itself, and the C# namespace, are cosmetic by comparison and can follow.
 

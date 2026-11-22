@@ -129,7 +129,13 @@ internal static class CheckVerb
         string entryClass = entryClasses[0];
         var disagreements = new List<string>();
 
-        if (!string.Equals(entryClass, stem, StringComparison.Ordinal))
+        // The two halves fail in different places, so they are tracked apart and explained apart:
+        // a class that disagrees with the project fails F5; a meta sheet that disagrees passes F5
+        // and is caught by the web app's Check bundle and refused at publish.
+        bool classDisagrees = !string.Equals(entryClass, stem, StringComparison.Ordinal);
+        bool metaDisagrees = false;
+
+        if (classDisagrees)
         {
             disagreements.Add($"the entry class is '{entryClass}' but the project file is '{stem}.csproj'");
         }
@@ -137,6 +143,12 @@ internal static class CheckVerb
         // The other two names live in the bundle. Checked here rather than with the bundle rules,
         // because a meta sheet naming a third identity is the same failure as a class that
         // disagrees with the project file - and reading only two of the four would let it pass.
+        //
+        // Both comparisons are at least as strict as the web app's Check bundle and publish:
+        // main_dll exact, letter case included, because the server resolves it as
+        // a Linux file path; main_class the bare name with no namespace, because the web app
+        // refuses a qualified one. The web app compares main_class ignoring case; this stays
+        // case-exact because the rule is four identical strings, and stricter here is harmless.
         if (bundle is not null)
         {
             SheetTable meta = bundle.Sheet(SheetSpec.Meta);
@@ -146,11 +158,22 @@ internal static class CheckVerb
             string expectedDll = stem + ".dll";
             if (mainDll.Length > 0 && !string.Equals(mainDll, expectedDll, StringComparison.Ordinal))
             {
+                metaDisagrees = true;
+                string caseOnly = string.Equals(mainDll, expectedDll, StringComparison.OrdinalIgnoreCase)
+                    ? " - they differ only in letter case, which matters on the server"
+                    : string.Empty;
                 disagreements.Add($"meta.main_dll is '{mainDll}' but the project file is '{stem}.csproj', " +
-                                  $"so the build produces '{expectedDll}'");
+                                  $"so the build produces '{expectedDll}'{caseOnly}");
             }
-            if (mainClass.Length > 0 && !string.Equals(mainClass.Split('.').Last(), stem, StringComparison.Ordinal))
+            if (mainClass.Length > 0 && mainClass.Contains('.'))
             {
+                metaDisagrees = true;
+                disagreements.Add($"meta.main_class is '{mainClass}', which carries a namespace - it must " +
+                                  $"be the bare class name '{stem}'");
+            }
+            else if (mainClass.Length > 0 && !string.Equals(mainClass, stem, StringComparison.Ordinal))
+            {
+                metaDisagrees = true;
                 disagreements.Add($"meta.main_class is '{mainClass}' but the project file is '{stem}.csproj'");
             }
         }
@@ -166,13 +189,28 @@ internal static class CheckVerb
             return;
         }
 
+        var why = new List<string>
+        {
+            "A normal model run reads the DLL and class names from the bundle's meta sheet. A debug " +
+            "(F5) run ignores that sheet and derives both from the .csproj filename. They only ever " +
+            "agree when all four names match.",
+        };
+        if (classDisagrees)
+        {
+            why.Add("An entry class not named after the project fails on F5 with \"Domain Model class '" +
+                    stem + "' was not found in the specified .dll\".");
+        }
+        if (metaDisagrees)
+        {
+            why.Add("A meta sheet that disagrees passes F5 (with only a warning), then fails Check bundle " +
+                    "on the web Debug Model page, and publish refuses it.");
+        }
+
         report.Problem("the four names",
             string.Join("; ", disagreements) + ".",
-            "A normal model run reads the class name from the bundle's meta sheet. A debug (F5) " +
-            "run ignores that sheet and derives it from the .csproj filename. They only ever " +
-            "agree when all four names match - so this model may run normally today and fail on " +
-            "F5 with \"Domain Model class '" + stem + "' was not found in the specified .dll\".",
-            $"Fix all four at once:  jcass-dm rename {stem} --project \"{project.Folder}\"");
+            string.Join(" ", why),
+            $"Fix all four at once:  jcass-dm rename {stem} --project \"{project.Folder}\"" +
+            (metaDisagrees ? "  - then upload the edited domain_model_setup.xlsx with Upload bundle file(s)." : string.Empty));
     }
 
     /// <summary>

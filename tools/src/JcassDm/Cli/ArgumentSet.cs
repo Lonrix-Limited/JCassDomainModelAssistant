@@ -6,8 +6,11 @@ using System.Linq;
 namespace JcassDm.Cli;
 
 /// <summary>
-/// The parsed command line for one verb: a single positional argument (the bundle
-/// path) plus <c>--option value</c> pairs and <c>--flag</c> switches.
+/// The parsed command line for one verb: at most one bare (positional) argument plus
+/// <c>--option value</c> pairs and <c>--flag</c> switches. What the bare argument means
+/// depends on the verb: a bundle path for the bundle verbs (<see cref="BundlePath"/>), a
+/// model folder for <c>check</c> and <c>package</c> (<see cref="ProjectPath"/>), and a name
+/// for <c>rename</c> and <c>scaffold</c>.
 ///
 /// <para><b>Unknown options are an error, never ignored.</b> That is the whole reason
 /// this class exists rather than a dictionary lookup at each call site. An agent that
@@ -238,7 +241,8 @@ public sealed class ArgumentSet
     }
 
     /// <summary>
-    /// The bundle path: the one positional argument every verb in this tool takes.
+    /// The bundle path, for the verbs whose bare argument is one (<c>dump</c>, <c>set-meta</c>,
+    /// the <c>add-*</c> verbs). Other verbs read that argument differently - see the class summary.
     /// </summary>
     public string BundlePath()
     {

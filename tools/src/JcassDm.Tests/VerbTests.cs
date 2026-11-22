@@ -96,6 +96,19 @@ public class VerbTests
     }
 
     [Fact]
+    public void SetMeta_refuses_a_namespace_qualified_main_class()
+    {
+        // Accepted until 2026-11-22, when the web app began refusing it at Check bundle and publish.
+        using var bundle = TestBundle.FromReferenceModel();
+
+        ToolResult result = bundle.Run("set-meta", bundle.Path, "--main-class", "MyRoads.MyRoadModel");
+
+        Assert.Equal(ExitCode.UsageError, result.ExitCode);
+        Assert.Contains("carries a namespace", result.All, StringComparison.Ordinal);
+        Assert.Contains("'MyRoadModel'", result.All, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void SetMeta_points_out_a_dll_and_class_that_cannot_both_be_right()
     {
         using var bundle = TestBundle.FromReferenceModel();

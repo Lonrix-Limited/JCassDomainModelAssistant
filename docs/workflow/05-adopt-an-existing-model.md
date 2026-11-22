@@ -108,8 +108,13 @@ doing this by hand.** A half-renamed model is worse than the original mismatch, 
 single most common way a working model gets broken.
 
 Pick the name carefully; it is the model's identity everywhere. If in doubt, rename to whatever
-the `.csproj` is already called, since that is the name a debug run derives its own from.
+the `.csproj` is already called, since that is the name a debug run derives its own from — and the
+name the web app's **Check bundle** and publish compare the spreadsheet against.
 [`../conventions/four-names.md`](../conventions/four-names.md).
+
+A rename on an inherited model also has to reach the web workspace — renamed source, **Reset debug
+bundle** if the old DLL is still listed, then the edited workbook, in that order:
+[`../conventions/four-names.md` § After a rename](../conventions/four-names.md#after-a-rename--carry-it-to-the-web-app).
 
 ### If it does not build for want of `refs\`
 

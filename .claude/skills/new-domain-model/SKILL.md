@@ -23,7 +23,7 @@ Design rule 27.
 
 | Their answer | You |
 |---|---|
-| **Yes, Lonrix set it up** | Walk `workflow/02-the-starter-model.md`: the model source, a project snapshot, `check`, then `rename`. Then hand off to the `adopt-existing-model` skill — the starter model is an existing model |
+| **Yes, Lonrix set it up** | Walk `workflow/02-the-starter-model.md`: the model source, a project snapshot, `check`, then `rename` — which changes their machine only; the web side follows `conventions/four-names.md` § After a rename at the first upload. Then hand off to the `adopt-existing-model` skill — the starter model is an existing model |
 | **No / they do not know** | **Stop and draft the email.** Registering a custom domain model is an administrative action, which is rule 14's second stop condition. Write a support request to `support@lonrix.com` naming the client, ready to copy and paste — do not offer to write one, and do not scaffold instead. A scaffolded project has nothing to be published into |
 | **There is no Juno Cassandra client project at all** | Then § 2 onwards applies as written: `scaffold --from-sample` is the right starting point. This is also how *Lonrix* produces a starter model |
 

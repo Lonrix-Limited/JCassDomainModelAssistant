@@ -41,12 +41,14 @@ Your model gets loaded by **two different routes** and they disagree about where
 from. A **normal run** reads the `meta` sheet of the bundle. A **debug run** — pressing F5 on the
 web Debug Model page — ignores that sheet entirely and derives both names from the `.csproj`
 filename, because mid-edit your source has usually drifted from whatever identity was last
-shipped. So the two routes only agree when all four strings match, and when they don't, everything
-looks fine until F5 gives you:
+shipped. So the two routes only agree when all four strings match. When they don't:
 
-```
-Domain Model class 'Whatever' was not found in the specified .dll
-```
+- **The class is not named after the `.csproj`** → F5 fails with
+  `Domain Model class 'Whatever' was not found in the specified .dll`.
+- **The `meta` sheet names something else** → F5 runs (with a `[DebugMode] Overriding DM DLL name`
+  warning), and **Check bundle** on the Debug Model page fails and publish refuses until they agree.
+  `main_dll` must match `{{MODEL}}.dll` exactly, letter case included — the server runs Linux.
+  `main_class` is the bare name `{{MODEL}}`, no namespace.
 
 **To rename, use the tool, not four manual edits:**
 
@@ -54,7 +56,9 @@ Domain Model class 'Whatever' was not found in the specified .dll
 .\tools\jcass-dm.exe rename NewName --project ..\{{MODEL}}
 ```
 
-It changes all four together or none of them.
+It changes all four together or none of them. Then carry the rename to the web app — the renamed
+source, a possible **Reset debug bundle**, then the edited workbook, in that order. The Assistant's
+`docs/conventions/four-names.md` § "After a rename" has the steps.
 
 **Do not add `<AssemblyName>` to the `.csproj`.** It is the one setting that breaks the rule
 silently — the file would still be `{{MODEL}}.csproj` while the DLL came out under another name.

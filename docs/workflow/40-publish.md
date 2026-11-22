@@ -169,17 +169,25 @@ a nullability difference, not a mystery.
 
 ### The refusal that catches people
 
-> The bundle declares main_dll 'X' but the Release build produced 'Y'
+Two headlines, one cause — the setup spreadsheet names a different model than the project builds:
 
-**Working as designed, and the message is the fix.** Your bundle's `meta.main_dll` must name the
-assembly your project actually builds. Publish refuses on a mismatch and **never rewrites your
-spreadsheet** — silently editing the file you consider authoritative would be found out later, by
-you, with nothing to explain it.
+| Headline | The message under it begins |
+|---|---|
+| **Bundle names the wrong DLL — nothing published** | *"The bundle declares main_dll 'X' but the Release build produced 'Y'"* — with *"The two differ only in letter case, which matters on the server"* added when that is the whole difference |
+| **Bundle names the wrong model class — nothing published** | *"The bundle declares main_class 'X' but the Release build produced 'Y.dll', so the model class must be 'Y'"* |
 
-The confusing part is that **F5 does not care.** A debug run binds to the freshly-built assembly
-and ignores `meta.main_dll` on purpose, because under active debugging your source has moved on
-from the published assembly name. So the mismatch can sit there through a hundred green debug runs
-and first surface here.
+**Working as designed, and the message is the fix.** `meta.main_dll` must be exactly the assembly
+your project builds, **letter case included** — the server runs Linux, where `toymodel.dll` and
+`ToyModel.dll` are different files. A case-only difference used to publish and then fail every run;
+it is now refused. `meta.main_class` must be the bare project name, **no namespace**. Publish
+**never rewrites your spreadsheet** — silently editing the file you consider authoritative would be
+found out later, by you, with nothing to explain it.
+
+**You should not normally meet this here.** F5 ignores both values — a debug run binds to the
+freshly-built assembly and a class named after the project — so a mismatch can sit through a hundred
+green debug runs. But **Check bundle** compares the same two values with the same rules, and the
+checklist above has you run it first. If publish refuses on names, Check bundle was skipped or the
+workbook changed after it ran.
 
 Fix it properly rather than by editing one of the four names:
 
@@ -188,8 +196,11 @@ Fix it properly rather than by editing one of the four names:
 ```
 
 The `the four names` rule reports exactly which of the four disagrees. If a rename is what you
-want, `jcass-dm rename` changes all four at once — never edit them individually.
-[`../conventions/four-names.md`](../conventions/four-names.md).
+want, `jcass-dm rename` changes all four at once — never edit them individually. To make the
+spreadsheet agree with the project as it stands, `rename` to the name the `.csproj` already has; it
+rewrites only what disagrees. Then upload the workbook with **Upload bundle file(s)**, **Check
+bundle**, and publish again —
+[`../conventions/four-names.md` § After a rename](../conventions/four-names.md#after-a-rename--carry-it-to-the-web-app).
 
 ### Anything else
 

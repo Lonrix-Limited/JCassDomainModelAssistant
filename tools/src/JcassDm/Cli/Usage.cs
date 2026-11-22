@@ -80,8 +80,11 @@ internal static class Usage
         output.WriteLine("  name, the assembly name it implies, the entry class, and meta.main_dll /");
         output.WriteLine("  meta.main_class in the bundle. A normal run reads the bundle; a debug (F5) run");
         output.WriteLine("  ignores it and derives both names from the .csproj filename. So they agree only");
-        output.WriteLine("  when all four match - and when they do not, everything looks fine until F5 says");
-        output.WriteLine("  \"Domain Model class 'X' was not found in the specified .dll\".");
+        output.WriteLine("  when all four match. A class that disagrees fails F5 with \"Domain Model class");
+        output.WriteLine("  'X' was not found in the specified .dll\". A meta sheet that disagrees passes F5,");
+        output.WriteLine("  fails Check bundle on the web Debug Model page, and is refused at publish:");
+        output.WriteLine("  main_dll must match <ProjectName>.dll letter case included, and main_class is");
+        output.WriteLine("  the bare project name, no namespace.");
         output.WriteLine();
         output.WriteLine("  scaffold and rename are the only things that should ever write those four, and");
         output.WriteLine("  both take ONE name. There is no option that sets one of them on its own.");

@@ -1,0 +1,62 @@
+using System;
+using System.Collections.Generic;
+using JCass_ModelCore.Models;
+
+namespace FixtureModel.Objects;
+
+/// <summary>
+/// Stage 1 of 6: what state every element starts the run in.
+///
+/// <para>Called once per element, before period 1. The job is to turn the client's survey data
+/// into a sane starting state - and "sane" is doing real work in a production model. Field data
+/// arrives with gaps, with values surveyed several years ago that need ageing forward, and with
+/// the occasional impossible number. A model that starts from bad state produces a bad forecast
+/// in every subsequent period, and nothing downstream will flag it.</para>
+///
+/// <para><b>This walking skeleton does none of that</b>, because the sample inputs are clean. It
+/// reads the raw columns and derives the objective value, and that is all. The canonical road
+/// models do three things here, in this order, and yours probably should too:</para>
+/// <list type="number">
+///   <item><description>Build the element from raw inputs.</description></item>
+///   <item><description>Fix what is missing or impossible - clamp to a floor, substitute a
+///   cohort default, age a stale survey value forward to today.</description></item>
+///   <item><description>Derive anything computed from the above.</description></item>
+/// </list>
+///
+/// <para>Any threshold you use in step 2 is a tunable number: it goes in <c>lookups.xlsx</c> and
+/// is read through <see cref="Constants"/>, not written here as a literal.</para>
+/// </summary>
+public class Initialiser
+{
+    private readonly ModelBase _frameworkModel;
+    private readonly FixtureModel _domainModel;
+
+    /// <summary>
+    /// Creates the initialiser. Built once in <see cref="FixtureModel.SetupInstance"/>, so
+    /// <c>_domainModel.Constants</c> is available by the time <see cref="Initialise"/> runs.
+    /// </summary>
+    /// <param name="frameworkModel">The framework model, for raw data and lookups.</param>
+    /// <param name="domainModel">This domain model, for its <see cref="Constants"/>.</param>
+    public Initialiser(ModelBase frameworkModel, FixtureModel domainModel)
+    {
+        _frameworkModel = frameworkModel ?? throw new ArgumentNullException(nameof(frameworkModel));
+        _domainModel = domainModel ?? throw new ArgumentNullException(nameof(domainModel));
+    }
+
+    /// <summary>
+    /// Returns the starting state for one element.
+    /// </summary>
+    /// <param name="iElemIndex">Zero-based index of the element.</param>
+    /// <param name="numInputs">Numeric raw input columns, keyed by column name.</param>
+    /// <param name="textInputs">Text raw input columns, keyed by column name.</param>
+    public ModelElement Initialise(
+        int iElemIndex,
+        Dictionary<string, double> numInputs,
+        Dictionary<string, string> textInputs)
+    {
+        // GetFromInputData already calls SetObjectiveValue, so the element comes back complete.
+        // Add your data cleaning between that call and the return, using thresholds from
+        // _domainModel.Constants rather than literals.
+        return ModelElementFactory.GetFromInputData(iElemIndex, numInputs, textInputs);
+    }
+}

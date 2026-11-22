@@ -15,6 +15,48 @@ before you download.
 
 ---
 
+## 2026-11-22
+
+**Headline: the web app now enforces the four-name rule at edit time, and so does `jcass-dm check`.
+A model name in your setup spreadsheet that disagrees with your project is caught by Check bundle
+and refused at publish — letter case in `main_dll` included.**
+
+### What changed in the web app
+
+- **Check bundle** on the Debug Model page now compares `meta.main_dll` and `meta.main_class` in
+  your workbook with your `.csproj` name — the check reads *"Bundle main_dll + main_class match the
+  C# project"*. It no longer looks for the model DLL in the bundle folder.
+- **`main_dll` must match `<ProjectName>.dll` exactly, letter case included.** The server runs
+  Linux. A case-only difference used to publish and then fail every run; it is now refused.
+- **`main_class` must be the bare project name, no namespace.**
+- **Publish refuses** on either mismatch, under *"Bundle names the wrong DLL"* or *"Bundle names
+  the wrong model class"*. Nothing is published.
+- **Initialize workspace and Reset debug bundle no longer copy the published model DLL** into
+  `debug_domain_model/`. Third-party DLLs are still copied.
+
+### What changed here
+
+- `jcass-dm check` now refuses a namespace-qualified `main_class`, says when `main_dll` differs only
+  in letter case, and explains a spreadsheet mismatch as *passes F5, fails Check bundle* rather than
+  *fails F5*. `set-meta --main-class` refuses a namespace.
+- [`docs/conventions/four-names.md`](docs/conventions/four-names.md) has a new section, **After a
+  rename — carry it to the web app**: renamed source, Reset debug bundle if the old DLL is still
+  listed, the edited workbook after the reset, then Check bundle.
+- The framework reference assemblies are re-stamped to the framework now in production. No public
+  signature changed.
+
+### What to re-check in your model
+
+- **Run `jcass-dm check`.** If *the four names* now reports a PROBLEM that it did not before, it is
+  a namespace in `main_class` or a letter-case difference in `main_dll`. Fix it with
+  `jcass-dm rename <YourProjectName>` (the name your `.csproj` already has), then upload the
+  workbook with **Upload bundle file(s)** before you next publish.
+- **If you renamed your model at some point**, look at the bundle file list on the Debug Model page.
+  An old `<OldName>.dll` still listed there would be published beside the new one — clear it with
+  **Reset debug bundle**, then re-upload your workbook.
+
+---
+
 ## 2026-11-20
 
 **Headline: Juno Cassandra is now on .NET 10. Install the .NET 10 SDK and change one line in your

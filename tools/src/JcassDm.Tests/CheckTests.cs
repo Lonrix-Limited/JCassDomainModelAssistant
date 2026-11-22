@@ -36,6 +36,7 @@ public class CheckTests
     [InlineData("assembly-name-set")]
     [InlineData("blank-budget-category")]
     [InlineData("target-framework-behind")]
+    [InlineData("main-class-namespaced")]
     public void Every_broken_fixture_is_caught(string fixture)
     {
         ToolResult result = Run(fixture);
@@ -106,6 +107,55 @@ public class CheckTests
         // The whole reason rename exists. A diagnosis that leaves somebody to do four manual
         // edits has handed them back the operation that caused the problem.
         Assert.Contains("jcass-dm rename", result.Output, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_namespace_in_main_class_is_a_problem()
+    {
+        // Until 2026-11-22 only the last segment of main_class was compared, so
+        // 'FixtureModel.Objects.FixtureModel' passed here - while the web app's Check bundle and
+        // publish refuse it. A local check that passes what the server refuses is worse than none.
+        ToolResult result = Run("main-class-namespaced");
+
+        Assert.Equal(ExitCode.CheckFailed, result.ExitCode);
+        Assert.Contains("carries a namespace", result.Output, StringComparison.Ordinal);
+        Assert.Contains("bare class name 'FixtureModel'", result.Output, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_meta_only_disagreement_is_explained_as_passing_F5_and_failing_Check_bundle()
+    {
+        // The meta sheet disagrees and the class does not, so F5 would run. Saying it fails F5 -
+        // which the message said for every disagreement until 2026-11-22 - sends the engineer to
+        // look for a failure they will never see.
+        ToolResult result = Run("main-class-namespaced");
+
+        Assert.Contains("passes F5", result.Output, StringComparison.Ordinal);
+        Assert.Contains("Check bundle", result.Output, StringComparison.Ordinal);
+        Assert.DoesNotContain("was not found in the specified .dll", result.Output, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_class_disagreement_is_explained_as_failing_F5()
+    {
+        ToolResult result = Run("names-disagree");
+
+        Assert.Contains("was not found in the specified .dll", result.Output, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_main_dll_differing_only_in_letter_case_says_so()
+    {
+        // The server resolves main_dll as a Linux file path, where case matters; on the engineer's
+        // Windows machine the two names look interchangeable. The message has to say which it is.
+        using TemporaryModel model = FixtureModels.Copy("healthy");
+        string bundle = model.PathTo("domain_model_setup.xlsx");
+        Assert.Equal(ExitCode.Ok, model.Run("set-meta", bundle, "--main-dll", "fixturemodel.dll", "--force").ExitCode);
+
+        ToolResult result = model.Run("check", "--project", model.Folder);
+
+        Assert.Equal(ExitCode.CheckFailed, result.ExitCode);
+        Assert.Contains("differ only in letter case", result.Output, StringComparison.Ordinal);
     }
 
     [Fact]

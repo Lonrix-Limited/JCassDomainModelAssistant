@@ -85,7 +85,10 @@ non-OK result means. The `check-my-model` skill does this part.
 .\tools\jcass-dm.exe rename <Name> --project ..\TheirModel
 ```
 
-All four together or none. **Never walk an engineer through doing it by hand.**
+All four together or none. **Never walk an engineer through doing it by hand.** It changes their
+machine only; when they next upload, walk them through
+[`docs/conventions/four-names.md` § After a rename](../../../docs/conventions/four-names.md#after-a-rename--carry-it-to-the-web-app),
+one browser step at a time.
 
 ## 4. Get it building
 

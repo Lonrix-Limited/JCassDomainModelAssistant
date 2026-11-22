@@ -28,11 +28,15 @@ must match code character for character.
 filename, the assembly name it implies, the entry class, and `meta.main_dll` /
 `meta.main_class` in the bundle. A normal run reads the bundle; a web debug (F5) run ignores
 it and derives both names from the `.csproj` filename. So they only ever agree when all four
-match — and when they do not, everything looks fine until F5 says:
+match. A class that disagrees with the `.csproj` fails at F5:
 
 ```
 Domain Model class 'X' was not found in the specified .dll
 ```
+
+A `meta` sheet that disagrees passes F5 and is caught by the web Debug Model page's **Check
+bundle**, and publish refuses it — `main_dll` letter-case-exact, `main_class` the bare name with
+no namespace. `check` applies the same two comparisons locally, so you see it before you upload.
 
 Renaming by hand is how that happens. `scaffold` and `rename` both take **one** name and
 write all four from it, so there is no argument combination that produces a mismatch.

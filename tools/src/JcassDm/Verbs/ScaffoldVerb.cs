@@ -18,8 +18,9 @@ namespace JcassDm.Verbs;
 /// <para><b>This verb exists because renaming is the way models break.</b> Four strings have to
 /// match - the <c>.csproj</c> filename, the assembly name it implies, the entry class, and
 /// <c>meta.main_dll</c> / <c>main_class</c> in the bundle - and a normal run and a debug F5 run
-/// read them by different routes, so a mismatch looks fine until F5 says "Domain Model class 'X'
-/// was not found in the specified .dll". A generator that takes ONE name and writes all four
+/// read them by different routes, so a mismatch fails either at F5 ("Domain Model class 'X' was
+/// not found in the specified .dll") or, worse, passes F5 and is refused at the web app's Check
+/// bundle and publish. A generator that takes ONE name and writes all four
 /// cannot produce that. There is deliberately no argument that sets any of the four
 /// independently, and adding one would undo the whole point of the verb.</para>
 ///

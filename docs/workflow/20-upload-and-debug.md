@@ -101,7 +101,12 @@ machine and the server.
 **Initialize workspace.**
 
 It seeds the debug bundle from the model version you picked, stages the framework DLLs the server
-build needs, and writes the two editor configuration files that make F5 work.
+build needs, and writes the two editor configuration files that make F5 work. It does **not** copy
+the published model DLL into the bundle — your model always comes from your own build (third-party
+DLLs in the published folder are still copied). An older workspace may still hold a copy from
+before that changed; it is harmless until a rename, and then
+[`../conventions/four-names.md` § After a rename](../conventions/four-names.md#after-a-rename--carry-it-to-the-web-app)
+says how to clear it.
 
 **You should see** the state chip beside the buttons change to report a ready workspace, and the
 editor mount in the frame below.
@@ -156,8 +161,8 @@ At the end:
   a real forecast; it is not a dry run.
 - **It ignores the bundle's `meta.main_dll` and `meta.main_class`** and binds to whatever your
   `.csproj` just built. That is deliberate — under debugging your source has moved on from the
-  published assembly. It is also why a name mismatch can hide here and first surface at publish:
-  see [`40-publish.md`](40-publish.md#the-refusal-that-catches-people).
+  published assembly. It is also why a name mismatch hides here: the only sign is a
+  `[DebugMode] Overriding DM DLL name` warning. **Check bundle** (step 8) is what catches it.
 
 ### If F5 says it cannot find a debug adapter
 
@@ -204,6 +209,13 @@ panel appears below the ribbon.
 
 **Read it now, not at publish time.** It is the same validator set as the Tuning page's
 **Check Setup**, and it is authoritative in a way the local check deliberately is not.
+
+One check differs from Check Setup, and it is the one most worth reading here: **"Bundle main_dll +
+main_class match the C# project"**. Rather than looking for the model DLL in the bundle folder, it
+compares the workbook's `main_dll` and `main_class` with your `.csproj` name — `main_dll` exactly,
+letter case included; `main_class` as the bare name, no namespace. A failure there is the mismatch F5
+just hid from you, and publish refuses on it. Fix:
+[`../orientation/reading-errors.md`](../orientation/reading-errors.md#check-bundle-fails-bundle-main_dll--main_class-match-the-c-project).
 
 ---
 

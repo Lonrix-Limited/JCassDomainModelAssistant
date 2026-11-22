@@ -474,7 +474,8 @@ handle:
   conventions are deliberate.
 - **The model may already violate the four-name rule**, so `jcass-dm rename` fixes all four
   atomically rather than leaving the engineer to do it by hand. **Never rename by hand** — a manual
-  rename gets three of the four names, and the failure surfaces much later.
+  rename gets three of the four names, and the failure surfaces later — at F5, or at the web app's
+  Check bundle — rather than at the edit.
 - **Downloading the source is an *entry* route**, because the engineer may have no local copy at
   all: **Download source zip** on the Debug Model page.
 - **It is by definition the takeover case**, so rule 13's publish warning applies in full.
