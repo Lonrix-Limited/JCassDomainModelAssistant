@@ -2,8 +2,8 @@
 
 version:        jcass-dm 1.2.0
 runtime:        .NET 10.0.15, win-x64, self-contained, single file, compressed, not trimmed
-built from:     e083960cef9d01fdc3c3812f8a80242bda55c202
+built from:     2b05e0650bb4e690a5d525de4a0572452dd2cbad
 built on:       2026-11-22
-size:           38.5 MB
+size:           38.6 MB
 
 Rebuild with .\scripts\build-jcass-dm.ps1 - see tools/README.md.
