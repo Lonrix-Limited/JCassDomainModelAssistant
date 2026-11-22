@@ -239,4 +239,31 @@ public class RenameTests
 
         Assert.Equal(before, File.ReadAllText(untouched));
     }
+
+    [Fact]
+    public void A_change_of_letter_case_only_renames_the_files_too()
+    {
+        // Until 2026-11-22 a case-only rename skipped the file moves (the paths compared equal
+        // ignoring case), so on Windows the .csproj kept its old spelling while the bundle was
+        // rewritten. The server compares main_dll with the project name letter for letter, so
+        // that left exactly the disagreement Check bundle and publish refuse.
+        using TemporaryModel model = FixtureModels.Copy("healthy");
+
+        ToolResult result = model.Run("rename", "Fixturemodel", "--project", model.Folder);
+        Assert.Equal(ExitCode.Ok, result.ExitCode);
+
+        string[] projects = Directory.GetFiles(model.Folder, "*.csproj").Select(Path.GetFileName).ToArray()!;
+        Assert.Equal(new[] { "Fixturemodel.csproj" }, projects);
+        string[] entryFiles = Directory.GetFiles(model.PathTo("Objects"), "fixturemodel.cs*",
+            new EnumerationOptions { MatchCasing = MatchCasing.CaseInsensitive }).Select(Path.GetFileName).ToArray()!;
+        Assert.Equal(new[] { "Fixturemodel.cs" }, entryFiles);
+
+        using (BundleFile bundle = BundleFile.Open(model.PathTo("domain_model_setup.xlsx")))
+        {
+            SheetTable meta = bundle.Sheet(SheetSpec.Meta);
+            Assert.Equal("Fixturemodel.dll", meta.Text(meta.FindRowByKey("Setting", "main_dll"), "Value"));
+        }
+
+        Assert.Equal(ExitCode.Ok, model.Run("check", "--project", model.Folder).ExitCode);
+    }
 }

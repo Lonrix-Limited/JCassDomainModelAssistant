@@ -53,9 +53,11 @@ cause; do not assemble the zip another way.
 
 ## 5. Then
 
-The upload, **Initialize workspace**, the server build, F5, and **Check bundle** are all on
+The upload, **Initialize workspace**, the trusted-folder check, the server build, F5, and **Check
+bundle** are all on
 [`docs/workflow/20-upload-and-debug.md`](../../../docs/workflow/20-upload-and-debug.md), from step 3.
-Those are browser steps: walk the engineer through them, one at a time.
+Those are browser steps: walk the engineer through them, one at a time. **Do not skip step 5½** —
+ask whether the grey *Restricted Mode* bar is showing in the editor, and wait for the answer.
 
 ## 6. Never
 

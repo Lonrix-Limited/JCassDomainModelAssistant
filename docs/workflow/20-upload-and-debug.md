@@ -75,12 +75,8 @@ the overlay so the editor can mount; it does not upload anything by itself.
 > both ways — and if the overlay's wording makes it look like a choice, say so plainly rather than
 > offering it. See [`../design-rules.md`](../design-rules.md) rule 8.
 
-That overlay also mentions **Restricted Mode**. The editor opens folders untrusted until you tell it
-otherwise. **If it asks, trust the folder and then reload the window** — command palette
-(**Ctrl+Shift+P**) → *Developer: Reload Window*. Trusting alone has no visible effect, and the cost
-of skipping the reload is not obvious: building still works perfectly, and only **F5 fails**, with a
-message that reads like a broken installation. See step 7. Newer editor profiles are set up so the
-question never comes up at all.
+That overlay also mentions **Restricted Mode** — the editor opens folders untrusted. Do not deal with
+it here; step 5½ is an explicit check for it, once the workspace exists.
 
 ## Step 4 — Pick the model version, then upload
 
@@ -115,6 +111,31 @@ editor mount in the frame below.
 > wrong — a missing `.vscode` folder, an editor that will not launch. The two buttons that *do*
 > delete are **Reset source** (wipes your uploaded C#) and **Reset debug bundle** (wipes the
 > setup spreadsheets). Neither is part of the normal loop.
+
+## Step 5½ — Check the folder is trusted. Do not skip this
+
+**Look at the top of the editor frame for a grey bar** saying the editor is in **Restricted Mode**,
+with a **Manage** link on it. (The bottom-left corner of the editor may also read *Restricted
+Mode*.)
+
+**If the bar is there:**
+
+1. Click **Manage** on the bar, and on the page that opens, trust the folder (**Trust**).
+2. **Reload the window** — command palette (**Ctrl+Shift+P**) → **Developer: Reload Window**.
+
+**You should see** the editor reload with no grey bar. **That is the check:** the bar gone after the
+reload. The trust page saying *"You trust this folder"* is not enough on its own — the editor does
+not pick up trust until it reloads.
+
+**If there is no bar**, the folder is already trusted (newer editor profiles are set up that way) —
+say so and move on.
+
+> **For the assistant: ask the engineer outright whether they can see the grey bar, and wait for the
+> answer.** Do not fold this into "if it asks". An untrusted folder is invisible in every step that
+> follows until it is not: the server build in step 6 succeeds, breakpoints appear as solid red
+> dots, the launch configuration is accepted — and then **F5 fails** with a message about a debug
+> adapter that reads like a broken installation (step 7). The cost of asking is one turn; the cost
+> of not asking has, in a real case, been days and a support call.
 
 ## Step 6 — Build on the server
 
@@ -233,6 +254,8 @@ project stays the source of truth**; a fix left only on the server is a fix you 
 
 ## Done when
 
+- [ ] The editor shows no grey *Restricted Mode* bar — the folder is trusted and the window was
+      reloaded after trusting it.
 - [ ] A breakpoint in your own C# stops a running forecast.
 - [ ] The run reaches `[DebugMode] Success`.
 - [ ] **Check bundle** reports no failures.

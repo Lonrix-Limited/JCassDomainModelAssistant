@@ -42,6 +42,14 @@ and refused at publish — letter case in `main_dll` included.**
 - [`docs/conventions/four-names.md`](docs/conventions/four-names.md) has a new section, **After a
   rename — carry it to the web app**: renamed source, Reset debug bundle if the old DLL is still
   listed, the edited workbook after the reset, then Check bundle.
+- **Trusting the editor folder is now an explicit step**, not an "if it asks":
+  [`docs/workflow/20-upload-and-debug.md`](docs/workflow/20-upload-and-debug.md) step 5½ has you look
+  for the grey *Restricted Mode* bar right after Initialize workspace, click **Manage**, trust the
+  folder, and reload the window. The check is the bar gone after the reload. Skipping it lets
+  everything up to F5 succeed and F5 fail.
+- `jcass-dm rename` to a name that differs from the project only in letter case (`toymodel` →
+  `ToyModel`) now renames the `.csproj` and entry-class files too. It used to skip them on Windows,
+  leaving the project and the workbook disagreeing in exactly the way Check bundle refuses.
 - The framework reference assemblies are re-stamped to the framework now in production. No public
   signature changed.
 

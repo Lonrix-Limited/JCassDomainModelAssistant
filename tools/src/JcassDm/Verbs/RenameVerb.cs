@@ -219,7 +219,20 @@ internal sealed class RenamePlan
 
             foreach (FileMove move in this._moves)
             {
-                File.Move(move.From, move.To);
+                if (move.IsCaseOnly)
+                {
+                    // On Windows 'toymodel.csproj' and 'ToyModel.csproj' are the same file, so
+                    // the change of case goes through a temporary name. The same two steps are
+                    // correct on a case-sensitive file system too.
+                    string temporary = move.From + ".jcass-dm-rename";
+                    File.Move(move.From, temporary);
+                    backup.RecordCreated(temporary);
+                    File.Move(temporary, move.To);
+                }
+                else
+                {
+                    File.Move(move.From, move.To);
+                }
                 backup.RecordCreated(move.To);
             }
 
@@ -345,9 +358,16 @@ internal sealed class RenamePlan
     private void PlanMove(string from, string newFileName, string? folder = null)
     {
         string target = Path.Combine(folder ?? Path.GetDirectoryName(from)!, newFileName);
-        if (string.Equals(from, target, StringComparison.OrdinalIgnoreCase)) return;
+        if (string.Equals(from, target, StringComparison.Ordinal)) return;
 
-        if (File.Exists(target))
+        // A change of letter case only is a real rename. Until 2026-11-22 it was skipped here,
+        // which on Windows left 'toymodel.csproj' in place while the bundle was rewritten to
+        // 'ToyModel.dll' - and the server, on Linux, treats those as different files, so the web
+        // app's Check bundle and publish refuse exactly that state. The target "exists" only
+        // because it is the same file, so the existence check below does not apply to it.
+        bool caseOnly = string.Equals(from, target, StringComparison.OrdinalIgnoreCase);
+
+        if (!caseOnly && File.Exists(target))
         {
             throw new UsageFailure(
                 $"'{Path.GetRelativePath(this._project.Folder, target)}' already exists, so " +
@@ -435,7 +455,13 @@ internal sealed class RenamePlan
 internal sealed record FileEdit(string Path, string RelativePath, string NewText);
 
 /// <summary>A file that changes name.</summary>
-internal sealed record FileMove(string From, string To, string RelativeFrom, string RelativeTo);
+internal sealed record FileMove(string From, string To, string RelativeFrom, string RelativeTo)
+{
+    /// <summary>True when only the letter case of the name changes, e.g. <c>toymodel.csproj</c> to <c>ToyModel.csproj</c>.</summary>
+    public bool IsCaseOnly =>
+        string.Equals(this.From, this.To, StringComparison.OrdinalIgnoreCase)
+        && !string.Equals(this.From, this.To, StringComparison.Ordinal);
+}
 
 /// <summary>
 /// Copies of every file a rename is about to touch, so the whole operation can be undone.
